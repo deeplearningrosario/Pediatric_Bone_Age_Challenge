@@ -8,3 +8,15 @@ The order of execution would be
 - 1.Pickle_dataset
 - 2.main
 - 3.check.
+
+Dependencies needed
+
+
+Install on Linux
+```bash
+python3 -mpip install opencv-python --user
+
+python3 -mpip install pandas --user
+
+python3 -mpip install pandas --user
+```
