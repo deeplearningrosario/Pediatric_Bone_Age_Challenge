@@ -11,7 +11,7 @@ The order of execution would be
 
 Dependencies needed
 
-*
+* [tensorflow](https://www.tensorflow.org/)
 * opencv-python
 * pandas
 * numpy
