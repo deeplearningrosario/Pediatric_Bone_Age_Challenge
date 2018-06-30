@@ -10,8 +10,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import os
 
-__location__ = os.path.realpath(os.path.join(
-    os.getcwd(), os.path.dirname(__file__)))
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 batch_size = 32
 epochs = 10
