@@ -18,9 +18,8 @@ df = pd.read_csv(os.path.join(train_dir, 'dataset_sample_labels.csv'))
 a = df.values
 m = a.shape[0]
 
-path = train_dir + '\\'
 print('Loading data set...')
-for i in os.listdir(path):
+for i in os.listdir(train_dir):
     if fnmatch.fnmatch(i, '*.png'):
         y_age.append(df.boneage[df.id == int(i[:-4])].tolist()[0])
         a = df.male[df.id == int(i[:-4])].tolist()[0]
@@ -28,7 +27,7 @@ for i in os.listdir(path):
             y_gender.append(1)
         else:
             y_gender.append(0)
-        img_path = path + i
+        img_path = os.path.join(train_dir, i)
         img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (224, 224))
