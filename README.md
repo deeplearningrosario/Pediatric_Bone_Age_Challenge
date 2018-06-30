@@ -11,6 +11,10 @@ The order of execution would be
 
 Dependencies needed
 
+*
+* opencv-python
+* pandas
+* numpy
 
 Install on Linux
 ```bash
@@ -18,5 +22,5 @@ python3 -mpip install opencv-python --user
 
 python3 -mpip install pandas --user
 
-python3 -mpip install pandas --user
+python3 -mpip install numpy --user
 ```
