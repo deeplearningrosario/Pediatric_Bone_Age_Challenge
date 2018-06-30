@@ -1,15 +1,16 @@
 import os
 from keras.applications.inception_v3 import InceptionV3
-from keras.preprocessing import image
+# from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input
-from keras import backend as K
+# from keras import backend as K
 import keras
 from six.moves import cPickle
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+__location__ = os.path.realpath(os.path.join(
+    os.getcwd(), os.path.dirname(__file__)))
 
 batch_size = 32
 epochs = 3
@@ -57,7 +58,7 @@ print('y_valid shape:' + str(y_valid.shape))
 print('x_test shape:' + str(x_test.shape))
 print('y_test shape:' + str(y_test.shape))
 
-# Using InceptionV3 with pretrained weights from Imagenet 
+# Using InceptionV3 with pretrained weights from Imagenet
 base_model = InceptionV3(weights='imagenet', include_top=False)
 input = Input(shape=(224, 224, 3))
 output_vgg16 = base_model(input)
