@@ -11,13 +11,17 @@ The order of execution would be
 
 Dependencies needed
 
+* [python3](https://www.python.org/)
 * [tensorflow](https://www.tensorflow.org/)
+* [keras](https://keras.io)
 * opencv-python
 * pandas
 * numpy
 
 Install on Linux
 ```bash
+sudo pip install keras
+
 python3 -mpip install opencv-python --user
 
 python3 -mpip install pandas --user
