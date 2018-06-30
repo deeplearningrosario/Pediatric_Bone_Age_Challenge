@@ -1,2 +1,6 @@
 # File created for pickle_dataset.py script
 /**/*.pkl
+
+# Ignore weight
+/**/*.h5
+/weights/**/*
