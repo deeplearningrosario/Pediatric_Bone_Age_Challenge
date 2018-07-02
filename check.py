@@ -1,13 +1,13 @@
 # Check metrics using trained weight files
 
 from keras.applications.inception_v3 import InceptionV3
-from keras.preprocessing import image
+# from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input
-from keras import backend as K
+# from keras import backend as K
 from six.moves import cPickle
-import numpy as np88
-import matplotlib.pyplot as plt
+import numpy as np
+# import matplotlib.pyplot as plt
 import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
