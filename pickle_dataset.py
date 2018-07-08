@@ -10,7 +10,7 @@ import sys
 
 
 # Show a progress bar
-def updateProgress(progress, tick='', total='', status=''):
+def updateProgress(progress, tick='', total='', status='loading...'):
     barLength = 45
     if isinstance(progress, int):
         progress = float(progress)
@@ -42,6 +42,7 @@ a = df.values
 m = a.shape[0]
 
 print('Loading data set...')
+# file names
 files = os.listdir(train_dir)
 totalFile = len(files)
 
@@ -65,6 +66,7 @@ for i in range(totalFile):
         x = np.asarray(img, dtype=np.uint8)
         X_train.append(x)
 
+        # Update the progress bar
         updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
 
 
