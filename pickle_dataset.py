@@ -59,10 +59,9 @@ for i in range(totalFile):
 
         img_path = os.path.join(train_dir, imgFile)
         img = cv2.imread(img_path)
-
-        cv2.imshow('image', img)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (224, 224))
+
         x = np.asarray(img, dtype=np.uint8)
         X_train.append(x)
 
