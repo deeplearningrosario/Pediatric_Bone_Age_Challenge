@@ -10,16 +10,16 @@ import sys
 
 
 # Show a progress bar
-def updateProgress(progress, tick='', total='', status='loading...'):
+def updateProgress(progress, tick='', total='', status='Loading...'):
     barLength = 45
     if isinstance(progress, int):
         progress = float(progress)
     if progress < 0:
         progress = 0
-        status = "waiting...\r\n"
+        status = "Waiting...\r\n"
     if progress >= 1:
         progress = 1
-        status = "completed loading data\r\n"
+        status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
     sys.stdout.write(str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
         tick,
@@ -83,4 +83,4 @@ train_age_pkl.close()
 train_gender_pkl = open('data_gender.pkl', 'wb')
 cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
 train_gender_pkl.close()
-print('\n100% completed saved data')
+print('\nCompleted saved data')
