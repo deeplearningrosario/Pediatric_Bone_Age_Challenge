@@ -9,6 +9,26 @@ import pandas as pd
 import sys
 
 
+# whitepatch, normaliza la los colores de la imagen
+#
+# Como las imagenes tiene diferentes tonalidades de colores
+# Este algoritmo whit-patch pretende llevar los colores de la
+# imagenes a un tono igual
+def whitePatch(image):
+    B, G, R = cv2.split(image)
+
+    red = cv2.equalizeHist(R)
+    green = cv2.equalizeHist(G)
+    blue = cv2.equalizeHist(B)
+
+    imgOut = cv2.merge((blue, green, red))
+
+    # show the images
+    # cv2.imwrite("white-patch.png", np.hstack([image, imgOut, ]))
+
+    return imgOut
+
+
 # Show a progress bar
 def updateProgress(progress, tick='', total='', status='Loading...'):
     barLength = 45
@@ -59,8 +79,46 @@ for i in range(totalFile):
 
         img_path = os.path.join(train_dir, imgFile)
         img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (224, 224))
+
+        imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        imgColorEqualize = whitePatch(imgBGR2RGB)
+
+        # =========================================================
+        # create NumPy arrays from the boundaries
+        lower = np.array([128, 128, 128], dtype="uint8")
+        upper = np.array([255, 255, 255], dtype="uint8")
+        # find the colors within the specified boundaries and apply the mask
+        # mask = cv2.imread('./mask.png')
+        mask = cv2.inRange(imgColorEqualize, lower, upper)
+
+        output = cv2.bitwise_and(img, img, mask=mask)
+
+        # show the images
+        cv2.imwrite(
+            "remainder.png",
+            np.hstack([img,  imgBGR2RGB, imgColorEqualize, output])
+        )
+        # img = cv2.resize(img, (224, 224))
+
+        """
+        # patch_center = np.array([500, 450])
+        image_src = img
+        gray = cv2.cvtColor(image_src, cv2.COLOR_BGR2GRAY)
+        ret, gray = cv2.threshold(gray, 10, 255, 0)
+        cv2.imwrite("gray.png", gray)
+        image, contours, hierarchy = cv2.findContours(
+            gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        largest_area = sorted(contours, key=cv2.contourArea)[-1]
+        mask = np.zeros(image_src.shape, np.uint8)
+        cv2.imwrite("mask.png", mask)
+        cv2.drawContours(mask, [largest_area], 0, (255, 255, 255, 255), -1)
+        image_remainder = cv2.bitwise_and(image_src, 255 - mask)
+
+        cv2.imwrite("remainder.png", image_remainder)
+        """
+
+        # cv2.imshow('image', img)
+        # cv2.waitKey(0)
 
         x = np.asarray(img, dtype=np.uint8)
         X_train.append(x)
