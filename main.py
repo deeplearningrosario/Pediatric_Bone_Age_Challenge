@@ -10,19 +10,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-np.random.seed(1671)  # for reproducibility
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
 EPOCHS = 3
 BATCH_SIZE = 32
 VERBOSE = 1
-NB_CLASSES = 10   # number of outputs = number of digits
 # OPTIMIZER = Adam()
 OPTIMIZER = RMSprop()
-N_HIDDEN = 128
-VALIDATION_SPLIT = 0.2  # how much TRAIN is reserved for VALIDATION
-DROPOUT = 0.3
 
 # Load data
 print('...loading training data')
@@ -79,7 +74,7 @@ model = Model(inputs=input, outputs=predictions)
 
 model.compile(
     optimizer=OPTIMIZER,
-    loss='categorical_crossentropy',
+    loss='mean_squared_error',
     metrics=['MAE', 'accuracy']
 )
 
@@ -94,7 +89,6 @@ history = model.fit(
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
     verbose=VERBOSE,
-    validation_split=VALIDATION_SPLIT,
     validation_data=(x_valid, y_valid),
     callbacks=[checkpoint]
 )
