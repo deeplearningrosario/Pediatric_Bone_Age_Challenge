@@ -3,7 +3,7 @@
 from six.moves import cPickle
 import cv2
 import fnmatch
-# import numpy as np
+import numpy as np
 import os
 import pandas as pd
 import sys
