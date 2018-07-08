@@ -3,6 +3,7 @@
 from six.moves import cPickle
 import cv2
 import fnmatch
+import re
 import numpy as np
 import os
 import pandas as pd
@@ -62,69 +63,60 @@ a = df.values
 m = a.shape[0]
 
 print('Loading data set...')
-# file names
+# file names on train_dir
 files = os.listdir(train_dir)
+# filtter image file
+files = [f for f in files if fnmatch.fnmatch(f, '*.png')]
 totalFile = len(files)
 
 for i in range(totalFile):
     imgFile = files[i]
 
-    if fnmatch.fnmatch(imgFile, '*.png'):
-        y_age.append(df.boneage[df.id == int(imgFile[:-4])].tolist()[0])
-        a = df.male[df.id == int(imgFile[:-4])].tolist()[0]
-        if a:
-            y_gender.append(1)
-        else:
-            y_gender.append(0)
+    y_age.append(df.boneage[df.id == int(imgFile[:-4])].tolist()[0])
+    a = df.male[df.id == int(imgFile[:-4])].tolist()[0]
+    if a:
+        y_gender.append(1)
+    else:
+        y_gender.append(0)
 
-        img_path = os.path.join(train_dir, imgFile)
-        img = cv2.imread(img_path)
+    img_path = os.path.join(train_dir, imgFile)
+    img = cv2.imread(img_path)
 
-        imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        imgColorEqualize = whitePatch(imgBGR2RGB)
+    imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    imgColorEqualize = whitePatch(imgBGR2RGB)
 
-        # =========================================================
-        # create NumPy arrays from the boundaries
-        lower = np.array([128, 128, 128], dtype="uint8")
-        upper = np.array([255, 255, 255], dtype="uint8")
-        # find the colors within the specified boundaries and apply the mask
-        # mask = cv2.imread('./mask.png')
-        mask = cv2.inRange(imgColorEqualize, lower, upper)
+    # =========================================================
+    lower = np.array([128, 128, 128])
+    upper = np.array([255, 255, 255])
+    # find the colors within the specified boundaries and apply the mask
+    # mask = cv2.imread('./mask.png')
+    # mask = cv2.inRange(imgColorEqualize, lower, upper)
+    # ========================
+    # imgBlackWihte = cv.Threshold(imgColorEqualize, img, threshold, 255, cv.CV_THRESH_BINARY | cv.CV_THRESH_OTSU);
+    mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
+    mask = cv2.inRange(mask, lower, upper)
+    # mask = cv2.dilate(mask, None, iterations=23)
+    # =========================
 
-        output = cv2.bitwise_and(img, img, mask=mask)
+    output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
 
-        # show the images
-        cv2.imwrite(
-            "remainder.png",
-            np.hstack([img,  imgBGR2RGB, imgColorEqualize, output])
-        )
-        # img = cv2.resize(img, (224, 224))
+    # show the images
+    cv2.imwrite(
+        "remainder.png",
+        np.hstack([
+            img,
+            imgBGR2RGB,
+            imgColorEqualize,
+            output
+        ])
+    )
+    # img = cv2.resize(img, (224, 224))
 
-        """
-        # patch_center = np.array([500, 450])
-        image_src = img
-        gray = cv2.cvtColor(image_src, cv2.COLOR_BGR2GRAY)
-        ret, gray = cv2.threshold(gray, 10, 255, 0)
-        cv2.imwrite("gray.png", gray)
-        image, contours, hierarchy = cv2.findContours(
-            gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        largest_area = sorted(contours, key=cv2.contourArea)[-1]
-        mask = np.zeros(image_src.shape, np.uint8)
-        cv2.imwrite("mask.png", mask)
-        cv2.drawContours(mask, [largest_area], 0, (255, 255, 255, 255), -1)
-        image_remainder = cv2.bitwise_and(image_src, 255 - mask)
+    x = np.asarray(img, dtype=np.uint8)
+    X_train.append(x)
 
-        cv2.imwrite("remainder.png", image_remainder)
-        """
-
-        # cv2.imshow('image', img)
-        # cv2.waitKey(0)
-
-        x = np.asarray(img, dtype=np.uint8)
-        X_train.append(x)
-
-        # Update the progress bar
-        updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
+    # Update the progress bar
+    updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
 
 
 print('\nSaving data...')
