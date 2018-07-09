@@ -12,38 +12,52 @@ import sys
 
 # Extrar los objetos que importan
 # https://programarfacil.com/blog/vision-artificial/detector-de-bordes-canny-opencv/
-def cutHandOfImage(imagen):
-
+def cutHandOfImage(image):
     # Convertimos a escala de grises
-    gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Aplicar suavizado Gaussiano
-    gauss = cv2.GaussianBlur(gris, (5, 5), 0)
+    # img= cv2.GaussianBlur(img, (5, 5), 0)
 
     # Detectamos los bordes con Canny
-    canny = cv2.Canny(gauss, 50, 150)
-    canny = cv2.morphologyEx(canny, cv2.MORPH_GRADIENT, kernel)
+    img = cv2.Canny(img, 50, 150)
+    kernel = np.ones((20, 20), np.uint8)
+    img = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)
 
     # Buscamos los contornos
-    (_, contornos, _) = cv2.findContours(
-        canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    (_, contours, _) = cv2.findContours(
+        img,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
 
     # Mostramos el número de monedas por consola
-    # print("He encontrado {} objetos".format(len(contornos)))
+    # print("He encontrado {} objetos".format(len(contours)))
     objetoMasGrande = 0
-    for i, cnt in enumerate(contornos):
-        if len(contornos[objetoMasGrande]) < len(cnt):
+    for i, cnt in enumerate(contours):
+        if len(contours[objetoMasGrande]) < len(cnt):
             objetoMasGrande = i
+        # else:
+        #     cv2.drawContours(image, contours, i, (0, 0, 0), -1)
 
-    # imagen, objecots, num objecto (-1, todos), color de borde, tamaño del borde
-    cv2.drawContours(imagen, contornos, objetoMasGrande, (255, 255, 255), -1)
+    # image, objecots, num objecto (-1, todos), color de borde, tamaño del borde
+    cv2.drawContours(image, contours, objetoMasGrande, (255, 255, 255), -1)
+
+    # Limpiar, Dejar solo el color blanco
+    image = cv2.inRange(
+        image,
+        np.array([255, 255, 255]),  # lower colr
+        np.array([255, 255, 255])  # upper color
+    )
 
     cv2.imwrite(
         "./cutHandOfImage.png",
         np.hstack([
-            imagen,
+            image,
         ])
     )
+
+    return image
 
 
 # whitepatch, normaliza la los colores de la imagen
@@ -135,15 +149,11 @@ for i in range(totalFile):
     # Se aplica la transformacion: Opening
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     # =========================================================
-    # cv2.imwrite(
-    #     "./mask.png",
-    #     np.hstack([
-    #         extent,
-    #     ])
-    # )
 
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-    cutHandOfImage(output)
+    mask2 = cutHandOfImage(output.copy())
+
+    output2 = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask2)
 
     # show the images
     cv2.imwrite(
@@ -152,7 +162,8 @@ for i in range(totalFile):
         np.hstack([
             img,
             imgColorEqualize,
-            output
+            output,
+            output2
         ])
     )
 
