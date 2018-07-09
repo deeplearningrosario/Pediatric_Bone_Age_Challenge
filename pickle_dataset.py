@@ -86,23 +86,19 @@ for i in range(totalFile):
     imgColorEqualize = whitePatch(imgBGR2RGB)
 
     # =========================================================
-    lower = np.array([128, 128, 128])
-    upper = np.array([255, 255, 255])
-    # find the colors within the specified boundaries and apply the mask
-    # mask = cv2.imread('./mask.png')
-    # mask = cv2.inRange(imgColorEqualize, lower, upper)
-    # ========================
-    # imgBlackWihte = cv.Threshold(imgColorEqualize, img, threshold, 255, cv.CV_THRESH_BINARY | cv.CV_THRESH_OTSU);
     mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
-    mask = cv2.inRange(mask, lower, upper)
-    # mask = cv2.dilate(mask, None, iterations=23)
-    # =========================
+    mask = cv2.inRange(
+        mask,
+        np.array([128, 128, 128]),  # lower colr
+        np.array([255, 255, 255])  # upper color
+    )
+    # =========================================================
 
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
 
     # show the images
     cv2.imwrite(
-        "remainder.png",
+        "./dataset_sample/remainder_"+str(i)+".png",
         np.hstack([
             img,
             imgBGR2RGB,
@@ -110,7 +106,11 @@ for i in range(totalFile):
             output
         ])
     )
-    # img = cv2.resize(img, (224, 224))
+
+    # TODO: Dejar solo el area de la mano amtes de redimencionar
+
+    # Redimencionar las imagenes
+    img = cv2.resize(img, (224, 224))
 
     x = np.asarray(img, dtype=np.uint8)
     X_train.append(x)
