@@ -86,26 +86,32 @@ for i in range(totalFile):
     imgColorEqualize = whitePatch(imgBGR2RGB)
 
     # =========================================================
+    # Crear una mascara para tratar de eliminar el fondo
     mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
     mask = cv2.inRange(
         mask,
         np.array([128, 128, 128]),  # lower colr
         np.array([255, 255, 255])  # upper color
     )
+
+    # Crear un kernel de '1' de 20x20
+    kernel = np.ones((20, 20), np.uint8)
+    # Se aplica la transformacion: Opening
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     # =========================================================
 
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
 
     # show the images
-    cv2.imwrite(
-        "./dataset_sample/remainder_"+str(i)+".png",
-        np.hstack([
-            img,
-            imgBGR2RGB,
-            imgColorEqualize,
-            output
-        ])
-    )
+    # cv2.imwrite(
+    #    "./remainder.png",
+    #    # "./dataset_sample/remainder_"+str(i)+".png",
+    #    np.hstack([
+    #        img,
+    #        imgColorEqualize,
+    #        output
+    #    ])
+    # )
 
     # TODO: Dejar solo el area de la mano amtes de redimencionar
 
