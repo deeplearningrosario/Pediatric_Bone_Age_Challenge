@@ -10,6 +10,42 @@ import pandas as pd
 import sys
 
 
+# Extrar los objetos que importan
+# https://programarfacil.com/blog/vision-artificial/detector-de-bordes-canny-opencv/
+def cutHandOfImage(imagen):
+
+    # Convertimos a escala de grises
+    gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
+
+    # Aplicar suavizado Gaussiano
+    gauss = cv2.GaussianBlur(gris, (5, 5), 0)
+
+    # Detectamos los bordes con Canny
+    canny = cv2.Canny(gauss, 50, 150)
+    canny = cv2.morphologyEx(canny, cv2.MORPH_GRADIENT, kernel)
+
+    # Buscamos los contornos
+    (_, contornos, _) = cv2.findContours(
+        canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Mostramos el número de monedas por consola
+    # print("He encontrado {} objetos".format(len(contornos)))
+    objetoMasGrande = 0
+    for i, cnt in enumerate(contornos):
+        if len(contornos[objetoMasGrande]) < len(cnt):
+            objetoMasGrande = i
+
+    # imagen, objecots, num objecto (-1, todos), color de borde, tamaño del borde
+    cv2.drawContours(imagen, contornos, objetoMasGrande, (255, 255, 255), -1)
+
+    cv2.imwrite(
+        "./cutHandOfImage.png",
+        np.hstack([
+            imagen,
+        ])
+    )
+
+
 # whitepatch, normaliza la los colores de la imagen
 #
 # Como las imagenes tiene diferentes tonalidades de colores
@@ -83,9 +119,9 @@ for i in range(totalFile):
     img = cv2.imread(img_path)
 
     imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    imgColorEqualize = whitePatch(imgBGR2RGB)
 
     # =========================================================
+    imgColorEqualize = whitePatch(imgBGR2RGB)
     # Crear una mascara para tratar de eliminar el fondo
     mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
     mask = cv2.inRange(
@@ -99,19 +135,26 @@ for i in range(totalFile):
     # Se aplica la transformacion: Opening
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     # =========================================================
+    # cv2.imwrite(
+    #     "./mask.png",
+    #     np.hstack([
+    #         extent,
+    #     ])
+    # )
 
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+    cutHandOfImage(output)
 
     # show the images
-    # cv2.imwrite(
-    #    "./remainder.png",
-    #    # "./dataset_sample/remainder_"+str(i)+".png",
-    #    np.hstack([
-    #        img,
-    #        imgColorEqualize,
-    #        output
-    #    ])
-    # )
+    cv2.imwrite(
+        "./remainder.png",
+        # "./dataset_sample/remainder_"+str(i)+".png",
+        np.hstack([
+            img,
+            imgColorEqualize,
+            output
+        ])
+    )
 
     # TODO: Dejar solo el area de la mano amtes de redimencionar
 
