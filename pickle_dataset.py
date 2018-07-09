@@ -21,6 +21,7 @@ def cutHandOfImage(image):
 
     # Difuminamos la imagen para evitar borrar bordes
     mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
+
     # Dejamos los grises más cerca del color blanco
     mask = cv2.inRange(
         mask,
@@ -43,9 +44,7 @@ def cutHandOfImage(image):
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Detectamos los bordes con Canny
-    img = cv2.Canny(img, 50, 150)
-    kernel = np.ones((20, 20), np.uint8)
-    img = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)
+    img = cv2.Canny(img, 100, 400)  # 50,150  ; 100,500
 
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(
@@ -74,7 +73,7 @@ def cutHandOfImage(image):
     # Dejar solo el color blanco, que fue el color que pintamos el objeto
     image = cv2.inRange(
         image,
-        np.array([255, 255, 255]),  # lower color
+        np.array([60, 60, 60]),  # lower color
         np.array([255, 255, 255])  # upper color
     )
 
@@ -172,9 +171,9 @@ for i in range(totalFile):
     )
     # =========================================================
 
-    # TODO: Dejar solo el area de la mano amtes de redimencionar
+    # TODO: Dejar solo el area de la mano antes de redimencionar
 
-    # Redimencionar las imagenes
+    # Red mencionar las imágenes
     img = cv2.resize(img, (224, 224))
 
     x = np.asarray(img, dtype=np.uint8)
