@@ -10,81 +10,11 @@ import pandas as pd
 import sys
 
 
-# Create a mask for the hand.
-# I guess the biggest object is the hand
-#
-def cutHandOfImage(image):
-    # ==== Primera mascara ====
-
-    # Aplico una técnica para normalizar los colores general de la imagen
-    imgColorEqualize = whitePatch(imgBGR2RGB)
-
-    # Difuminamos la imagen para evitar borrar bordes
-    mask = cv2.GaussianBlur(imgColorEqualize, (23, 23), 0)
-
-    # Dejamos los grises más cerca del color blanco
-    mask = cv2.inRange(
-        mask,
-        np.array([128, 128, 128]),  # lower color
-        np.array([255, 255, 255])  # upper color
-    )
-
-    # Crear un kernel de '1' de 20x20, usado como goma de borrar
-    kernel = np.ones((20, 20), np.uint8)
-
-    # Se aplica la transformación: Opening
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-
-    # Ala imagen se le aplica la primera mascara, obtengo una imagen mas limpiar
-    image = cv2.bitwise_and(image, image, mask=mask)
-
-    # ==== Segunda mascara ====
-
-    # Convertimos a escala de grises
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Detectamos los bordes con Canny
-    img = cv2.Canny(img, 100, 400)  # 50,150  ; 100,500
-
-    # Buscamos los contornos
-    (_, contours, _) = cv2.findContours(
-        img,
-        cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE
-    )
-
-    # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
-    # De las lista de contornos buscar el índice del objeto mas grande
-    objetoMasGrande = 0
-    for i, cnt in enumerate(contours):
-        if len(contours[objetoMasGrande]) < len(cnt):
-            objetoMasGrande = i
-        # else:
-        #     cv2.drawContours(image, contours, i, (0, 0, 0), -1)
-
-    cv2.drawContours(
-        image,  # image,
-        contours,  # objects
-        objetoMasGrande,  # índice de objeto (-1, todos)
-        (255, 255, 255),  # color
-        -1  # tamaño del borde (-1, pintar adentro)
-    )
-
-    # Dejar solo el color blanco, que fue el color que pintamos el objeto
-    image = cv2.inRange(
-        image,
-        np.array([60, 60, 60]),  # lower color
-        np.array([255, 255, 255])  # upper color
-    )
-
-    return image
-
-
-# whitepatch, normaliza la los colores de la imagen
+# white-patch, normaliza la los colores de la imagen
 #
 # Como las imágenes tiene diferentes tonalidades de colores
 # Este algoritmo whit-patch pretende llevar los colores de la
-# imagenes a un tono igual
+# imágenes a un tono igual
 def whitePatch(image):
     B, G, R = cv2.split(image)
 
@@ -98,6 +28,79 @@ def whitePatch(image):
     # cv2.imwrite("white-patch.png", np.hstack([image, imgOut, ]))
 
     return imgOut
+
+
+# Create a mask for the hand.
+# I guess the biggest object is the hand
+#
+def cutHandOfImage(image):
+    # Aplico una técnica para normalizar los colores general de la imagen
+    imgColorEqualize = whitePatch(image)
+
+    # Difuminamos la imagen para evitar borrar bordes
+    mask = cv2.GaussianBlur(imgColorEqualize, (5, 5), 0)
+
+    # Dejamos los grises más cerca del color blanco
+    mask = cv2.inRange(
+        mask,
+        np.array([128, 128, 128]),  # lower color
+        np.array([255, 255, 255])  # upper color
+    )
+
+    # Crear un kernel de '1' de 20x20, usado como goma de borrar
+    kernel = np.ones((5, 5), np.uint8)
+
+    # Se aplica la transformación: Opening
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+    # A la imagen se le aplica la primera mascara, obtengo una imagen mas limpiar
+    image = cv2.bitwise_and(image, image, mask=mask)
+
+    # Convertimos a escala de grises
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Detectamos los bordes con Canny
+    # img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
+    img = cv2.Canny(image, 100, 400, apertureSize=3)
+
+    # Buscamos los contornos
+    (_, contours, _) = cv2.findContours(
+        img,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    # print(len(contours))
+    if len(contours) > 1:
+        # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
+        # De las lista de contornos buscar el índice del objeto mas grande
+        objetoMasGrande = 0
+        for i, cnt in enumerate(contours):
+            if len(contours[objetoMasGrande]) < len(cnt):
+                objetoMasGrande = i
+            else:
+                cv2.drawContours(image, contours, i, (0, 255, 0), 10)
+
+        cv2.drawContours(
+            image,  # image,
+            contours,  # objects
+            objetoMasGrande,  # índice de objeto (-1, todos)
+            (255, 255, 255),  # color
+            -1  # tamaño del borde (-1, pintar adentro)
+        )
+
+        # Dejar solo el color blanco, que fue el color que pintamos el objeto
+        image = cv2.inRange(
+            image,
+            np.array([60, 60, 60]),  # lower color
+            # np.array([250, 250, 250]),  # lower color
+            np.array([255, 255, 255])  # upper color
+        )
+
+    # Difuminamos la imagen para evitar borrar bordes
+    image = cv2.GaussianBlur(image, (7, 7), 0)
+
+    return image
 
 
 # Show a progress bar
@@ -156,20 +159,6 @@ for i in range(totalFile):
 
     mask = cutHandOfImage(imgBGR2RGB.copy())
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-
-    # =============== Solo para ver imagenes ===================
-    imgColorEqualize = whitePatch(imgBGR2RGB)
-    # show the images
-    cv2.imwrite(
-        "./remainder.png",
-        # "./dataset_sample/remainder_"+str(i)+".png",
-        np.hstack([
-            img,
-            cv2.bitwise_and(imgColorEqualize, imgColorEqualize, mask=mask),
-            output,
-        ])
-    )
-    # =========================================================
 
     # TODO: Dejar solo el area de la mano antes de redimencionar
 
