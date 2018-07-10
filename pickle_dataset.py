@@ -32,7 +32,7 @@ def whitePatch(image):
 # Create a mask for the hand.
 # I guess the biggest object is the hand
 #
-def cutHandOfImage(image):
+def createMask(image):
     # Aplico una técnica para normalizar los colores general de la imagen
     imgColorEqualize = whitePatch(image)
 
@@ -58,9 +58,18 @@ def cutHandOfImage(image):
     # Convertimos a escala de grises
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    image = cv2.bitwise_or(imgColorEqualize, image)
+
     # Detectamos los bordes con Canny
     # img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
     img = cv2.Canny(image, 100, 400, apertureSize=3)
+
+    # cv2.imwrite(
+    #    os.path.join(__location__,  "mask2.png",),
+    #    np.hstack([
+    #        img
+    #    ])
+    # )
 
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(
@@ -77,8 +86,8 @@ def cutHandOfImage(image):
         for i, cnt in enumerate(contours):
             if len(contours[objetoMasGrande]) < len(cnt):
                 objetoMasGrande = i
-            else:
-                cv2.drawContours(image, contours, i, (0, 255, 0), 10)
+            # else:
+            #    cv2.drawContours(image, contours, i, (0, 0, 0), -1)
 
         cv2.drawContours(
             image,  # image,
@@ -88,16 +97,34 @@ def cutHandOfImage(image):
             -1  # tamaño del borde (-1, pintar adentro)
         )
 
+        # cv2.imwrite(
+        #    os.path.join(__location__,  "mask3.png",),
+        #    np.hstack([
+        #        image
+        #    ])
+        # )
+
         # Dejar solo el color blanco, que fue el color que pintamos el objeto
         image = cv2.inRange(
             image,
-            np.array([60, 60, 60]),  # lower color
-            # np.array([250, 250, 250]),  # lower color
+            # np.array([60, 60, 60]),  # lower color
+            np.array([128, 128, 128]),  # lower color
             np.array([255, 255, 255])  # upper color
         )
+    else:
+        # En caso de no encontrar objeto, envió la imagen
+        image = cv2.bitwise_or(imgColorEqualize, image)
+
+        #img = cv2.Canny(image, 100, 400, apertureSize=3)
+        # cv2.imwrite(
+        #    os.path.join(__location__,  "mask2.png",),
+        #    np.hstack([
+        #        img
+        #    ])
+        # )
 
     # Difuminamos la imagen para evitar borrar bordes
-    image = cv2.GaussianBlur(image, (7, 7), 0)
+    # image = cv2.GaussianBlur(image, (7, 7), 0)
 
     return image
 
@@ -145,7 +172,7 @@ for i in range(totalFile):
     imgFile = files[i]
 
     # Update the progress bar
-    updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
+    updateProgress(float(i / totalFile), (i+1), totalFile, imgFile)
 
     y_age.append(df.boneage[df.id == int(imgFile[:-4])].tolist()[0])
     a = df.male[df.id == int(imgFile[:-4])].tolist()[0]
@@ -159,23 +186,25 @@ for i in range(totalFile):
 
     imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    mask = cutHandOfImage(imgBGR2RGB.copy())
+    mask = createMask(imgBGR2RGB.copy())
+
     # cv2.imwrite(
-    #    "./mask.png",
+    #    os.path.join(__location__,  "mask.png",),
     #    np.hstack([
     #        mask
     #    ])
     # )
 
-    output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+    output0 = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+    output = whitePatch(output0)
 
     # =============== Solo para ver imágenes ===================
     # show the images
     cv2.imwrite(
-        # "./remainder.png",
         os.path.join(__location__, "dataset_sample", "render", imgFile),
         np.hstack([
             imgBGR2RGB,
+            output0,
             output,
         ])
     )
@@ -189,6 +218,7 @@ for i in range(totalFile):
     x = np.asarray(img, dtype=np.uint8)
     X_train.append(x)
 
+updateProgress(1, totalFile, totalFile, imgFile)
 
 print('\nSaving data...')
 # Save data
