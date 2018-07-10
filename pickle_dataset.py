@@ -3,7 +3,6 @@
 from six.moves import cPickle
 import cv2
 import fnmatch
-import re
 import numpy as np
 import os
 import pandas as pd
@@ -145,6 +144,9 @@ totalFile = len(files)
 for i in range(totalFile):
     imgFile = files[i]
 
+    # Update the progress bar
+    updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
+
     y_age.append(df.boneage[df.id == int(imgFile[:-4])].tolist()[0])
     a = df.male[df.id == int(imgFile[:-4])].tolist()[0]
     if a:
@@ -158,7 +160,26 @@ for i in range(totalFile):
     imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     mask = cutHandOfImage(imgBGR2RGB.copy())
+    # cv2.imwrite(
+    #    "./mask.png",
+    #    np.hstack([
+    #        mask
+    #    ])
+    # )
+
     output = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+
+    # =============== Solo para ver imágenes ===================
+    # show the images
+    cv2.imwrite(
+        # "./remainder.png",
+        os.path.join(__location__, "dataset_sample", "render", imgFile),
+        np.hstack([
+            imgBGR2RGB,
+            output,
+        ])
+    )
+    # =========================================================
 
     # TODO: Dejar solo el area de la mano antes de redimencionar
 
@@ -167,9 +188,6 @@ for i in range(totalFile):
 
     x = np.asarray(img, dtype=np.uint8)
     X_train.append(x)
-
-    # Update the progress bar
-    updateProgress(float((i+1) / totalFile), (i+1), totalFile, imgFile)
 
 
 print('\nSaving data...')
