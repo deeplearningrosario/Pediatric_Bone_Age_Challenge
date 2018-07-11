@@ -19,23 +19,44 @@ import sys
 def cutHand(image):
     imageOriginal = image.copy()
     # convert to grayscale
-    grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # applying gaussian blur
-    blurred = cv2.GaussianBlur(grey, (35, 35), 0)
+    blurred = cv2.GaussianBlur(gray, (47, 47), 0)
+
+    # Dejar solo el color blanco, que fue el color que pintamos el objeto
+    mask = cv2.inRange(
+        blurred,
+        np.array([100]),  # lower color
+        np.array([255])  # upper color
+    )
+    #img_mask = cv2.bitwise_and(blurred, blurred, mask=mask)
+    #blurred = cv2.GaussianBlur(img_mask, (45, 45), 0)
 
     # thresholdin: Otsu's Binarization method
-    _, thresh1 = cv2.threshold(blurred, 127, 255,
-                               cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    # _, thresh = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+    thresh = cv2.GaussianBlur(mask, (55, 55), 0)
 
     # check OpenCV version to avoid unpacking error
     (version, _, _) = cv2.__version__.split('.')
     if version == '3':
         image, contours, hierarchy = cv2.findContours(
-            thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     elif version == '2':
         contours, hierarchy = cv2.findContours(
-            thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+    # show the images
+    # cv2.imwrite(
+    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
+    #    'cut_hand.png',
+    #    np.hstack([
+    #        gray,
+    #        # blurred,
+    #        mask,
+    #        # thresh
+    #    ])
+    # )
 
     # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
     # De las lista de contornos buscar el índice del objeto mas grande
@@ -45,7 +66,7 @@ def cutHand(image):
             objetoMasGrande = i
 
     # create bounding rectangle around the contour (can skip below two lines)
-    x, y, w, h = cv2.boundingRect(contours[objetoMasGrande])
+    [x, y, w, h] = cv2.boundingRect(contours[objetoMasGrande])
     # Fondeo negro debajo de el objeto mas grande
     cv2.rectangle(image, (x, y), (x+w, y+h), (0, 0, 0), -1)
 
@@ -65,11 +86,9 @@ def cutHand(image):
     # show the images
     # cv2.imwrite(
     #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
-    #    'cut_hand.png',
+    #    'mask.png',
     #    np.hstack([
-    #        # mask,
-    #        # imageOriginal,
-    #        output
+    #        mask
     #    ])
     # )
 
@@ -165,6 +184,14 @@ def createMask(image):
         # En caso de no encontrar objeto, envió la imagen
         image = cv2.bitwise_or(imgColorEqualize, image)
 
+    # show the images
+    # cv2.imwrite(
+    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
+    #    'mask.png',
+    #    np.hstack([
+    #        image,
+    #    ])
+    # )
     return image
 
 
