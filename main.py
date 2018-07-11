@@ -1,6 +1,6 @@
 from keras.applications.inception_v3 import InceptionV3
 # from keras import backend as K
-from keras.layers import Flatten, Dense, Input
+from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop
 # from keras.preprocessing import image
@@ -22,55 +22,98 @@ OPTIMIZER = RMSprop()
 # Load data
 print('...loading training data')
 f = open((os.path.join(__location__, 'data.pkl')), 'rb')
-x = cPickle.load(f)
+img = cPickle.load(f)
 f.close()
 
 f = open((os.path.join(__location__, 'data_age.pkl')), 'rb')
-y = cPickle.load(f)
+age = cPickle.load(f)
 f.close()
 
-x = np.asarray(x, dtype=np.float32)
-y = np.asarray(y)
+f = open((os.path.join(__location__, 'data_gender.pkl')), 'rb')
+gender = cPickle.load(f)
+f.close()
 
-x /= 255.
+img = np.asarray(img, dtype=np.float32)
+age = np.asarray(age)
+gender = np.asarray(gender)
 
-x_final = []
-y_final = []
+# this is to normalize x since RGB scale is [0,255]
+img /= 255.
+
+img_final = []
+age_final = []
+gdr_final = []
 
 # Shuffle images and split into train, validation and test sets
-random_no = np.random.choice(x.shape[0], size=x.shape[0], replace=False)
+random_no = np.random.choice(img.shape[0], size=img.shape[0], replace=False)
 for i in random_no:
-    x_final.append(x[i, :, :, :])
-    y_final.append(y[i])
+    img_final.append(img[i, :, :, :])
+    age_final.append(age[i])
+    gdr_final.append(gender[i])
 
-x_final = np.asarray(x_final)
-y_final = np.asarray(y_final)
+img_final = np.asarray(img_final)
+age_final = np.asarray(age_final)
+gdr_final = np.asarray(gdr_final)
 
 
 k = 2  # Decides split count
-x_test = x_final[:k, :, :, :]
-y_test = y_final[:k]
-x_valid = x_final[k:2 * k, :, :, :]
-y_valid = y_final[k:2 * k]
-x_train = x_final[2 * k:, :, :, :]
-y_train = y_final[2 * k:]
+img_test = img_final[:k, :, :, :]
+age_test = age_final[:k]
+gdr_test = gdr_final[:k]
+img_valid = img_final[k:2 * k, :, :, :]
+age_valid = age_final[k:2 * k]
+gdr_valid = gdr_final[k:2 * k]
+img_train = img_final[2 * k:, :, :, :]
+age_train = age_final[2 * k:]
+gdr_train = gdr_final[2 * k:]
 
-print('x_train shape:' + str(x_train.shape))
-print('y_train shape:' + str(y_train.shape))
-print('x_valid shape:' + str(x_valid.shape))
-print('y_valid shape:' + str(y_valid.shape))
-print('x_test shape:' + str(x_test.shape))
-print('y_test shape:' + str(y_test.shape))
+print('img_train shape:' + str(img_train.shape))
+print('age_train shape:' + str(age_train.shape))
+print('gdr_train shape:' + str(gdr_train.shape))
+print('img_valid shape:' + str(img_valid.shape))
+print('age_valid shape:' + str(age_valid.shape))
+print('gdr_valid shape:' + str(gdr_valid.shape))
+print('img_test shape:' + str(img_test.shape))
+print('age_test shape:' + str(age_test.shape))
+print('gdr_test shape:' + str(gdr_test.shape))
 
-# Using InceptionV3 with pretrained weights from Imagenet
-base_model = InceptionV3(weights='imagenet', include_top=False)
-input = Input(shape=(224, 224, 3))
-output_vgg16 = base_model(input)
-x = Flatten()(output_vgg16)
-x = Dense(512, activation='relu')(x)
+# First we need to create a model structure
+# Iv3-like input layer
+image_input = Input(shape=img_train.shape[1:], name='image_input')
+# Inception V3 layer with pretrained weights from Imagenet
+base_iv3_model = InceptionV3(include_top=False, weights='imagenet')
+# Inception V3 output from input layer
+output_vgg16 = base_iv3_model(image_input)
+# flattening it #why?
+flat_iv3 = Flatten()(output_vgg16)
+
+# Gender input layer
+gdr_input = Input(shape=(1,), name='gdr_input')
+# Gender dense layer
+gdr_dense = Dense(32, activation='relu')
+# Gender dense output
+output_gdr_dense = gdr_dense(gdr_input)
+
+# Concatenating iv3 output with sex_dense output after going through shared layer
+x = keras.layers.concatenate([flat_iv3, output_gdr_dense])
+
+# We stack dense layers and dropout layers to avoid overfitting after that
+x = Dense(1000, activation='relu')(x)
+x = Dropout(0.2)(x)
+x = Dense(1000, activation='relu')(x)
+x = Dropout(0.2)(x)
+
+# and the final prediction layer as output (should be the main logistic regression layer)
+# predictions = Dense(1, activation='sigmoid', name='predictions')(x)
 predictions = Dense(1)(x)
 
-model = Model(inputs=input, outputs=predictions)
+# Now that we have created a model structure we can define it
+# this defines the model with two inputs and one output
+model = Model(inputs=[image_input, gdr_input],
+              outputs=predictions)
+
+# printing a model summary to check what we constructed
+print(model.summary())
 
 model.compile(
     optimizer=OPTIMIZER,
@@ -85,17 +128,22 @@ checkpoint = keras.callbacks.ModelCheckpoint(
     period=1)
 
 history = model.fit(
-    x_train, y_train,
+    [img_train, gdr_train],
+    [age_train],
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
     verbose=VERBOSE,
-    validation_data=(x_valid, y_valid),
+    validation_data=([img_valid, gdr_valid], [age_valid]),
     callbacks=[checkpoint]
 )
 
 model.save_weights("model.h5")
 
-score = model.evaluate(x_test, y_test, batch_size=BATCH_SIZE, verbose=VERBOSE)
+score = model.evaluate([img_test, gdr_test],
+                       age_test,
+                       batch_size=BATCH_SIZE,
+                       verbose=VERBOSE)
+
 print('\nTest loss:', score[0])
 print('Test MAE:', score[1])
 print('Test accuracy:', score[2])
