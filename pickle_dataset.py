@@ -9,7 +9,15 @@ import pandas as pd
 import sys
 
 
+# Cut the hand of the image
+# Como la nueva imagen tien los colores de la mano mas resaltaos crea otra mascara,
+# (imagen en blanco y negro)
+# Busca los objetos mas grandes y los recorta de ambas,
+# (de la original y de las mascara) es decir deja solo la mano,
+# luego aplica la mascara a  la foto recortada.
+#
 def cutHand(image):
+    imageOriginal = image.copy()
     # convert to grayscale
     grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -29,29 +37,43 @@ def cutHand(image):
         contours, hierarchy = cv2.findContours(
             thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+    # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
+    # De las lista de contornos buscar el índice del objeto mas grande
+    objetoMasGrande = 0
+    for i, cnt in enumerate(contours):
+        if len(contours[objetoMasGrande]) < len(cnt):
+            objetoMasGrande = i
+
     # create bounding rectangle around the contour (can skip below two lines)
-    x, y, w, h = cv2.boundingRect(contours[3])
+    x, y, w, h = cv2.boundingRect(contours[objetoMasGrande])
     # Fondeo negro debajo de el objeto mas grande
     cv2.rectangle(image, (x, y), (x+w, y+h), (0, 0, 0), -1)
 
     cv2.drawContours(
         image,  # image,
         contours,  # objects
-        3,  # índice de objeto (-1, todos)
+        objetoMasGrande,  # índice de objeto (-1, todos)
         (255, 255, 255),  # color
         -1  # tamaño del borde (-1, pintar adentro)
     )
     # Recortar ese ojeto
-    crop_img = image[y:y+h, x:x+w]
+    mask = image[y:y+h, x:x+w]
+    imageOriginal = imageOriginal[y:y+h, x:x+w]
+
+    output = cv2.bitwise_and(imageOriginal, imageOriginal, mask=mask)
 
     # show the images
-    cv2.imwrite(
-        # os.path.join(__location__, "dataset_sample", "render", imgFile),
-        'cut_hand.png',
-        np.hstack([
-            crop_img,
-        ])
-    )
+    # cv2.imwrite(
+    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
+    #    'cut_hand.png',
+    #    np.hstack([
+    #        # mask,
+    #        # imageOriginal,
+    #        output
+    #    ])
+    # )
+
+    return output
 
 
 # white-patch, normaliza la los colores de la imagen
@@ -67,9 +89,6 @@ def whitePatch(image):
     blue = cv2.equalizeHist(B)
 
     imgOut = cv2.merge((blue, green, red))
-
-    # show the images
-    # cv2.imwrite("white-patch.png", np.hstack([image, imgOut, ]))
 
     return imgOut
 
@@ -146,9 +165,6 @@ def createMask(image):
         # En caso de no encontrar objeto, envió la imagen
         image = cv2.bitwise_or(imgColorEqualize, image)
 
-    # Difuminamos la imagen para evitar borrar bordes
-    # image = cv2.GaussianBlur(image, (7, 7), 0)
-
     return image
 
 
@@ -211,19 +227,17 @@ for i in range(totalFile):
 
     mask = createMask(imgBGR2RGB.copy())
 
-    output0 = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-    output = whitePatch(output0)
+    img_mask = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+    img_hand = whitePatch(img_mask)
 
-    cutHand(output)
-    break
+    output = cutHand(img_hand)
+
     # =============== Solo para ver imágenes ===================
     # show the images
     cv2.imwrite(
         os.path.join(__location__, "dataset_sample", "render", imgFile),
         np.hstack([
-            imgBGR2RGB,
-            output0,
-            output,
+            output
         ])
     )
     # =========================================================
