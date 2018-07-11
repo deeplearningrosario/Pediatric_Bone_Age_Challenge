@@ -9,6 +9,51 @@ import pandas as pd
 import sys
 
 
+def cutHand(image):
+    # convert to grayscale
+    grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # applying gaussian blur
+    blurred = cv2.GaussianBlur(grey, (35, 35), 0)
+
+    # thresholdin: Otsu's Binarization method
+    _, thresh1 = cv2.threshold(blurred, 127, 255,
+                               cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+
+    # check OpenCV version to avoid unpacking error
+    (version, _, _) = cv2.__version__.split('.')
+    if version == '3':
+        image, contours, hierarchy = cv2.findContours(
+            thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    elif version == '2':
+        contours, hierarchy = cv2.findContours(
+            thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+    # create bounding rectangle around the contour (can skip below two lines)
+    x, y, w, h = cv2.boundingRect(contours[3])
+    # Fondeo negro debajo de el objeto mas grande
+    cv2.rectangle(image, (x, y), (x+w, y+h), (0, 0, 0), -1)
+
+    cv2.drawContours(
+        image,  # image,
+        contours,  # objects
+        3,  # índice de objeto (-1, todos)
+        (255, 255, 255),  # color
+        -1  # tamaño del borde (-1, pintar adentro)
+    )
+    # Recortar ese ojeto
+    crop_img = image[y:y+h, x:x+w]
+
+    # show the images
+    cv2.imwrite(
+        # os.path.join(__location__, "dataset_sample", "render", imgFile),
+        'cut_hand.png',
+        np.hstack([
+            crop_img,
+        ])
+    )
+
+
 # white-patch, normaliza la los colores de la imagen
 #
 # Como las imágenes tiene diferentes tonalidades de colores
@@ -64,13 +109,6 @@ def createMask(image):
     # img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
     img = cv2.Canny(image, 100, 400, apertureSize=3)
 
-    # cv2.imwrite(
-    #    os.path.join(__location__,  "mask2.png",),
-    #    np.hstack([
-    #        img
-    #    ])
-    # )
-
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(
         img,
@@ -97,13 +135,6 @@ def createMask(image):
             -1  # tamaño del borde (-1, pintar adentro)
         )
 
-        # cv2.imwrite(
-        #    os.path.join(__location__,  "mask3.png",),
-        #    np.hstack([
-        #        image
-        #    ])
-        # )
-
         # Dejar solo el color blanco, que fue el color que pintamos el objeto
         image = cv2.inRange(
             image,
@@ -114,14 +145,6 @@ def createMask(image):
     else:
         # En caso de no encontrar objeto, envió la imagen
         image = cv2.bitwise_or(imgColorEqualize, image)
-
-        #img = cv2.Canny(image, 100, 400, apertureSize=3)
-        # cv2.imwrite(
-        #    os.path.join(__location__,  "mask2.png",),
-        #    np.hstack([
-        #        img
-        #    ])
-        # )
 
     # Difuminamos la imagen para evitar borrar bordes
     # image = cv2.GaussianBlur(image, (7, 7), 0)
@@ -188,16 +211,11 @@ for i in range(totalFile):
 
     mask = createMask(imgBGR2RGB.copy())
 
-    # cv2.imwrite(
-    #    os.path.join(__location__,  "mask.png",),
-    #    np.hstack([
-    #        mask
-    #    ])
-    # )
-
     output0 = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
     output = whitePatch(output0)
 
+    cutHand(output)
+    break
     # =============== Solo para ver imágenes ===================
     # show the images
     cv2.imwrite(
