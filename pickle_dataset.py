@@ -18,8 +18,12 @@ import sys
 #
 def cutHand(image):
     imageOriginal = image.copy()
+
     # convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if (cv2.mean(gray)[0] > 50.0):
+        imageOriginal = whitePatch(image)
+        gray = cv2.cvtColor(imageOriginal, cv2.COLOR_BGR2GRAY)
 
     # applying gaussian blur
     blurred = cv2.GaussianBlur(gray, (47, 47), 0)
@@ -30,33 +34,15 @@ def cutHand(image):
         np.array([100]),  # lower color
         np.array([255])  # upper color
     )
-    #img_mask = cv2.bitwise_and(blurred, blurred, mask=mask)
-    #blurred = cv2.GaussianBlur(img_mask, (45, 45), 0)
+    # img_mask = cv2.bitwise_and(blurred, blurred, mask=mask)
+    # blurred = cv2.GaussianBlur(img_mask, (45, 45), 0)
 
     # thresholdin: Otsu's Binarization method
     # _, thresh = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-    thresh = cv2.GaussianBlur(mask, (55, 55), 0)
+    thresh = cv2.GaussianBlur(mask, (51, 51), 0)
 
-    # check OpenCV version to avoid unpacking error
-    (version, _, _) = cv2.__version__.split('.')
-    if version == '3':
-        image, contours, hierarchy = cv2.findContours(
-            thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    elif version == '2':
-        contours, hierarchy = cv2.findContours(
-            thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-    # show the images
-    # cv2.imwrite(
-    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
-    #    'cut_hand.png',
-    #    np.hstack([
-    #        gray,
-    #        # blurred,
-    #        mask,
-    #        # thresh
-    #    ])
-    # )
+    (image, contours, _) = cv2.findContours(
+        thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
     # De las lista de contornos buscar el índice del objeto mas grande
@@ -77,22 +63,30 @@ def cutHand(image):
         (255, 255, 255),  # color
         -1  # tamaño del borde (-1, pintar adentro)
     )
+
     # Recortar ese ojeto
     mask = image[y:y+h, x:x+w]
     imageOriginal = imageOriginal[y:y+h, x:x+w]
 
     output = cv2.bitwise_and(imageOriginal, imageOriginal, mask=mask)
 
+    # =============== Solo para ver imágenes ===================
     # show the images
-    # cv2.imwrite(
-    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
-    #    'mask.png',
-    #    np.hstack([
-    #        mask
-    #    ])
-    # )
+    cv2.imwrite(
+        os.path.join(__location__, "dataset_sample", "render", imgFile),
+        np.hstack([
+            imageOriginal,
+            output
+        ])
+    )
+    # =========================================================
 
-    return output
+    # En caso que la imagen quede negra devuelvo la original
+    gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+    if (cv2.mean(gray)[0] <= 10.0):
+        return imageOriginal
+    else:
+        return output
 
 
 # white-patch, normaliza la los colores de la imagen
@@ -118,40 +112,45 @@ def whitePatch(image):
 def createMask(image):
     # Aplico una técnica para normalizar los colores general de la imagen
     imgColorEqualize = whitePatch(image)
+    gray = cv2.cvtColor(imgColorEqualize, cv2.COLOR_BGR2GRAY)
 
     # Difuminamos la imagen para evitar borrar bordes
-    mask = cv2.GaussianBlur(imgColorEqualize, (5, 5), 0)
+    mask = cv2.GaussianBlur(gray, (25, 25), 0)
 
     # Dejamos los grises más cerca del color blanco
     mask = cv2.inRange(
         mask,
-        np.array([128, 128, 128]),  # lower color
-        np.array([255, 255, 255])  # upper color
+        np.array(125),  # lower color
+        np.array(255)  # upper color
     )
 
     # Crear un kernel de '1' de 20x20, usado como goma de borrar
-    kernel = np.ones((5, 5), np.uint8)
+    # kernel = np.ones((5, 5), np.uint8)
 
     # Se aplica la transformación: Opening
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     # A la imagen se le aplica la primera mascara, obtengo una imagen mas limpiar
-    image = cv2.bitwise_and(image, image, mask=mask)
+    # image = cv2.bitwise_and(image, image, mask=mask)
 
     # Convertimos a escala de grises
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    image = cv2.bitwise_or(imgColorEqualize, image)
+    # image = cv2.bitwise_or(imgColorEqualize, image)
+    image = cv2.bitwise_and(imgColorEqualize, imgColorEqualize, mask=mask)
 
     # Detectamos los bordes con Canny
     # img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
-    img = cv2.Canny(image, 100, 400, apertureSize=3)
+    # img = cv2.Canny(image, 100, 400, apertureSize=3)
+    img = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
 
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(
         img,
-        cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE
+        #            cv2.RETR_EXTERNAL,
+        cv2.RETR_TREE,
+        #            cv2.CHAIN_APPROX_SIMPLE
+        cv2.CHAIN_APPROX_NONE
     )
 
     # print(len(contours))
@@ -160,10 +159,15 @@ def createMask(image):
         # De las lista de contornos buscar el índice del objeto mas grande
         objetoMasGrande = 0
         for i, cnt in enumerate(contours):
-            if len(contours[objetoMasGrande]) < len(cnt):
+            if cv2.contourArea(contours[objetoMasGrande]) < cv2.contourArea(cnt):
                 objetoMasGrande = i
-            # else:
-            #    cv2.drawContours(image, contours, i, (0, 0, 0), -1)
+
+        # Pintar los objetos mas chichos que el 30% del grande, limite: (0.2, 0.5]
+        lenOfObjetoGrande = cv2.contourArea(contours[objetoMasGrande]) * 0.3
+        for i, cnt in enumerate(contours):
+            # print(cv2.contourArea(cnt), lenOfObjetoGrande)
+            if cv2.contourArea(cnt) < lenOfObjetoGrande:
+                cv2.drawContours(image, contours, i, (0, 0, 0), -1)
 
         cv2.drawContours(
             image,  # image,
@@ -173,25 +177,25 @@ def createMask(image):
             -1  # tamaño del borde (-1, pintar adentro)
         )
 
+        # Difuminamos la imagen para evitar borrar bordes
+        image = cv2.GaussianBlur(image, (25, 25), 0)
+
+        image = cv2.cvtColor(whitePatch(image), cv2.COLOR_BGR2GRAY)
+
         # Dejar solo el color blanco, que fue el color que pintamos el objeto
         image = cv2.inRange(
             image,
             # np.array([60, 60, 60]),  # lower color
-            np.array([128, 128, 128]),  # lower color
-            np.array([255, 255, 255])  # upper color
+            np.array(70),  # lower color
+            np.array(255)  # upper color
         )
-    else:
-        # En caso de no encontrar objeto, envió la imagen
-        image = cv2.bitwise_or(imgColorEqualize, image)
 
-    # show the images
-    # cv2.imwrite(
-    #    # os.path.join(__location__, "dataset_sample", "render", imgFile),
-    #    'mask.png',
-    #    np.hstack([
-    #        image,
-    #    ])
-    # )
+    else:
+        # TODO ver bien este caso
+        # En caso de no encontrar objeto, envió la imagen
+        # image = cv2.bitwise_or(imgColorEqualize, image)
+        image = imgColorEqualize
+
     return image
 
 
@@ -254,20 +258,17 @@ for i in range(totalFile):
 
     mask = createMask(imgBGR2RGB.copy())
 
-    img_mask = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-    img_hand = whitePatch(img_mask)
-
-    output = cutHand(img_hand)
-
-    # =============== Solo para ver imágenes ===================
+    img = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
+    # =====================================================================
     # show the images
     cv2.imwrite(
-        os.path.join(__location__, "dataset_sample", "render", imgFile),
+        # os.path.join(__location__, "dataset_sample", "render", imgFile),
+        'mask.png',
         np.hstack([
-            output
+            img
         ])
     )
-    # =========================================================
+    img = cutHand(img)
 
     # TODO: Dejar solo el area de la mano antes de redimencionar
 
