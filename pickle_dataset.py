@@ -17,7 +17,7 @@ SAVE_RENDERS = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = not False
 
 
 # Delete small objects from the images
@@ -47,8 +47,10 @@ def deleteObjects(image):
         image = cv2.bitwise_and(image, image, mask=thresh)
 
         # He reported it because it can take a long time if the number is large
-        if len(contours) > 5000:
-            print(' Img with', len(contours), 'contours')
+        if len(contours) > 3000:
+            # print(' Img with', len(contours), 'contours')
+            updateProgress(progress[0], progress[1], total_file,
+                           img_file + " Img with " + str(len(contours)) + " contours")
         # ================================================================
         if SAVE_IMAGE_FOR_DEBUGGER:
             # show the images
@@ -152,14 +154,14 @@ def cutHand(image, original_image):
 
     output = cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
-    # FIXME: Ver bien este caso, creo que no sucede
+    # Ver bien este caso, creo que no sucede
     # In case the image is black I return the original
-    gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
-    if (cv2.mean(gray)[0] <= 10.0):
-        print("\n-------------IMAGEN NEGRA----------------\n")
-        return image_copy
-    else:
-        return output
+    # gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+    # if (cv2.mean(gray)[0] <= 10.0):
+    #     print("\n-------------IMAGEN NEGRA----------------\n")
+    #    return image_copy
+    # else:
+    return output
 
 
 # Create a mask for the hand.
@@ -227,18 +229,18 @@ def equalizeImg(image):
 
 # Show a progress bar
 def updateProgress(progress, tick='', total='', status='Loading...'):
-    barLength = 45
+    barLength = 30
     if isinstance(progress, int):
         progress = float(progress)
     if progress < 0:
         progress = 0
-        status = "Waiting...\r\n"
+        status = "Waiting...\r"
     if progress >= 1:
         progress = 1
         status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
     sys.stdout.write(
-        str("\rImage: {0}/{1} [{2}] {3}% {4}")
+        str("\rImage: {0}/{1} [{2}] {3}% {4} ")
         .format(
             tick,
             total,
@@ -283,7 +285,8 @@ for i in range(total_file):
     img_file = files[i]
 
     # Update the progress bar
-    updateProgress(float(i / total_file), (i + 1), total_file, img_file)
+    progress = float(i / total_file), (i + 1)
+    updateProgress(progress[0], progress[1], total_file, img_file)
 
     y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
     a = df.male[df.id == int(img_file[:-4])].tolist()[0]
