@@ -266,7 +266,7 @@ for i in range(totalFile):
     # Recortar la mano de la imagen
     img_hand = cutHand(
         # img,
-        equalizeImg(img),
+        equalizeImg(img_hand),
         imgRGB
     )
 
