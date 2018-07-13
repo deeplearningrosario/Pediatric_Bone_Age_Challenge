@@ -9,10 +9,10 @@ from six.moves import cPickle
 import numpy as np
 # import matplotlib.pyplot as plt
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
 
 batch_size = 32
-epochs = 3
+epochs = 10
 
 # Load data
 print('...loading training data')
@@ -27,7 +27,7 @@ f.close()
 x = np.asarray(x, dtype=np.float32)
 y = np.asarray(y)
 
-x /= 255.
+x /= 255.1
 
 x_final = []
 y_final = []
