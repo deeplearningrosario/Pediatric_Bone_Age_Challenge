@@ -39,6 +39,16 @@ def cutHand(image, imageOriginal):
     _, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_OTSU)
     # thresh = cv2.GaussianBlur(mask, (51, 51), 0)
 
+    # ================================================================
+    # show the images
+    cv2.imwrite(
+        os.path.join(__location__, "dataset_sample", "cut_hand", imgFile),
+        np.hstack([
+            thresh
+        ])
+    )
+    # ================================================================
+
     (image, contours, _) = cv2.findContours(
         thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -75,27 +85,11 @@ def cutHand(image, imageOriginal):
     else:
         return output
 
-
-# white-patch, normaliza la los colores de la imagen
-#
-# Como las imágenes tiene diferentes tonalidades de colores
-# Este algoritmo whit-patch pretende llevar los colores de la
-# imágenes a un tono igual
-def equalizeImg(image):
-    B, G, R = cv2.split(image)
-
-    red = cv2.equalizeHist(R)
-    green = cv2.equalizeHist(G)
-    blue = cv2.equalizeHist(B)
-
-    imgOut = cv2.merge((blue, green, red))
-
-    return imgOut
-
-
 # Create a mask for the hand.
 # I guess the biggest object is the hand
 #
+
+
 def createMask(image):
     # Aplico una técnica para normalizar los colores general de la imagen
     imgColorEqualize = equalizeImg(image)
@@ -127,9 +121,9 @@ def createMask(image):
     image = cv2.bitwise_and(imgColorEqualize, imgColorEqualize, mask=mask)
 
     # Detectamos los bordes con Canny
-    # img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
+    img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
     # img = cv2.Canny(image, 100, 400, apertureSize=3)
-    img = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
+    # img = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
 
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(
@@ -177,6 +171,15 @@ def createMask(image):
             np.array(255)  # upper color
         )
 
+        # show the images =================================================
+        cv2.imwrite(
+            os.path.join(__location__, "dataset_sample", "mask", imgFile),
+            np.hstack([
+                # mask,
+                image,
+            ])
+        )  # ================================================================
+
     else:
         # TODO ver bien este caso
         # En caso de no encontrar objeto, envió la imagen
@@ -184,6 +187,23 @@ def createMask(image):
         image = imgColorEqualize
 
     return image
+
+
+# white-patch, normaliza la los colores de la imagen
+#
+# Como las imágenes tiene diferentes tonalidades de colores
+# Este algoritmo whit-patch pretende llevar los colores de la
+# imágenes a un tono igual
+def equalizeImg(image):
+    B, G, R = cv2.split(image)
+
+    red = cv2.equalizeHist(R)
+    green = cv2.equalizeHist(G)
+    blue = cv2.equalizeHist(B)
+
+    imgOut = cv2.merge((blue, green, red))
+
+    return imgOut
 
 
 # Show a progress bar
