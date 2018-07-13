@@ -14,9 +14,9 @@ Dependencies needed
 * [python3](https://www.python.org/)
 * [tensorflow](https://www.tensorflow.org/)
 * [keras](https://keras.io)
-* opencv-python
-* pandas
-* numpy
+* [opencv-python](https://opencv.org/)
+* [pandas](https://pandas.pydata.org/)
+* [numpy](http://www.numpy.org/)
 
 Install on Linux
 ```bash
