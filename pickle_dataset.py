@@ -16,30 +16,28 @@ import sys
 # (de la original y de las mascara) es decir deja solo la mano,
 # luego aplica la mascara a  la foto recortada.
 #
-def cutHand(image):
-    imageOriginal = image.copy()
+def cutHand(image, imageOriginal):
+    imageCopy = image.copy()
 
     # convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    if (cv2.mean(gray)[0] > 50.0):
-        imageOriginal = whitePatch(image)
-        gray = cv2.cvtColor(imageOriginal, cv2.COLOR_BGR2GRAY)
+    # if (cv2.mean(gray)[0] > 50.0):
+    #    imageCopy = equalizeImg(image)
+    #    gray = cv2.cvtColor(imageCopy, cv2.COLOR_BGR2GRAY)
 
     # applying gaussian blur
     blurred = cv2.GaussianBlur(gray, (47, 47), 0)
 
     # Dejar solo el color blanco, que fue el color que pintamos el objeto
-    mask = cv2.inRange(
-        blurred,
-        np.array([100]),  # lower color
-        np.array([255])  # upper color
-    )
-    # img_mask = cv2.bitwise_and(blurred, blurred, mask=mask)
-    # blurred = cv2.GaussianBlur(img_mask, (45, 45), 0)
+    # mask = cv2.inRange(
+    #    blurred,
+    #    np.array([100]),  # lower color
+    #    np.array([255])  # upper color
+    # )
 
     # thresholdin: Otsu's Binarization method
-    # _, thresh = cv2.threshold(mask, 100, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-    thresh = cv2.GaussianBlur(mask, (51, 51), 0)
+    _, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_OTSU)
+    # thresh = cv2.GaussianBlur(mask, (51, 51), 0)
 
     (image, contours, _) = cv2.findContours(
         thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -48,7 +46,7 @@ def cutHand(image):
     # De las lista de contornos buscar el índice del objeto mas grande
     objetoMasGrande = 0
     for i, cnt in enumerate(contours):
-        if len(contours[objetoMasGrande]) < len(cnt):
+        if cv2.contourArea(contours[objetoMasGrande]) < cv2.contourArea(cnt):
             objetoMasGrande = i
 
     # create bounding rectangle around the contour (can skip below two lines)
@@ -66,25 +64,14 @@ def cutHand(image):
 
     # Recortar ese ojeto
     mask = image[y:y+h, x:x+w]
-    imageOriginal = imageOriginal[y:y+h, x:x+w]
+    imageCut = imageCopy[y:y+h, x:x+w]
 
-    output = cv2.bitwise_and(imageOriginal, imageOriginal, mask=mask)
+    output = cv2.bitwise_and(imageCut, imageCut, mask=mask)
 
-    # =============== Solo para ver imágenes ===================
-    # show the images
-    cv2.imwrite(
-        os.path.join(__location__, "dataset_sample", "render", imgFile),
-        np.hstack([
-            imageOriginal,
-            output
-        ])
-    )
-    # =========================================================
-
-    # En caso que la imagen quede negra devuelvo la original
+    # FIXME En caso que la imagen quede negra devuelvo la original
     gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     if (cv2.mean(gray)[0] <= 10.0):
-        return imageOriginal
+        return imageCopy
     else:
         return output
 
@@ -94,7 +81,7 @@ def cutHand(image):
 # Como las imágenes tiene diferentes tonalidades de colores
 # Este algoritmo whit-patch pretende llevar los colores de la
 # imágenes a un tono igual
-def whitePatch(image):
+def equalizeImg(image):
     B, G, R = cv2.split(image)
 
     red = cv2.equalizeHist(R)
@@ -111,7 +98,7 @@ def whitePatch(image):
 #
 def createMask(image):
     # Aplico una técnica para normalizar los colores general de la imagen
-    imgColorEqualize = whitePatch(image)
+    imgColorEqualize = equalizeImg(image)
     gray = cv2.cvtColor(imgColorEqualize, cv2.COLOR_BGR2GRAY)
 
     # Difuminamos la imagen para evitar borrar bordes
@@ -180,7 +167,7 @@ def createMask(image):
         # Difuminamos la imagen para evitar borrar bordes
         image = cv2.GaussianBlur(image, (25, 25), 0)
 
-        image = cv2.cvtColor(whitePatch(image), cv2.COLOR_BGR2GRAY)
+        image = cv2.cvtColor(equalizeImg(image), cv2.COLOR_BGR2GRAY)
 
         # Dejar solo el color blanco, que fue el color que pintamos el objeto
         image = cv2.inRange(
@@ -254,21 +241,26 @@ for i in range(totalFile):
     img_path = os.path.join(train_dir, imgFile)
     img = cv2.imread(img_path)
 
-    imgBGR2RGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    mask = createMask(imgBGR2RGB.copy())
+    mask = createMask(imgRGB.copy())
+    img = cv2.bitwise_and(imgRGB, imgRGB, mask=mask)
 
-    img = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-    # =====================================================================
+    img = cutHand(img, imgRGB.copy())
+
+    # =============== Solo para ver imágenes ===================
+    # NOTE: Resalta los huegos y puede eliminar la piel
+    # gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+    # if (cv2.mean(gray)[0] > 50.0):
+    #    output2 = equalizeImg(output)
     # show the images
     cv2.imwrite(
-        # os.path.join(__location__, "dataset_sample", "render", imgFile),
-        'mask.png',
+        os.path.join(__location__, "dataset_sample", "render", imgFile),
         np.hstack([
             img
         ])
     )
-    img = cutHand(img)
+    # =========================================================
 
     # TODO: Dejar solo el area de la mano antes de redimencionar
 
