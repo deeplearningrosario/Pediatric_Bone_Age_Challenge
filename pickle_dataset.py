@@ -40,6 +40,8 @@ def deleteObjects(image):
         img = cv2.Canny(thresh, 100, 400)  # 50,150  ; 100,500
         (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+        image = cv2.bitwise_and(image, image, mask=thresh)
+
         # He reported it because it can take a long time if the number is large
         if len(contours) > 5000:
             print(' Img with', len(contours), 'contours')
@@ -50,7 +52,8 @@ def deleteObjects(image):
                 os.path.join(__location__, "dataset_sample", "delete_object", img_file),
                 np.hstack([
                     thresh,
-                    img
+                    img,
+                    # image
                 ])
             )
         # ================================================================
@@ -310,9 +313,9 @@ for i in range(total_file):
     # =======================================================================
 
     # Resize the images
-    # img = cv2.resize(img, (224, 224))
-    # NOTE: Ahora usa las imágenes que deberían tener solo la mano o mano y brazo
-    img = cv2.resize(img_hand, (224, 224))
+    # NOTE: Para usa las imágenes que deberían tener solo la mano o mano y brazo
+    # img = cv2.resize(img_hand, (224, 224))
+    img = cv2.resize(img, (224, 224))
 
     x = np.asarray(img, dtype=np.uint8)
     X_train.append(x)
