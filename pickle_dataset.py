@@ -9,8 +9,11 @@ import pandas as pd
 import sys
 
 # Create intermediate images in separate folders for debugger.
-# mask, cut _hand, delete_object, render
+# mask, cut_hand, delete_object, render
 SAVE_IMAGE_FOR_DEBUGGER = False
+
+# Turn saving renders feature on/off
+SAVE_RENDERS = False
 
 
 # Delete small objects from the images
@@ -248,9 +251,19 @@ X_train = []
 y_age = []
 y_gender = []
 
-df = pd.read_csv(os.path.join(train_dir, 'dataset_sample_labels.csv'))
+df = pd.read_csv(os.path.join(train_dir, 'boneage-training-dataset.csv'))
 a = df.values
 m = a.shape[0]
+
+
+# Create the directories to save the images
+if SAVE_IMAGE_FOR_DEBUGGER:
+    for folder in ['mask', 'cut_hand', 'delete_object', 'render']:
+        if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
+            os.makedirs(os.path.join(__location__, "dataset_sample", folder))
+if SAVE_RENDERS:
+    if not os.path.exists(os.path.join(__location__, "dataset_sample", "render")):
+        os.makedirs(os.path.join(__location__, "dataset_sample", "render"))
 
 print('Loading data set...')
 # file names on train_dir
@@ -284,14 +297,10 @@ for i in range(total_file):
     img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
 
     # Trim the hand of the image
-    img_hand = cutHand(
-        # img,
-        equalizeImg(img_hand),
-        img_rgb
-    )
+    img_hand = cutHand(equalizeImg(img_hand), img_rgb)
 
     # ====================== show the images ================================
-    if SAVE_IMAGE_FOR_DEBUGGER:
+    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
         cv2.imwrite(
             os.path.join(__location__, "dataset_sample", "render", img_file),
             np.hstack([
