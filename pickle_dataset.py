@@ -9,7 +9,7 @@ import pandas as pd
 import sys
 
 # Crear imagenes intermedias en capertas separadas. Mask, Cut_hand_mask, Render
-SAVE_IMAGEN_FOR_DEBUGER = False
+SAVE_IMAGEN_FOR_DEBUGER = not False
 
 
 # Limpiar la imagen
@@ -20,7 +20,38 @@ def deleteObject(image):
     # Buscamos los contornos
     (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-    # print("-->", len(contours))
+    # En caso de tener más de 10000 contornos, sub figuras
+    if len(contours) > 10000:
+        # Crear un kernel de '1' de 20x20, usado como goma de borrar
+        kernel = np.ones((10, 10), np.uint8)
+        # Se aplica la transformación: Opening, para eliminar particulas
+        img = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+
+        # Comvertir a escala de greces
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Obtener una nueva mascara con menos objetos
+        _, thresh = cv2.threshold(gray, 75, 255, cv2.THRESH_OTSU)
+
+        # Detectamos los bordes con Canny
+        img = cv2.Canny(thresh, 100, 400)  # 50,150  ; 100,500
+        # Buscamos los contornos
+        (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+        # Lo informo porque puede llevar mucho tiempo si el numero es grande
+        if len(contours) > 5000:
+            print(' Img with', len(contours), 'contours')
+        # ================================================================
+        if SAVE_IMAGEN_FOR_DEBUGER:
+            # show the images
+            cv2.imwrite(
+                os.path.join(__location__, "dataset_sample", "delete_object", imgFile),
+                np.hstack([
+                    thresh,
+                    img
+                ])
+            )
+        # ================================================================
+
     if len(contours) > 1:
         # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
         # De las lista de contornos buscar el índice del objeto mas grande
@@ -72,7 +103,6 @@ def cutHand(image, imageOriginal):
     blurred = cv2.GaussianBlur(gray, (47, 47), 0)
 
     # thresholdin: Otsu's Binarization method
-    # _, thresh = cv2.threshold(blurred, 75, 255, cv2.THRESH_OTSU)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_OTSU)
     thresh = cv2.GaussianBlur(thresh, (41, 41), 0)
 
@@ -212,11 +242,16 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
         progress = 1
         status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
-    sys.stdout.write(str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
-        tick,
-        total,
-        str(("#" * block)) + str("." * (barLength - block)),
-        round(progress * 100, 1), status))
+    sys.stdout.write(
+        str("\rImage: {0}/{1} [{2}] {3}% {4}")
+        .format(
+            tick,
+            total,
+            str(("#" * block)) + str("." * (barLength - block)),
+            round(progress * 100, 1),
+            status
+        )
+    )
     sys.stdout.flush()
 
 
