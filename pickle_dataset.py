@@ -9,7 +9,7 @@ import pandas as pd
 import sys
 
 # Crear imagenes intermedias en capertas separadas. Mask, Cut_hand_mask, Render
-SAVE_IMAGEN_FOR_DEBUGER = False
+SAVE_IMAGEN_FOR_DEBUGER = not False
 
 
 # Limpiar la imagen
@@ -276,7 +276,7 @@ for i in range(totalFile):
         cv2.imwrite(
             os.path.join(__location__, "dataset_sample", "render", imgFile),
             np.hstack([
-                img
+                img_hand
             ])
         )
     # ======================================================================
