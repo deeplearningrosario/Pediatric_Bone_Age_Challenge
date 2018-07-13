@@ -9,7 +9,7 @@ import pandas as pd
 import sys
 
 # Crear imagenes intermedias en capertas separadas. Mask, Cut_hand_mask, Render
-SAVE_IMAGEN_FOR_DEBUGER = not False
+SAVE_IMAGEN_FOR_DEBUGER = False
 
 
 # Limpiar la imagen
