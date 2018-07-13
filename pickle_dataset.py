@@ -15,6 +15,10 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
+# Extracting hands from images and using that new dataset.
+# Simple dataset is correct, I am verifying the original.
+EXTRACTING_HANDS = False
+
 
 # Delete small objects from the images
 def deleteObjects(image):
@@ -293,28 +297,27 @@ for i in range(total_file):
     img = cv2.imread(img_path)
 
     # Sort colors in R, G, B
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    # Create mask to highlight your hand
-    mask = createMask(img_rgb.copy())
-    img_hand = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
+    if EXTRACTING_HANDS:
+        # Create mask to highlight your hand
+        mask = createMask(img.copy())
+        img_hand = cv2.bitwise_and(img, img, mask=mask)
 
-    # Trim the hand of the image
-    img_hand = cutHand(equalizeImg(img_hand), img_rgb)
+        # Trim the hand of the image
+        img = cutHand(equalizeImg(img_hand), img)
 
-    # ====================== show the images ================================
-    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-        cv2.imwrite(
-            os.path.join(__location__, "dataset_sample", "render", img_file),
-            np.hstack([
-                img_hand
-            ])
-        )
-    # =======================================================================
+        # ====================== show the images ================================
+        if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
+            cv2.imwrite(
+                os.path.join(__location__, "dataset_sample", "render", img_file),
+                np.hstack([
+                    img
+                ])
+            )
+        # =======================================================================
 
     # Resize the images
-    # NOTE: Para usa las imágenes que deberían tener solo la mano o mano y brazo
-    # img = cv2.resize(img_hand, (224, 224))
     img = cv2.resize(img, (224, 224))
 
     x = np.asarray(img, dtype=np.uint8)
