@@ -8,6 +8,11 @@ import os
 import pandas as pd
 import sys
 
+# turn saving renders feature on/off
+SAVE_RENDERS = False
+
+
+# SAVE_RENDERS = True
 
 # white-patch, normaliza la los colores de la imagen
 #
@@ -115,7 +120,7 @@ def createMask(image):
         # En caso de no encontrar objeto, envió la imagen
         image = cv2.bitwise_or(imgColorEqualize, image)
 
-        #img = cv2.Canny(image, 100, 400, apertureSize=3)
+        # img = cv2.Canny(image, 100, 400, apertureSize=3)
         # cv2.imwrite(
         #    os.path.join(__location__,  "mask2.png",),
         #    np.hstack([
@@ -157,7 +162,7 @@ X_train = []
 y_age = []
 y_gender = []
 
-df = pd.read_csv(os.path.join(train_dir, 'dataset_sample_labels.csv'))
+df = pd.read_csv(os.path.join(train_dir, 'boneage-training-dataset.csv'))
 a = df.values
 m = a.shape[0]
 
@@ -172,7 +177,7 @@ for i in range(totalFile):
     imgFile = files[i]
 
     # Update the progress bar
-    updateProgress(float(i / totalFile), (i+1), totalFile, imgFile)
+    updateProgress(float(i / totalFile), (i + 1), totalFile, imgFile)
 
     y_age.append(df.boneage[df.id == int(imgFile[:-4])].tolist()[0])
     a = df.male[df.id == int(imgFile[:-4])].tolist()[0]
@@ -200,14 +205,17 @@ for i in range(totalFile):
 
     # =============== Solo para ver imágenes ===================
     # show the images
-    cv2.imwrite(
-        os.path.join(__location__, "dataset_sample", "render", imgFile),
-        np.hstack([
-            imgBGR2RGB,
-            output0,
-            output,
-        ])
-    )
+    if SAVE_RENDERS:
+        if not os.path.exists(os.path.join(__location__, "dataset_sample", "render")):
+            os.makedirs(os.path.join(__location__, "dataset_sample", "render"))
+        cv2.imwrite(
+            os.path.join(__location__, "dataset_sample", "render", imgFile),
+            np.hstack([
+                imgBGR2RGB,
+                output0,
+                output,
+            ])
+        )
     # =========================================================
 
     # TODO: Dejar solo el area de la mano antes de redimencionar

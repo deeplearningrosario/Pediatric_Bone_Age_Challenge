@@ -4,3 +4,7 @@
 # Ignore weight
 /**/*.h5
 /weights/**/*
+
+# Ignore images. Each person should use as many as it wants from the original dataset
+/**/*.png
+/**/**/*.png
