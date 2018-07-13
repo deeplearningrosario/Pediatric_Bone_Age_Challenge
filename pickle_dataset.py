@@ -9,6 +9,43 @@ import pandas as pd
 import sys
 
 
+# Limpiar la imagen
+def deleteObject(image):
+    # Detectamos los bordes con Canny
+    img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
+    # img = cv2.Canny(image, 100, 400, apertureSize=3)
+    # img = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
+
+    # Buscamos los contornos
+    (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+    # print("-->", len(contours))
+    if len(contours) > 1:
+        # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
+        # De las lista de contornos buscar el índice del objeto mas grande
+        objetoMasGrande = 0
+        for i, cnt in enumerate(contours):
+            if cv2.contourArea(contours[objetoMasGrande]) < cv2.contourArea(cnt):
+                objetoMasGrande = i
+
+        # Pintar los objetos mas chichos que el 30% del grande, limite: (0.2, 0.5]
+        lenOfObjetoGrande = cv2.contourArea(contours[objetoMasGrande]) * 0.3
+        for i, cnt in enumerate(contours):
+            # print(cv2.contourArea(cnt), lenOfObjetoGrande)
+            if cv2.contourArea(cnt) < lenOfObjetoGrande:
+                cv2.drawContours(image, contours, i, (0, 0, 0), -1)
+
+        cv2.drawContours(
+            image,  # image,
+            contours,  # objects
+            objetoMasGrande,  # índice de objeto (-1, todos)
+            (255, 255, 255),  # color
+            -1  # tamaño del borde (-1, pintar adentro)
+        )
+
+    return image, len(contours)
+
+
 # Cut the hand of the image
 # Como la nueva imagen tien los colores de la mano mas resaltaos crea otra mascara,
 # (imagen en blanco y negro)
@@ -21,9 +58,11 @@ def cutHand(image, imageOriginal):
 
     # convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # print(cv2.mean(gray)[0], imgFile)
     # if (cv2.mean(gray)[0] > 50.0):
-    #    imageCopy = equalizeImg(image)
-    #    gray = cv2.cvtColor(imageCopy, cv2.COLOR_BGR2GRAY)
+    #     imageCopy = equalizeImg(image)
+    #     gray = cv2.cvtColor(imageCopy, cv2.COLOR_BGR2GRAY)
 
     # applying gaussian blur
     blurred = cv2.GaussianBlur(gray, (47, 47), 0)
@@ -120,44 +159,10 @@ def createMask(image):
     # image = cv2.bitwise_or(imgColorEqualize, image)
     image = cv2.bitwise_and(imgColorEqualize, imgColorEqualize, mask=mask)
 
-    # Detectamos los bordes con Canny
-    img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
-    # img = cv2.Canny(image, 100, 400, apertureSize=3)
-    # img = cv2.cvtColor(image, cv2.COLOR_RGBA2GRAY)
+    # Eliminar otras figuras
+    image, contours = deleteObject(image)
 
-    # Buscamos los contornos
-    (_, contours, _) = cv2.findContours(
-        img,
-        #            cv2.RETR_EXTERNAL,
-        cv2.RETR_TREE,
-        #            cv2.CHAIN_APPROX_SIMPLE
-        cv2.CHAIN_APPROX_NONE
-    )
-
-    # print(len(contours))
-    if len(contours) > 1:
-        # Supongo que el objeto mas grande las la mano o el único objeto en la imagen
-        # De las lista de contornos buscar el índice del objeto mas grande
-        objetoMasGrande = 0
-        for i, cnt in enumerate(contours):
-            if cv2.contourArea(contours[objetoMasGrande]) < cv2.contourArea(cnt):
-                objetoMasGrande = i
-
-        # Pintar los objetos mas chichos que el 30% del grande, limite: (0.2, 0.5]
-        lenOfObjetoGrande = cv2.contourArea(contours[objetoMasGrande]) * 0.3
-        for i, cnt in enumerate(contours):
-            # print(cv2.contourArea(cnt), lenOfObjetoGrande)
-            if cv2.contourArea(cnt) < lenOfObjetoGrande:
-                cv2.drawContours(image, contours, i, (0, 0, 0), -1)
-
-        cv2.drawContours(
-            image,  # image,
-            contours,  # objects
-            objetoMasGrande,  # índice de objeto (-1, todos)
-            (255, 255, 255),  # color
-            -1  # tamaño del borde (-1, pintar adentro)
-        )
-
+    if contours > 0:
         # Difuminamos la imagen para evitar borrar bordes
         image = cv2.GaussianBlur(image, (25, 25), 0)
 
@@ -258,21 +263,26 @@ for i in range(totalFile):
     else:
         y_gender.append(0)
 
+    # Tratamiento de la imagen
     img_path = os.path.join(train_dir, imgFile)
     img = cv2.imread(img_path)
 
+    # Ordenar colores en R,G,B
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+    # Crear mascara para resaltar la mano
     mask = createMask(imgRGB.copy())
     img = cv2.bitwise_and(imgRGB, imgRGB, mask=mask)
 
-    img = cutHand(img, imgRGB.copy())
+    # Recortar la mano de la imagen
+    img = cutHand(img, equalizeImg(imgRGB.copy()))
 
     # =============== Solo para ver imágenes ===================
     # NOTE: Resalta los huegos y puede eliminar la piel
     # gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     # if (cv2.mean(gray)[0] > 50.0):
     #    output2 = equalizeImg(output)
+
     # show the images
     cv2.imwrite(
         os.path.join(__location__, "dataset_sample", "render", imgFile),
