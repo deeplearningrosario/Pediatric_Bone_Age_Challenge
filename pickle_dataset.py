@@ -8,16 +8,16 @@ import os
 import pandas as pd
 import sys
 
+# Turn saving renders feature on/off
+SAVE_RENDERS = False
+
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
 SAVE_IMAGE_FOR_DEBUGGER = False
 
-# Turn saving renders feature on/off
-SAVE_RENDERS = False
-
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = not False
+EXTRACTING_HANDS = False
 
 
 # Delete small objects from the images
