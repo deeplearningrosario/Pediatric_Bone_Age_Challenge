@@ -124,23 +124,22 @@ def cutHand(image, imageOriginal):
     else:
         return output
 
+
 # Create a mask for the hand.
 # I guess the biggest object is the hand
 #
-
-
 def createMask(image):
     # Aplico una técnica para normalizar los colores general de la imagen
     imgColorEqualize = equalizeImg(image)
     gray = cv2.cvtColor(imgColorEqualize, cv2.COLOR_BGR2GRAY)
 
     # Difuminamos la imagen para evitar borrar bordes
-    mask = cv2.GaussianBlur(gray, (25, 25), 0)
+    mask = cv2.GaussianBlur(gray, (33, 33), 0)
 
     # Dejamos los grises más cerca del color blanco
     mask = cv2.inRange(
         mask,
-        np.array(125),  # lower color
+        np.array(123),  # lower color
         np.array(255)  # upper color
     )
 
@@ -275,7 +274,11 @@ for i in range(totalFile):
     img = cv2.bitwise_and(imgRGB, imgRGB, mask=mask)
 
     # Recortar la mano de la imagen
-    img = cutHand(img, equalizeImg(imgRGB.copy()))
+    img = cutHand(
+        # img,
+        equalizeImg(img),
+        imgRGB
+    )
 
     # =============== Solo para ver imágenes ===================
     # NOTE: Resalta los huegos y puede eliminar la piel
