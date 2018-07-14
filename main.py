@@ -1,9 +1,7 @@
 from keras.applications.inception_v3 import InceptionV3
-# from keras import backend as K
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop
-# from keras.preprocessing import image
 from six.moves import cPickle
 import keras
 import matplotlib.pyplot as plt
@@ -13,8 +11,8 @@ import os
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
 
 # network and training
-EPOCHS = 3
-BATCH_SIZE = 32
+EPOCHS = 10
+BATCH_SIZE = 35
 VERBOSE = 1
 # OPTIMIZER = Adam()
 OPTIMIZER = RMSprop()
@@ -55,8 +53,7 @@ img_final = np.asarray(img_final)
 age_final = np.asarray(age_final)
 gdr_final = np.asarray(gdr_final)
 
-
-k = 2  # Decides split count
+k = 6  # Decides split count
 img_test = img_final[:k, :, :, :]
 age_test = age_final[:k]
 gdr_test = gdr_final[:k]
@@ -122,6 +119,8 @@ model.compile(
 )
 
 # Save weights after every epoch
+if not os.path.exists(os.path.join(__location__, "weights")):
+    os.makedirs(os.path.join(__location__, "weights"))
 checkpoint = keras.callbacks.ModelCheckpoint(
     filepath='weights/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
     save_weights_only=True,

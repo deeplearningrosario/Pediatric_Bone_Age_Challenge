@@ -1,13 +1,11 @@
 # Deep Learning For Computer Vision
 This is a first approach to Deep Learning by an investigation group from Rosario, Santa Fe, Argentina.
-We are using another team's final solution as our starting point to submerge ourselves into this new field.
-
-Source:https://github.com/thevishalagarwal/BoneAgeEstimation
+We used another team's [solution](https://github.com/thevishalagarwal/BoneAgeEstimation) to submerge ourselves. However, we've since modified it to suit our needs and to apply any improvements we saw fit.
 
 The order of execution would be
-- 1.Pickle_dataset
-- 2.main
-- 3.check.
+- 1. pickle_dataset
+- 2. main
+- 3. check
 
 Dependencies needed
 
