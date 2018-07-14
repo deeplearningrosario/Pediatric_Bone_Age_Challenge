@@ -229,6 +229,7 @@ def equalizeImg(image):
 
 # Show a progress bar
 def updateProgress(progress, tick='', total='', status='Loading...'):
+    lineLength = 80
     barLength = 30
     if isinstance(progress, int):
         progress = float(progress)
@@ -239,16 +240,16 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
         progress = 1
         status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
-    sys.stdout.write(
-        str("\rImage: {0}/{1} [{2}] {3}% {4} ")
-        .format(
-            tick,
-            total,
-            str(("#" * block)) + str("." * (barLength - block)),
-            round(progress * 100, 1),
-            status
-        )
+    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+        tick,
+        total,
+        str(("#" * block)) + str("." * (barLength - block)),
+        round(progress * 100, 1),
+        status
     )
+    emptyBlock = lineLength - len(line)
+    emptyBlock = " "*emptyBlock if emptyBlock > 0 else ""
+    sys.stdout.write(line + emptyBlock)
     sys.stdout.flush()
 
 
