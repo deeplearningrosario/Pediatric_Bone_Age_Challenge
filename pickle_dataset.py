@@ -19,8 +19,12 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 # Simple dataset is correct, I am verifying the original.
 EXTRACTING_HANDS = False
 
+# Usar el descriptor basado en gradiente
+IMAGE_GRADIENTS = False
 
 # Delete small objects from the images
+
+
 def deleteObjects(image):
     # Detect the edges with Canny
     img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
@@ -148,24 +152,42 @@ def cutHand(image, original_image):
         -1  # tamaño del borde (-1, pintar adentro)
     )
 
-    # Trim that object
+    # Trim that object of mask
     mask = image[y:y+h, x:x+w]
-    image_cut = image_copy[y:y+h, x:x+w]
 
-    output = cv2.bitwise_and(image_cut, image_cut, mask=mask)
+    # Joining broken parts of an object.
+    # kernel = np.ones((5, 5), np.uint8)
+    kernel = np.ones((15, 15), np.uint8)
+    mask = cv2.erode(image, kernel, iterations=1)
+    mask = cv2.dilate(mask, kernel, iterations=2)
+    # Clean black spaces within the target
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    # Ver bien este caso, creo que no sucede
-    # In case the image is black I return the original
-    # gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
-    # if (cv2.mean(gray)[0] <= 10.0):
-    #     print("\n-------------IMAGEN NEGRA----------------\n")
-    #    return image_copy
-    # else:
-    return output
+    # Evaluate the center of the mask in search of black block
+    # In case the image is black, return the original
+    x_div_2 = x/2
+    y_div_2 = y/2
+    delta_x = int(x_div_2/2)
+    delta_y = int(y_div_2/2)
+    # Get a square from the center of the mask
+    sub_mask = mask[
+        y_div_2 - delta_y: y_div_2 + delta_y,
+        x_div_2 - delta_x: x_div_2 + delta_x
+    ]
+    mask_gray = cv2.cvtColor(sub_mask, cv2.COLOR_BGR2GRAY)
+    if (cv2.mean(mask_gray)[0] > 80.0):
+        # Trim that object
+        image_cut = image_copy[y:y+h, x:x+w]
+
+        output = cv2.bitwise_and(image_cut, image_cut, mask=mask)
+        return output
+    else:
+        print("\n-------------IMAGEN NEGRA----------------\n")
+        return image_copy
 
 
 # Create a mask for the hand.
-# I guess the biggest object is the hand
+# I guess the biggest objecUsar el descriptor basado en gradientet is the hand
 def createMask(image):
     # Apply a technique to normalize the overall colors of the image
     equalized_image = equalizeImg(image)
@@ -311,15 +333,27 @@ for i in range(total_file):
         # Trim the hand of the image
         img = cutHand(equalizeImg(img_hand), img)
 
-        # ====================== show the images ================================
-        if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-            cv2.imwrite(
-                os.path.join(__location__, "dataset_sample", "render", img_file),
-                np.hstack([
-                    img
-                ])
-            )
-        # =======================================================================
+    # Image Gradients
+    if IMAGE_GRADIENTS:
+        laplacian = cv2.Laplacian(img, cv2.CV_64F)
+        sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
+        sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
+        img = cv2.bitwise_or(sobelx, sobely)
+
+        # sobelx8u = cv2.Sobel(img, cv2.CV_8U, 1, 0, ksize=5)
+        # sobelx64f = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
+        # abs_sobel64f = np.absolute(sobelx64f)
+        # sobel_8u = np.uint8(abs_sobel64f)
+
+    # ====================== show the images ================================
+    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
+        cv2.imwrite(
+            os.path.join(__location__, "dataset_sample", "render", img_file),
+            np.hstack([
+                img
+            ])
+        )
+    # =======================================================================
 
     # Resize the images
     img = cv2.resize(img, (224, 224))
