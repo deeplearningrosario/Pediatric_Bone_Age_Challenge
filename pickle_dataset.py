@@ -154,35 +154,9 @@ def cutHand(image, original_image):
 
     # Trim that object of mask
     mask = image[y:y+h, x:x+w]
-
-    # Joining broken parts of an object.
-    # kernel = np.ones((5, 5), np.uint8)
-    kernel = np.ones((15, 15), np.uint8)
-    mask = cv2.erode(image, kernel, iterations=1)
-    mask = cv2.dilate(mask, kernel, iterations=2)
-    # Clean black spaces within the target
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-    # Evaluate the center of the mask in search of black block
-    # In case the image is black, return the original
-    x_div_2 = x/2
-    y_div_2 = y/2
-    delta_x = int(x_div_2/2)
-    delta_y = int(y_div_2/2)
-    # Get a square from the center of the mask
-    sub_mask = mask[
-        y_div_2 - delta_y: y_div_2 + delta_y,
-        x_div_2 - delta_x: x_div_2 + delta_x
-    ]
-    mask_gray = cv2.cvtColor(sub_mask, cv2.COLOR_BGR2GRAY)
-    if (cv2.mean(mask_gray)[0] > 80.0):
-        # Trim that object
-        image_cut = image_copy[y:y+h, x:x+w]
-
-        return cv2.bitwise_and(image_cut, image_cut, mask=mask)
-    else:
-        # print("\n-------------IMAGEN NEGRA----------------\n")
-        return image_copy
+    # Trim that object
+    image_cut = image_copy[y:y+h, x:x+w]
+    return cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
 
 # Create a mask for the hand.
@@ -371,11 +345,11 @@ for i in range(total_file):
         mask = createMask(img.copy())
         img_hand = cv2.bitwise_and(img, img, mask=mask)
 
-        # Rotate hands
-        img = rotateImage(img)
-
         # Trim the hand of the image
         img = cutHand(equalizeImg(img_hand), img)
+
+        # Rotate hands
+        img = rotateImage(img)
 
     # Image Gradients
     if IMAGE_GRADIENTS:
