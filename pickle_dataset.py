@@ -179,10 +179,9 @@ def cutHand(image, original_image):
         # Trim that object
         image_cut = image_copy[y:y+h, x:x+w]
 
-        output = cv2.bitwise_and(image_cut, image_cut, mask=mask)
-        return output
+        return cv2.bitwise_and(image_cut, image_cut, mask=mask)
     else:
-        print("\n-------------IMAGEN NEGRA----------------\n")
+        # print("\n-------------IMAGEN NEGRA----------------\n")
         return image_copy
 
 
