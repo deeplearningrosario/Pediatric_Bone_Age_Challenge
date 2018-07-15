@@ -7,9 +7,10 @@ import numpy as np
 import os
 import pandas as pd
 import sys
+import math
 
 # turn saving renders feature on/off
-SAVE_RENDERS = False
+SAVE_RENDERS = True
 
 
 # SAVE_RENDERS = True
@@ -133,6 +134,45 @@ def createMask(image):
 
     return image
 
+def rotateImage(imageToRotate):
+    edges = cv2.Canny(imageToRotate,50,150,apertureSize = 3)
+    #Obtener una línea de la imágen
+    lines = cv2.HoughLines(edges,1,np.pi/180,200)
+    for rho,theta in lines[0]:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+        cv2.line(imageToRotate,(x1,y1),(x2,y2),(0,0,255),2)
+        angle = math.atan2(y1 - y2, x1 - x2)
+        angleDegree = (angle*180)/math.pi
+    
+    if (angleDegree < 0):
+        angleDegree = angleDegree + 360
+    print(' ')
+    print(angleDegree)
+
+    if (angleDegree >= 0 and angleDegree < 45):
+       angleToSubtract = 0
+    elif (angleDegree >= 45 and angleDegree < 135):
+       angleToSubtract = 90
+    elif (angleDegree >= 135 and angleDegree < 225):
+       angleToSubtract = 180
+    elif (angleDegree >= 225 and angleDegree < 315):
+       angleToSubtract = 270
+    else:
+       angleToSubtract = 0
+    print(angleToSubtract)
+    angleToRotate = angleDegree - angleToSubtract
+    print(angleToRotate)
+    num_rows, num_cols = imageToRotate.shape[:2]
+    rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), angleToRotate, 1)
+    img_rotation = cv2.warpAffine(img, rotation_matrix, (num_cols, num_rows))
+    return img_rotation
 
 # Show a progress bar
 def updateProgress(progress, tick='', total='', status='Loading...'):
@@ -152,7 +192,6 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1), status))
     sys.stdout.flush()
-
 
 # For this problem the validation and test data provided by the concerned authority did not have labels, so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
@@ -201,7 +240,9 @@ for i in range(totalFile):
     # )
 
     output0 = cv2.bitwise_and(imgBGR2RGB, imgBGR2RGB, mask=mask)
-    output = whitePatch(output0)
+    output1 = rotateImage(output0)
+    output = whitePatch(output1)
+    
 
     # =============== Solo para ver imágenes ===================
     # show the images
