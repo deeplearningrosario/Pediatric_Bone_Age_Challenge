@@ -314,8 +314,10 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
 
 
 # For this problem the validation and test data provided by the concerned authority did not have labels, so the training data was split into train, test and validation sets
-__location__ = os.path.realpath(os.path.join(
-    os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+# __location__ = os.path.realpath(os.path.join(
+#    os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
+
 train_dir = os.path.join(__location__, 'dataset_sample')
 
 X_train = []
