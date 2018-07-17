@@ -116,20 +116,17 @@ def deleteObjects(image):
 def cutHand(image):
     image_copy = image.copy()
 
-    # applying gaussian blur
-    blurred = cv2.GaussianBlur(image, (47, 47), 0)
+    img = cv2.medianBlur(image, 5)
+    th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                cv2.THRESH_BINARY, 11, 2)
+    th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.THRESH_BINARY, 11, 2)
 
     # thresholdin: Otsu's Binarization method
-    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_OTSU)
-    thresh = cv2.GaussianBlur(thresh, (41, 41), 0)
+    thresh = cv2.bitwise_not(th3, th2)
+    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
 
-    writeImage("cut_hand", np.hstack([  # ================================
-        # img,
-        thresh,
-        image
-    ]))  # show the images ===============================================
-
-    (image, contours, _) = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    (_, contours, _) = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # I guess the largest object is the hand or the only object in the image.
     largest_object_index = 0
@@ -140,7 +137,7 @@ def cutHand(image):
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
     # Black background below the largest object
-    cv2.rectangle(image, (x, y), (x+w, y+h), (0, 0, 0), -1)
+    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 255, 255), -1)
 
     cv2.drawContours(
         image,  # image,
@@ -150,35 +147,123 @@ def cutHand(image):
         -1  # tamaño del borde (-1, pintar adentro)
     )
 
-    # Joining broken parts of an object.
-    kernel = np.ones((1, 1), np.uint8)
-    image_mask = cv2.erode(image, kernel, iterations=2)
-    kernel = np.ones((5, 5), np.uint8)
-    image_mask = cv2.dilate(image_mask, kernel, iterations=2)
-
-    # Clean black spaces within the target
-    kernel = np.ones((75, 75), np.uint8)
-    image_mask = cv2.morphologyEx(image_mask, cv2.MORPH_CLOSE, kernel)
-
     # Trim that object of mask and image
-    mask = image_mask[y:y+h, x:x+w]
+    mask = image[y:y+h, x:x+w]
     image_cut = image_copy[y:y+h, x:x+w]
 
-    # Evaluate the center of the mask in search of black block
-    # In case the image is black, return the original
-    # Get a square from the center of the mask
-    # print('\n', cv2.mean(image_cut)[0] * 0.392)
-    if (cv2.mean(image_cut)[0] * 0.392 > 10.0 or True):
-        # Trim that object
-        return cv2.bitwise_and(image_cut, image_cut, mask=mask)
-    else:
-        print("-------------IMAGEN NEGRA----------------\n")
-        return image_copy
+    # Apply mask
+    image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
+
+    writeImage("cut_hand", np.hstack([  # ================================
+        # image,
+        # mask,
+        # thresh,
+        # thresh2,
+        # image_thresh,
+        # image_mask,
+        # blur,
+        # image,
+        image_cut,
+    ]))  # show the images ===============================================
+    return image_cut
 
 
 # Create a mask for the hand.
 # I guess the biggest objecUsar el descriptor basado en gradientet is the hand
 def createMask(image, sensitivity=0.25):
+    img = cv2.medianBlur(image, 5)
+    th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                cv2.THRESH_BINARY, 11, 2)
+    th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.THRESH_BINARY, 11, 2)
+
+    # applying gaussian blur
+    # blur = cv2.GaussianBlur(image, (47, 47), 0)
+
+    # thresholdin: Otsu's Binarization method
+    # _, thresh = cv2.threshold(image, 0, 255, cv2.THRESH_OTSU)  # or cv2.THRESH_BINARY
+    # ret3,th3 = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    # Joining broken parts of an object.
+    # kernel = np.ones((10, 10), np.uint8)
+    # image_mask = cv2.erode(thresh, kernel, iterations=2)
+    # kernel = np.ones((5, 5), np.uint8)
+    # image_mask = cv2.dilate(image_mask, kernel, iterations=2)
+    # mask = cv2.bitwise_and(th2, th3)
+    # mask = cv2.bitwise_or(th2, th3)
+    # mask = cv2.bitwise_xor(th2, th3)
+    # thresh = cv2.bitwise_not(th2, th3)
+    thresh = cv2.bitwise_not(th3, th2)
+    # thresh2 = cv2.bitwise_and(image, thresh)
+    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
+
+    # Clean black spaces within the target
+    kernel = np.ones((5, 5), np.uint8)
+    image_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+    image_mask = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    # image_mask = cv2.GaussianBlur(image_mask, (5, 5), 0)
+
+    (_, contours, _) = cv2.findContours(image_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # He reported it because it can take a long time if the number is large
+    if len(contours) > 3000:
+        updateProgress(progress[0], progress[1], total_file,
+                       img_file + " Img with " + str(len(contours)) + " contours")
+
+    # I guess the largest object is the hand or the only object in the image.
+    # From the contour list search the index of the largest object
+    largest_object_index = 0
+    for i, cnt in enumerate(contours):
+        if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
+            largest_object_index = i
+
+    # Paint the objects smaller than 30% of the large, limit: (0.2, 0.5]
+    # lenOfObjetoGrande = cv2.contourArea(contours[largest_object_index]) * 0.3
+    # for i, cnt in enumerate(contours):
+    #   if cv2.contourArea(cnt) < lenOfObjetoGrande:
+    #       cv2.drawContours(image, contours, i, (0, 0, 0), -1)
+
+    # Paint the largest object in white
+    cv2.drawContours(
+        image,  # image,
+        contours,  # objects
+        largest_object_index,  # índice de objeto (-1, todos)
+        (255, 255, 255),  # color
+        -1  # tamaño del borde (-1, pintar adentro)
+    )
+    # Add a border to the largest object in white
+    cv2.drawContours(
+        image,  # image,
+        contours,  # objects
+        largest_object_index,  # índice de objeto (-1, todos)
+        (255, 255, 255),  # color
+        3  # tamaño del borde (-1, pintar adentro)
+    )
+
+    writeImage("mask", np.hstack([  # ====================================
+        # img,
+        # thresh,
+        # thresh2,
+        # mask,
+        # cv2.bitwise_and(image, image, mask=thresh),
+        image,
+        image_mask
+    ]))  # show the images ===============================================
+
+    # create bounding rectangle around the contour (can skip below two lines)
+    [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
+    # Black background below the largest object
+    cv2.rectangle(image_mask, (x, y), (x+w, y+h), (0, 0, 0), -1)
+
+    cv2.drawContours(
+        image_mask,  # image,
+        contours,  # objects
+        largest_object_index,  # índice de objeto (-1, todos)
+        (255, 255, 255),  # color
+        -1  # tamaño del borde (-1, pintar adentro)
+    )
+
+    """
     mask = cv2.inRange(
         image,
         np.array(int(sensitivity * 255)),  # lower color
@@ -209,14 +294,9 @@ def createMask(image, sensitivity=0.25):
 
     # Blur the image to avoid erasing borders
     mask = cv2.GaussianBlur(mask, (25, 25), 0)
+    """
 
-    writeImage("mask", np.hstack([  # ====================================
-        # img,
-        mask,
-        image
-    ]))  # show the images ===============================================
-
-    return mask
+    return image
 
 
 # Create and apply a mask to the image, then cut out the large objects and
@@ -224,17 +304,17 @@ def createMask(image, sensitivity=0.25):
 # In each iteration the intensity increases.
 def extractingHands(image, sensitivity=0.20):
     # Create mask to highlight your hand
-    mask = createMask(image, sensitivity)
+    # mask = createMask(image, sensitivity)
     # Aplly mask
-    img_mask = cv2.bitwise_and(image, image, mask=mask)
+    # img_mask = cv2.bitwise_and(image, image, mask=mask)
     # Trim the hand of the image
-    img = cutHand(img_mask)
+    img = cutHand(image)
 
-    avg_white = cv2.mean(img)[0]  # 0 to 255
+    # avg_white = cv2.mean(img)[0]  # 0 to 255
     # print('\n value', avg_white, 'proce', avg_white *
     #      0.392, 'sen', sensitivity, '+', avg_white * 0.001)
-    if (avg_white * 0.392 > 60.0):
-        img = extractingHands(image, sensitivity + avg_white * 0.001)
+    # if (avg_white * 0.392 > 60.0):
+    #     img = extractingHands(image, sensitivity + avg_white * 0.001)
 
     return img
 
