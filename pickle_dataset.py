@@ -10,7 +10,7 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = False
+SAVE_RENDERS = not False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -18,10 +18,20 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = not False
+
+# Turn rotate image on/off
+ROTATE_IMAGE = False
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
+
+
+# XXX: Combertimos en gris y normalizamos el historama de colores
+def histogramsEqualization(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    return clahe.apply(img)
 
 
 # Delete small objects from the images
@@ -35,12 +45,14 @@ def deleteObjects(image):
     # In case of having more than 10000 contours, sub figures
     if len(contours) > 10000:
         # Create a kernel of '1' of 10x10, used as an eraser
-        kernel = np.ones((10, 10), np.uint8)
+        # kernel = np.ones((10, 10), np.uint8)
+        kernel = np.ones((30, 30), np.uint8)
         # Transformation is applied to eliminate particles
         img = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
         # Convertir a escala de grises
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        gray = histogramsEqualization(img)
         # Get a new mask with fewer objects
         _, thresh = cv2.threshold(gray, 75, 255, cv2.THRESH_OTSU)
 
@@ -109,7 +121,8 @@ def cutHand(image, original_image):
     image_copy = image.copy()
 
     # convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = histogramsEqualization(image)
 
     # applying gaussian blur
     blurred = cv2.GaussianBlur(gray, (47, 47), 0)
@@ -152,33 +165,27 @@ def cutHand(image, original_image):
         -1  # tamaño del borde (-1, pintar adentro)
     )
 
-    # Trim that object of mask
-    mask = image[y:y+h, x:x+w]
-
     # Joining broken parts of an object.
-    # kernel = np.ones((5, 5), np.uint8)
-    kernel = np.ones((15, 15), np.uint8)
-    mask = cv2.erode(image, kernel, iterations=1)
-    mask = cv2.dilate(mask, kernel, iterations=2)
+    kernel = np.ones((5, 5), np.uint8)
+    # kernel = np.ones((10, 10), np.uint8)
+    # kernel = np.ones((15, 15), np.uint8)
+    image_mask = cv2.erode(image, kernel, iterations=1)
+    kernel = np.ones((30, 30), np.uint8)
+    image_mask = cv2.dilate(image_mask, kernel, iterations=1)
     # Clean black spaces within the target
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    image_mask = cv2.morphologyEx(image_mask, cv2.MORPH_CLOSE, kernel)
+
+    # Trim that object of mask and image
+    mask = image_mask[y:y+h, x:x+w]
+    image_cut = image_copy[y:y+h, x:x+w]
 
     # Evaluate the center of the mask in search of black block
     # In case the image is black, return the original
-    x_div_2 = x/2
-    y_div_2 = y/2
-    delta_x = int(x_div_2/2)
-    delta_y = int(y_div_2/2)
     # Get a square from the center of the mask
-    sub_mask = mask[
-        y_div_2 - delta_y: y_div_2 + delta_y,
-        x_div_2 - delta_x: x_div_2 + delta_x
-    ]
-    mask_gray = cv2.cvtColor(sub_mask, cv2.COLOR_BGR2GRAY)
-    if (cv2.mean(mask_gray)[0] > 80.0):
+    # print('\n', cv2.mean(image_cut)[0] * 0.392)
+    if (cv2.mean(image_cut)[0] * 0.392 > 20.0):
+        image_cut = cv2.cvtColor(image_cut, cv2.COLOR_RGB2GRAY)
         # Trim that object
-        image_cut = image_copy[y:y+h, x:x+w]
-
         return cv2.bitwise_and(image_cut, image_cut, mask=mask)
     else:
         # print("\n-------------IMAGEN NEGRA----------------\n")
@@ -190,7 +197,8 @@ def cutHand(image, original_image):
 def createMask(image):
     # Apply a technique to normalize the overall colors of the image
     equalized_image = equalizeImg(image)
-    gray = cv2.cvtColor(equalized_image, cv2.COLOR_BGR2GRAY)
+    # gray = cv2.cvtColor(equalized_image, cv2.COLOR_BGR2GRAY)
+    gray = histogramsEqualization(equalized_image)
 
     # Blur the image to avoid erasing borders
     mask = cv2.GaussianBlur(gray, (33, 33), 0)
@@ -224,15 +232,11 @@ def createMask(image):
                 ])
             )
         # ====================================================================
-    else:
-        # In case of not finding an object, use the image
-        image = equalized_image
 
     return image
 
 
-# white-patch, normalizes the colors of the image
-#
+# NOTE: Actualizar descripcion
 # How the images have different shades of colors
 # This whit-patch algorithm is intended to carry the colors of the
 # images to an equal tone.
@@ -265,8 +269,7 @@ def rotateImage(imageToRotate):
 
     if (angleDegree < 0):
         angleDegree = angleDegree + 360
-    print(' ')
-    print(angleDegree)
+    # print('\n', angleDegree)
 
     if (angleDegree >= 0 and angleDegree < 45):
         angleToSubtract = 0
@@ -278,9 +281,9 @@ def rotateImage(imageToRotate):
         angleToSubtract = 270
     else:
         angleToSubtract = 0
-    print(angleToSubtract)
+    # print(angleToSubtract)
     angleToRotate = angleDegree - angleToSubtract
-    print(angleToRotate)
+    # print(angleToRotate)
     num_rows, num_cols = imageToRotate.shape[:2]
     rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), angleToRotate, 1)
     img_rotation = cv2.warpAffine(img, rotation_matrix, (num_cols, num_rows))
@@ -371,11 +374,12 @@ for i in range(total_file):
         mask = createMask(img.copy())
         img_hand = cv2.bitwise_and(img, img, mask=mask)
 
-        # Rotate hands
-        img = rotateImage(img)
-
         # Trim the hand of the image
         img = cutHand(equalizeImg(img_hand), img)
+
+        if ROTATE_IMAGE:
+            # Rotate hands
+            img = rotateImage(img)
 
     # Image Gradients
     if IMAGE_GRADIENTS:
