@@ -14,7 +14,7 @@ SAVE_RENDERS = not False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
-SAVE_IMAGE_FOR_DEBUGGER = False
+SAVE_IMAGE_FOR_DEBUGGER = not False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
@@ -27,6 +27,15 @@ ROTATE_IMAGE = False
 IMAGE_GRADIENTS = False
 
 
+# Show the images
+def writeImage(path, image):
+    if SAVE_IMAGE_FOR_DEBUGGER:
+        cv2.imwrite(
+            os.path.join(__location__, "dataset_sample", path, img_file),
+            image
+        )
+
+
 # XXX: Combertimos en gris y normalizamos el historama de colores
 def histogramsEqualization(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -36,11 +45,8 @@ def histogramsEqualization(img):
 
 # Delete small objects from the images
 def deleteObjects(image):
-    # Detect the edges with Canny
-    img = cv2.Canny(image, 100, 400)  # 50,150  ; 100,500
-
     # We look for contours
-    (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    (_, contours, _) = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     # In case of having more than 10000 contours, sub figures
     if len(contours) > 10000:
@@ -50,11 +56,8 @@ def deleteObjects(image):
         # Transformation is applied to eliminate particles
         img = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
-        # Convertir a escala de grises
-        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray = histogramsEqualization(img)
         # Get a new mask with fewer objects
-        _, thresh = cv2.threshold(gray, 75, 255, cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(img, 75, 255, cv2.THRESH_OTSU)
 
         # Detect the edges with Canny and then we look for contours
         img = cv2.Canny(thresh, 100, 400)  # 50,150  ; 100,500
@@ -62,25 +65,12 @@ def deleteObjects(image):
 
         image = cv2.bitwise_and(image, image, mask=thresh)
 
+    if len(contours) > 1:
         # He reported it because it can take a long time if the number is large
         if len(contours) > 3000:
-            # print(' Img with', len(contours), 'contours')
             updateProgress(progress[0], progress[1], total_file,
                            img_file + " Img with " + str(len(contours)) + " contours")
-        # ================================================================
-        if SAVE_IMAGE_FOR_DEBUGGER:
-            # show the images
-            cv2.imwrite(
-                os.path.join(__location__, "dataset_sample", "delete_object", img_file),
-                np.hstack([
-                    thresh,
-                    img,
-                    # image
-                ])
-            )
-        # ================================================================
 
-    if len(contours) > 1:
         # I guess the largest object is the hand or the only object in the image
         # From the contour list search the index of the largest object
         largest_object_index = 0
@@ -111,38 +101,33 @@ def deleteObjects(image):
             10  # tamaño del borde (-1, pintar adentro)
         )
 
+    writeImage("delete_object", np.hstack([  # ===========================
+        # img,
+        # thresh,
+        image
+    ]))  # show the images ===============================================
+
     return image, len(contours)
 
 
 # Cut the hand of the image
 # Look for the largest objects and create a mask, with that new mask
 # is applied to the original and cut out.
-def cutHand(image, original_image):
+def cutHand(image):
     image_copy = image.copy()
 
-    # convert to grayscale
-    # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = histogramsEqualization(image)
-
     # applying gaussian blur
-    blurred = cv2.GaussianBlur(gray, (47, 47), 0)
+    blurred = cv2.GaussianBlur(image, (47, 47), 0)
 
     # thresholdin: Otsu's Binarization method
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_OTSU)
     thresh = cv2.GaussianBlur(thresh, (41, 41), 0)
 
-    # ================================================================
-    if SAVE_IMAGE_FOR_DEBUGGER:
-        # show the images
-        cv2.imwrite(
-            os.path.join(__location__, "dataset_sample", "cut_hand", img_file),
-            np.hstack([
-                thresh,
-                # mask,
-                # image
-            ])
-        )
-    # ================================================================
+    writeImage("cut_hand", np.hstack([  # ================================
+        # img,
+        thresh,
+        image
+    ]))  # show the images ===============================================
 
     (image, contours, _) = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -166,13 +151,13 @@ def cutHand(image, original_image):
     )
 
     # Joining broken parts of an object.
+    kernel = np.ones((1, 1), np.uint8)
+    image_mask = cv2.erode(image, kernel, iterations=2)
     kernel = np.ones((5, 5), np.uint8)
-    # kernel = np.ones((10, 10), np.uint8)
-    # kernel = np.ones((15, 15), np.uint8)
-    image_mask = cv2.erode(image, kernel, iterations=1)
-    kernel = np.ones((30, 30), np.uint8)
-    image_mask = cv2.dilate(image_mask, kernel, iterations=1)
+    image_mask = cv2.dilate(image_mask, kernel, iterations=2)
+
     # Clean black spaces within the target
+    kernel = np.ones((75, 75), np.uint8)
     image_mask = cv2.morphologyEx(image_mask, cv2.MORPH_CLOSE, kernel)
 
     # Trim that object of mask and image
@@ -183,71 +168,75 @@ def cutHand(image, original_image):
     # In case the image is black, return the original
     # Get a square from the center of the mask
     # print('\n', cv2.mean(image_cut)[0] * 0.392)
-    if (cv2.mean(image_cut)[0] * 0.392 > 20.0):
-        image_cut = cv2.cvtColor(image_cut, cv2.COLOR_RGB2GRAY)
+    if (cv2.mean(image_cut)[0] * 0.392 > 10.0 or True):
         # Trim that object
         return cv2.bitwise_and(image_cut, image_cut, mask=mask)
     else:
-        # print("\n-------------IMAGEN NEGRA----------------\n")
+        print("-------------IMAGEN NEGRA----------------\n")
         return image_copy
 
 
 # Create a mask for the hand.
 # I guess the biggest objecUsar el descriptor basado en gradientet is the hand
-def createMask(image):
-    # Apply a technique to normalize the overall colors of the image
-    equalized_image = equalizeImg(image)
-    # gray = cv2.cvtColor(equalized_image, cv2.COLOR_BGR2GRAY)
-    gray = histogramsEqualization(equalized_image)
-
-    # Blur the image to avoid erasing borders
-    mask = cv2.GaussianBlur(gray, (33, 33), 0)
+def createMask(image, sensitivity=0.25):
     mask = cv2.inRange(
-        mask,
-        np.array(128),  # lower color
+        image,
+        np.array(int(sensitivity * 255)),  # lower color
         np.array(255)  # upper color
     )
-    # We apply the mask
-    image = cv2.bitwise_and(equalized_image, equalized_image, mask=mask)
+
+    # Clean black spaces within the target
+    kernel = np.ones((20, 20), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    # Blur the image to avoid erasing borders
+    mask = cv2.GaussianBlur(mask, (25, 25), 0)
+
+    # Joining broken parts of an object.
+    # kernel = np.ones((3, 3), np.uint8)
+    # mask = cv2.erode(mask, kernel, iterations=2)
+
+    # Detect the edges with Canny
+    # img = cv2.Canny(image, 100, 100)  # 50,150  ; 100,500
+
+    # _, thresh = cv2.threshold(image, 80, 255, cv2.THRESH_OTSU)
 
     # Delete other figures
-    image, contours = deleteObjects(image)
+    mask, contours = deleteObjects(mask)
 
-    if contours > 0:
-        # Blur the image to avoid erasing borders
-        image = cv2.GaussianBlur(image, (25, 25), 0)
-        image = cv2.inRange(
-            image,
-            np.array([60, 60, 60]),  # lower color
-            np.array([255, 255, 255])  # upper color
-        )
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.dilate(mask, kernel, iterations=2)
 
-        # show the images ====================================================
-        if SAVE_IMAGE_FOR_DEBUGGER:
-            cv2.imwrite(
-                os.path.join(__location__, "dataset_sample", "mask", img_file),
-                np.hstack([
-                    # mask,
-                    image,
-                ])
-            )
-        # ====================================================================
+    # Blur the image to avoid erasing borders
+    mask = cv2.GaussianBlur(mask, (25, 25), 0)
 
-    return image
+    writeImage("mask", np.hstack([  # ====================================
+        # img,
+        mask,
+        image
+    ]))  # show the images ===============================================
+
+    return mask
 
 
-# NOTE: Actualizar descripcion
-# How the images have different shades of colors
-# This whit-patch algorithm is intended to carry the colors of the
-# images to an equal tone.
-def equalizeImg(image):
-    B, G, R = cv2.split(image)
+# Create and apply a mask to the image, then cut out the large objects and
+# if the image is too white again, apply the procedure.
+# In each iteration the intensity increases.
+def extractingHands(image, sensitivity=0.20):
+    # Create mask to highlight your hand
+    mask = createMask(image, sensitivity)
+    # Aplly mask
+    img_mask = cv2.bitwise_and(image, image, mask=mask)
+    # Trim the hand of the image
+    img = cutHand(img_mask)
 
-    red = cv2.equalizeHist(R)
-    green = cv2.equalizeHist(G)
-    blue = cv2.equalizeHist(B)
+    avg_white = cv2.mean(img)[0]  # 0 to 255
+    # print('\n value', avg_white, 'proce', avg_white *
+    #      0.392, 'sen', sensitivity, '+', avg_white * 0.001)
+    if (avg_white * 0.392 > 60.0):
+        img = extractingHands(image, sensitivity + avg_white * 0.001)
 
-    return cv2.merge((blue, green, red))
+    return img
 
 
 def rotateImage(imageToRotate):
@@ -293,7 +282,7 @@ def rotateImage(imageToRotate):
 # Show a progress bar
 def updateProgress(progress, tick='', total='', status='Loading...'):
     lineLength = 80
-    barLength = 30
+    barLength = 23
     if isinstance(progress, int):
         progress = float(progress)
     if progress < 0:
@@ -366,20 +355,14 @@ for i in range(total_file):
     img_path = os.path.join(train_dir, img_file)
     img = cv2.imread(img_path)
 
-    # Sort colors in R, G, B
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = histogramsEqualization(img)
 
     if EXTRACTING_HANDS:
-        # Create mask to highlight your hand
-        mask = createMask(img.copy())
-        img_hand = cv2.bitwise_and(img, img, mask=mask)
+        img = extractingHands(img)
 
-        # Trim the hand of the image
-        img = cutHand(equalizeImg(img_hand), img)
-
-        if ROTATE_IMAGE:
-            # Rotate hands
-            img = rotateImage(img)
+    if ROTATE_IMAGE:
+        # Rotate hands
+        img = rotateImage(img)
 
     # Image Gradients
     if IMAGE_GRADIENTS:
