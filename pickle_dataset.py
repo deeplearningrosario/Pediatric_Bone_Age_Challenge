@@ -10,15 +10,15 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = not False
+SAVE_RENDERS = False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
-SAVE_IMAGE_FOR_DEBUGGER = not False
+SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = not False
+EXTRACTING_HANDS = False
 
 # Turn rotate image on/off
 ROTATE_IMAGE = False
@@ -36,76 +36,12 @@ def writeImage(path, image):
         )
 
 
-# XXX: Combertimos en gris y normalizamos el historama de colores
+# Histogram Calculation
+# https://en.wikipedia.org/wiki/Histogram_equalization
 def histogramsEqualization(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     return clahe.apply(img)
-
-
-# Delete small objects from the images
-def deleteObjects(image):
-    # We look for contours
-    (_, contours, _) = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-    # In case of having more than 10000 contours, sub figures
-    if len(contours) > 10000:
-        # Create a kernel of '1' of 10x10, used as an eraser
-        kernel = np.ones((10, 10), np.uint8)
-        # Transformation is applied to eliminate particles
-        img = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-
-        # Get a new mask with fewer objects
-        _, thresh = cv2.threshold(img, 75, 255, cv2.THRESH_OTSU)
-
-        # Detect the edges with Canny and then we look for contours
-        img = cv2.Canny(thresh, 100, 400)  # 50,150  ; 100,500
-        (_, contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-        image = cv2.bitwise_and(image, image, mask=thresh)
-
-    # He reported it because it can take a long time if the number is large
-    if len(contours) > 3000:
-        # print(' Img with', len(contours), 'contours')
-        updateProgress(progress[0], progress[1], total_file,
-                       img_file + " Img with " + str(len(contours)) + " contours")
-
-    if len(contours) > 1:
-        # I guess the largest object is the hand or the only object in the image
-        # From the contour list search the index of the largest object
-        largest_object_index = 0
-        for i, cnt in enumerate(contours):
-            if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
-                largest_object_index = i
-
-        # Paint the objects smaller than 30% of the large, limit: (0.2, 0.5]
-        lenOfObjetoGrande = cv2.contourArea(contours[largest_object_index]) * 0.3
-        for i, cnt in enumerate(contours):
-            if cv2.contourArea(cnt) < lenOfObjetoGrande:
-                cv2.drawContours(image, contours, i, (0, 0, 0), -1)
-
-        # Paint the largest object in white
-        cv2.drawContours(
-            image,  # image,
-            contours,  # objects
-            largest_object_index,  # índice de objeto (-1, todos)
-            (255, 255, 255),  # color
-            -1  # tamaño del borde (-1, pintar adentro)
-        )
-        # Add a border to the largest object in white
-        cv2.drawContours(
-            image,  # image,
-            contours,  # objects
-            largest_object_index,  # índice de objeto (-1, todos)
-            (255, 255, 255),  # color
-            0  # tamaño del borde (-1, pintar adentro)
-        )
-
-    writeImage("delete_object", np.hstack([  # ===========================
-        image,
-    ]))  # show the images ===============================================
-
-    return image, len(contours)
 
 
 # Cut the hand of the image
@@ -120,7 +56,6 @@ def cutHand(image):
     th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                 cv2.THRESH_BINARY, 11, 2)
 
-    # thresholdin: Otsu's Binarization method
     thresh = cv2.bitwise_not(th3, th2)
     thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
 
@@ -156,85 +91,6 @@ def cutHand(image):
         image_cut,
     ]))  # show the images ===============================================
     return image_cut
-
-
-# Create a mask for the hand.
-# I guess the biggest objecUsar el descriptor basado en gradientet is the hand
-def createMask(image, sensitivity=0.15):
-
-    mask = cv2.inRange(
-        image,
-        np.array(int(sensitivity * 255)),  # lower color
-        np.array(255)  # upper color
-    )
-
-    image_mask = cv2.bitwise_and(image, image, mask=mask)
-
-    #
-    (_, contours, _) = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-    # I guess the largest object is the hand or the only object in the image.
-    largest_object_index = 0
-    for i, cnt in enumerate(contours):
-        if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
-            largest_object_index = i
-
-    # create bounding rectangle around the contour (can skip below two lines)
-    [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
-    # White background below the largest object
-    cv2.rectangle(mask, (x, y), (x+w, y+h), (255, 255, 255), -1)
-    cv2.drawContours(
-        mask,  # image,
-        contours,  # objects
-        largest_object_index,  # índice de objeto (-1, todos)
-        (255, 255, 255),  # color
-        -1  # tamaño del borde (-1, pintar adentro)
-    )
-
-    # Trim that object of mask and image
-    mask = mask[y:y+h, x:x+w]
-    image_cut = image[y:y+h, x:x+w]
-
-    # Apply mask
-    image_mask = cv2.bitwise_and(image_cut, image_cut, mask=mask)
-
-    # NOTE ROTAR ACA ??
-    # image_mask = rotateImage(image_mask)
-
-    image_mask = cv2.medianBlur(image_mask, 5)
-
-    mask = cv2.inRange(
-        image_mask,
-        np.array(int(sensitivity * 250)),  # lower color
-        np.array(255)  # upper color
-    )
-
-    mask, _ = deleteObjects(mask)
-    image = cv2.bitwise_and(image_mask, image_mask, mask=mask)
-    writeImage("mask", np.hstack([  # ====================================
-        mask,
-        image_mask,
-    ]))  # show the images ===============================================
-
-    return image
-
-
-# Create and apply a mask to the image, then cut out the large objects and
-# if the image is too white again, apply the procedure.
-# In each iteration the intensity increases.
-def extractingHands(image, sensitivity=0.27):
-    # Create mask to highlight your hand
-    img = createMask(image, sensitivity)
-    # Aplly mask
-    # img = cv2.bitwise_and(image, image, mask=mask)
-
-    avg_white = cv2.mean(img)[0]  # 0 to 255
-    print('\n value', avg_white, 'proce', avg_white *
-          0.392, 'sen', sensitivity, '+', avg_white * 0.001)
-    if (avg_white * 0.392 > 60.0):
-        img = extractingHands(img, sensitivity + avg_white * 0.001)
-
-    return img
 
 
 def rotateImage(imageToRotate):
@@ -321,7 +177,7 @@ m = a.shape[0]
 
 # Create the directories to save the images
 if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ['mask', 'cut_hand', 'delete_object', 'render']:
+    for folder in ['cut_hand', 'render']:
         if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
             os.makedirs(os.path.join(__location__, "dataset_sample", folder))
 if SAVE_RENDERS:
@@ -358,7 +214,6 @@ for i in range(total_file):
     if EXTRACTING_HANDS:
         # Trim the hand of the image
         img = cutHand(img)
-        img = extractingHands(img)
 
     if ROTATE_IMAGE:
         # Rotate hands
