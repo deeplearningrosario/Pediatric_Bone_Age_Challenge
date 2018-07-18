@@ -10,7 +10,7 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = False
+SAVE_RENDERS = not False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -18,10 +18,10 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = not False
 
 # Turn rotate image on/off
-ROTATE_IMAGE = False
+ROTATE_IMAGE = not False
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
@@ -235,13 +235,7 @@ for i in range(total_file):
 
     # ====================== show the images ================================
     if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-        cv2.imwrite(
-            os.path.join(__location__, "dataset_sample", "render", img_file),
-            np.hstack([
-                img
-            ])
-        )
-    # =======================================================================
+        cv2.imwrite(os.path.join(__location__, "dataset_sample", "render", img_file), img)
 
     # Resize the images
     img = cv2.resize(img, (224, 224))
