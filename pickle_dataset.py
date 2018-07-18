@@ -18,7 +18,7 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = not False
 
 # Turn rotate image on/off
 ROTATE_IMAGE = not False
