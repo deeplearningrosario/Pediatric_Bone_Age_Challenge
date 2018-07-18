@@ -87,9 +87,10 @@ def cutHand(image):
     # Apply mask
     image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
-    writeImage("cut_hand", np.hstack([  # ================================
+    writeImage("cut_hand", np.hstack([
         image_cut,
-    ]))  # show the images ===============================================
+    ]))  # show the images ===========
+
     return image_cut
 
 
