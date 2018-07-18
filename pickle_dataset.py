@@ -94,9 +94,11 @@ def cutHand(image):
 
 
 def rotateImage(imageToRotate):
-    edges = cv2.Canny(imageToRotate, 50, 150, apertureSize=3)
+    edges = cv2.Canny(imageToRotate, 100, 150, apertureSize=3)
     # Obtener una línea de la imágen
     lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
+    if lines is None:
+        return imageToRotate
     for rho, theta in lines[0]:
         a = np.cos(theta)
         b = np.sin(theta)
