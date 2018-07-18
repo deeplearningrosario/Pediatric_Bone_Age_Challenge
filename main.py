@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from keras.applications.inception_v3 import InceptionV3
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
@@ -8,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
 EPOCHS = 10
