@@ -1,5 +1,6 @@
-# Check metrics using trained weight files
+#!/usr/bin/python3
 
+# Check metrics using trained weight files
 from keras.applications.inception_v3 import InceptionV3
 # from keras.preprocessing import image
 from keras.models import Model
@@ -10,7 +11,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import os
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("C:/Pablo/Git/deeplearningforcomputervision/")))
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 batch_size = 32
 epochs = 10

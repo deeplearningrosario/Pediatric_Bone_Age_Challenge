@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from keras.applications.inception_v3 import InceptionV3
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
