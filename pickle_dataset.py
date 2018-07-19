@@ -253,10 +253,8 @@ def rotateImage(imageToRotate):
             angleToRotate = angleDegree - angleToSubtract
             num_rows, num_cols = imageToRotate.shape[:2]
             rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), angleToRotate, 1)
-            img_rotation = cv2.warpAffine(img, rotation_matrix, (num_cols, num_rows))
-    else:
-        img_rotation = imageToRotate
-    return img_rotation
+            imageToRotate = cv2.warpAffine(imageToRotate, rotation_matrix, (num_cols, num_rows))
+    return imageToRotate
 
 
 # Show a progress bar
