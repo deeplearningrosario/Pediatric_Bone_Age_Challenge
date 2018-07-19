@@ -10,7 +10,7 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = False
+SAVE_RENDERS = True
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -18,7 +18,7 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = True
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
@@ -224,40 +224,39 @@ def rotateImage(imageToRotate):
     edges = cv2.Canny(imageToRotate, 50, 150, apertureSize=3)
     # Obtener una línea de la imágen
     lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
-    for rho, theta in lines[0]:
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a*rho
-        y0 = b*rho
-        x1 = int(x0 + 1000*(-b))
-        y1 = int(y0 + 1000*(a))
-        x2 = int(x0 - 1000*(-b))
-        y2 = int(y0 - 1000*(a))
-        cv2.line(imageToRotate, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        angle = math.atan2(y1 - y2, x1 - x2)
-        angleDegree = (angle*180)/math.pi
-
-    if (angleDegree < 0):
-        angleDegree = angleDegree + 360
-    print(' ')
-    print(angleDegree)
-
-    if (angleDegree >= 0 and angleDegree < 45):
-        angleToSubtract = 0
-    elif (angleDegree >= 45 and angleDegree < 135):
-        angleToSubtract = 90
-    elif (angleDegree >= 135 and angleDegree < 225):
-        angleToSubtract = 180
-    elif (angleDegree >= 225 and angleDegree < 315):
-        angleToSubtract = 270
+    if (not(lines is None)):
+        for rho, theta in lines[0]:
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
+            #cv2.line(imageToRotate, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            angle = math.atan2(y1 - y2, x1 - x2)
+            angleDegree = (angle*180)/math.pi
+    
+        if (angleDegree < 0):
+            angleDegree = angleDegree + 360
+        
+        if (angleDegree >= 0 and angleDegree < 45):
+            angleToSubtract = 0
+        elif (angleDegree >= 45 and angleDegree < 135):
+            angleToSubtract = 90
+        elif (angleDegree >= 135 and angleDegree < 225):
+            angleToSubtract = 180
+        elif (angleDegree >= 225 and angleDegree < 315):
+            angleToSubtract = 270
+        else:
+            angleToSubtract = 0
+        angleToRotate = angleDegree - angleToSubtract
+        num_rows, num_cols = imageToRotate.shape[:2]
+        rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), angleToRotate, 1)
+        img_rotation = cv2.warpAffine(img, rotation_matrix, (num_cols, num_rows))
     else:
-        angleToSubtract = 0
-    print(angleToSubtract)
-    angleToRotate = angleDegree - angleToSubtract
-    print(angleToRotate)
-    num_rows, num_cols = imageToRotate.shape[:2]
-    rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), angleToRotate, 1)
-    img_rotation = cv2.warpAffine(img, rotation_matrix, (num_cols, num_rows))
+        img_rotation = imageToRotate
     return img_rotation
 
 
@@ -341,16 +340,19 @@ for i in range(total_file):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     if EXTRACTING_HANDS:
+        # Rotate hands
+        img = rotateImage(img)
+        
         # Create mask to highlight your hand
         mask = createMask(img.copy())
         img_hand = cv2.bitwise_and(img, img, mask=mask)
-
+        
         # Trim the hand of the image
         img = cutHand(equalizeImg(img_hand), img)
+    
 
-        # Rotate hands
-        img = rotateImage(img)
 
+        
     # Image Gradients
     if IMAGE_GRADIENTS:
         laplacian = cv2.Laplacian(img, cv2.CV_64F)
