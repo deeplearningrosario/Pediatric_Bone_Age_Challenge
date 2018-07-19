@@ -21,15 +21,15 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 EXTRACTING_HANDS = not False
 
 # Turn rotate image on/off
-ROTATE_IMAGE = False
+ROTATE_IMAGE = not False
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
 
 
 # Show the images
-def writeImage(path, image):
-    if SAVE_IMAGE_FOR_DEBUGGER:
+def writeImage(path, image, force=False):
+    if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(
             os.path.join(__location__, "dataset_sample", path, img_file),
             image
@@ -95,7 +95,7 @@ def cutHand(image):
 
 
 def rotateImage(imageToRotate):
-    edges = cv2.Canny(imageToRotate, 100, 150, apertureSize=3)
+    edges = cv2.Canny(imageToRotate, 50, 150, apertureSize=3)
     # Obtener una línea de la imágen
     lines = cv2.HoughLines(edges, 1, np.pi/180, 180)
     if (not(lines is None) and len(lines) >= 1):
