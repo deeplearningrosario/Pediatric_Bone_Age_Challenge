@@ -10,7 +10,7 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = not True
+SAVE_RENDERS = False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -18,10 +18,10 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = not False
+EXTRACTING_HANDS = False
 
 # Turn rotate image on/off
-ROTATE_IMAGE = not False
+ROTATE_IMAGE = False
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
