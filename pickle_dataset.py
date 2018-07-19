@@ -10,7 +10,7 @@ import sys
 import math
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = True
+SAVE_RENDERS = not True
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -210,7 +210,6 @@ for i in range(total_file):
     img = histogramsEqualization(img)
 
     if EXTRACTING_HANDS:
-<< << << < HEAD
         # Trim the hand of the image
         img = cutHand(img)
 
