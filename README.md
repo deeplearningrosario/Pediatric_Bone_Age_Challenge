@@ -15,6 +15,7 @@ Dependencies needed
 * [opencv-python](https://opencv.org/)
 * [pandas](https://pandas.pydata.org/)
 * [numpy](http://www.numpy.org/)
+* [matplotlib]
 
 Install on Linux
 ```bash
