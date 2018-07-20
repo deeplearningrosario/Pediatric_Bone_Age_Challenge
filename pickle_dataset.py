@@ -38,51 +38,34 @@ def writeImage(path, image, force=False):
         )
 
 
-def sigma(x, x_0=1.5, a=0.15):
-    return 1/(1 + math.pow(math.e, -(x-x_0)/a))
-
-
 # Auto adjust levels colors
 def histogramsLevelFix(img):
     min_color, max_color = np.percentile(img, (2.5, 99.4))
-    # hist, _ = np.histogram(img, 'auto', (min_color, max_color))
-    # print('\n', len(np.where(hist > 0)[0]))
-
     min_color = int(min_color)
     max_color = int(max_color)
-    med_color = int(max_color - (max_color-min_color) / 2)
 
     # Armar una nueva paleta de colores
     colors_palette = []
-    proc_color = 50 / med_color
     for color in range(256):
         if color <= min_color:
-            proc = 0
+            colors_palette.append(0)
         elif color >= max_color:
-            proc = 255
+            colors_palette.append(255)
         else:
-            proc = color * proc_color
-        # print(((color - min_color)*256/max_color - min_color))
-        colors_palette.append(int(proc * 2.55))
-
+            colors_palette.append(int(
+                (color - min_color) * 256 / (max_color - min_color)
+            ))
     colors_palette = np.clip(colors_palette, 0, 255)
 
-    # print('\n',  min_color, med_color, max_color)
-    # print(min_color, '-min>', colors_palette[min_color])
-    # print(max_color, '-max>', colors_palette[max_color])
-
-    img2 = img.copy()
     height, width = img.shape
     for y in range(0, height):
         for x in range(0, width):
             color = img[y, x]
-            # print(color, '->', colors_palette[color])
-            img2[y, x] = colors_palette[color]
+            img[y, x] = colors_palette[color]
 
-    # img3 = img * 255.0/img.max()
     writeImage("histograms_level_fix", np.hstack([
-        img2,
-    ]), True)  # show the images ===========
+        img,
+    ]))  # show the images ===========
 
     return img
 
@@ -91,15 +74,9 @@ def histogramsLevelFix(img):
 # https://en.wikipedia.org/wiki/Histogram_equalization
 def histogramsEqualization(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    histogramsLevelFix(img)
+    # img = histogramsLevelFix(img)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     return clahe.apply(img)
-    """
-    H, S, V = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
-    eq_V = cv2.equalizeHist(V)
-    eq_image = cv2.cvtColor(cv2.merge([H, S, eq_V]), cv2.COLOR_HSV2RGB)
-    return cv2.cvtColor(eq_image, cv2.COLOR_BGR2GRAY)
-    """
 
 
 # Cut the hand of the image
