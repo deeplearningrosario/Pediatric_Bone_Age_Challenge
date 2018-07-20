@@ -12,7 +12,7 @@ import pandas as pd
 import sys
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = not False
+SAVE_RENDERS = False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
@@ -39,24 +39,28 @@ def writeImage(path, image, force=False):
 
 
 # Auto adjust levels colors
+# We order the colors of the image with their frequency and
+# obtain the accumulated one, then we obtain the colors that
+# accumulate 2.5% and 99.4% of the frequency.
 def histogramsLevelFix(img):
+    # Find the acceptable limits of the intensity histogram
     min_color, max_color = np.percentile(img, (2.5, 99.4))
     min_color = int(min_color)
     max_color = int(max_color)
 
-    # Armar una nueva paleta de colores
+    # To improve the preform we created a color palette with the new values
     colors_palette = []
+    # Auxiliary calculation, avoid doing calculations within the 'for'
+    dif_color = 255 / (max_color - min_color)
     for color in range(256):
         if color <= min_color:
             colors_palette.append(0)
         elif color >= max_color:
             colors_palette.append(255)
         else:
-            colors_palette.append(int(
-                (color - min_color) * 256 / (max_color - min_color)
-            ))
-    colors_palette = np.clip(colors_palette, 0, 255)
+            colors_palette.append(int((color - min_color) * dif_color))
 
+    # We paint the image with the new color palette
     height, width = img.shape
     for y in range(0, height):
         for x in range(0, width):
@@ -74,7 +78,7 @@ def histogramsLevelFix(img):
 # https://en.wikipedia.org/wiki/Histogram_equalization
 def histogramsEqualization(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # img = histogramsLevelFix(img)
+    img = histogramsLevelFix(img)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     return clahe.apply(img)
 
