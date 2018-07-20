@@ -41,6 +41,8 @@ def writeImage(path, image, force=False):
 # obtain the accumulated one, then we obtain the colors that
 # accumulate 2.5% and 99.4% of the frequency.
 def histogramsLevelFix(img):
+    # This function is only prepared for images in scale of gripes
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Find the acceptable limits of the intensity histogram
     min_color, max_color = np.percentile(img, (2.5, 99.4))
     min_color = int(min_color)
@@ -69,16 +71,6 @@ def histogramsLevelFix(img):
         img,
     ]))  # show the images ===========
 
-    return img
-
-
-# Histogram Calculation
-# https://en.wikipedia.org/wiki/Histogram_equalization
-def histogramsEqualization(img):
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = histogramsLevelFix(img)
-    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    # return clahe.apply(img)
     return img
 
 
@@ -245,7 +237,7 @@ for i in range(total_file):
     img_path = os.path.join(train_dir, img_file)
     img = cv2.imread(img_path)
 
-    img = histogramsEqualization(img)
+    img = histogramsLevelFix(img)
 
     if EXTRACTING_HANDS:
         # Trim the hand of the image
