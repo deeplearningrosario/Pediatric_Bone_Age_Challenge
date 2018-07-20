@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
 from six.moves import cPickle
+# from functools import reduce
 import cv2
 import fnmatch
+import math
 import numpy as np
+# import operator
 import os
 import pandas as pd
 import sys
-import math
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = not False
@@ -21,7 +23,7 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 EXTRACTING_HANDS = not False
 
 # Turn rotate image on/off
-ROTATE_IMAGE = not False
+ROTATE_IMAGE = False
 
 # Usar el descriptor basado en gradiente
 IMAGE_GRADIENTS = False
@@ -36,12 +38,77 @@ def writeImage(path, image, force=False):
         )
 
 
+# Auto adjust levels colors
+def histogramsLevelFix(img):
+    """
+    hist, bins = np.histogram(img.flatten(), 256, [0, 256])
+    cdf = hist.cumsum()
+    cdf = cdf * hist.max() / cdf.max()
+    cdf_m = np.ma.masked_equal(cdf, 0)
+    cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+    cdf = np.ma.filled(cdf_m, 0).astype('uint8')
+    img2 = cdf[img]
+
+    """
+    # -----------------------------
+    hist = cv2.calcHist([img], [0], None, [256], [0, 255])
+    cv2.normalize(hist, hist, 0, 1, norm_type=cv2.NORM_MINMAX)
+    # TODO: La idea es encontrar la frecuencia relativa de los colores y
+    # con ellos encontrar el rango donde esta el 95% de los colores para
+    # adapatar esos colores en toda la esca de colores, es decir el color más
+    # oscuro sera el negro y el más claro sera el blanco.
+    min_color = 255
+    max_color = 0
+    # FIXME: Ahora solo el primer color que supere 0.004,
+    # deberian ser los que esten dentro del 95%
+    for color, frequency in enumerate(hist):
+        if color != 0 and color != 255:
+            # print(color, frequency[0])
+            if frequency > 0.004:
+                if color > max_color:
+                    max_color = color
+                if color < min_color:
+                    min_color = color
+
+    # Armar una nueva paleta de colores
+    colors_palette = []
+    proc_max = 100 / (max_color - min_color)
+    for color in range(256):
+        proc = color * proc_max
+        colors_palette.append(np.int(np.clip(proc * 2.55, 0, 255)))
+
+    print('\n', len(colors_palette), min_color, max_color)
+    print(min_color, '-min>', colors_palette[min_color])
+    print(max_color, '-max>', colors_palette[max_color])
+
+    img2 = img.copy()
+    height, width = img.shape
+    for y in range(0, height):
+        for x in range(0, width):
+            color = img[y, x]
+            # print(color, '->', colors_palette[color])
+            img2[y, x] = colors_palette[color]
+
+    writeImage("histograms_level_fix", np.hstack([
+        img2
+    ]), True)  # show the images ===========
+
+    return img
+
+
 # Histogram Calculation
 # https://en.wikipedia.org/wiki/Histogram_equalization
 def histogramsEqualization(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    histogramsLevelFix(img)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     return clahe.apply(img)
+    """
+    H, S, V = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+    eq_V = cv2.equalizeHist(V)
+    eq_image = cv2.cvtColor(cv2.merge([H, S, eq_V]), cv2.COLOR_HSV2RGB)
+    return cv2.cvtColor(eq_image, cv2.COLOR_BGR2GRAY)
+    """
 
 
 # Cut the hand of the image
@@ -88,7 +155,7 @@ def cutHand(image):
     image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
     writeImage("cut_hand", np.hstack([
-        image_cut,
+        image_cut
     ]))  # show the images ===========
 
     return image_cut
@@ -175,7 +242,7 @@ m = a.shape[0]
 
 # Create the directories to save the images
 if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ['cut_hand', 'render']:
+    for folder in ['histograms_level_fix', 'cut_hand', 'render']:
         if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
             os.makedirs(os.path.join(__location__, "dataset_sample", folder))
 if SAVE_RENDERS:
