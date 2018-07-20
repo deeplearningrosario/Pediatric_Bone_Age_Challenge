@@ -49,18 +49,10 @@ def histogramsLevelFix(img):
     cdf = np.ma.filled(cdf_m, 0).astype('uint8')
     img2 = cdf[img]
 
-    """
-    # -----------------------------
     hist = cv2.calcHist([img], [0], None, [256], [0, 255])
     cv2.normalize(hist, hist, 0, 1, norm_type=cv2.NORM_MINMAX)
-    # TODO: La idea es encontrar la frecuencia relativa de los colores y
-    # con ellos encontrar el rango donde esta el 95% de los colores para
-    # adapatar esos colores en toda la esca de colores, es decir el color más
-    # oscuro sera el negro y el más claro sera el blanco.
     min_color = 255
     max_color = 0
-    # FIXME: Ahora solo el primer color que supere 0.004,
-    # deberian ser los que esten dentro del 95%
     for color, frequency in enumerate(hist):
         if color != 0 and color != 255:
             # print(color, frequency[0])
@@ -69,15 +61,24 @@ def histogramsLevelFix(img):
                     max_color = color
                 if color < min_color:
                     min_color = color
+    print('\n', min_color, max_color)
+    """
+    # -----------------------------
+    min_color, max_color = np.percentile(img, (2.5, 99.4))
+    min_color = int(min_color)
+    max_color = int(max_color)
 
     # Armar una nueva paleta de colores
     colors_palette = []
     proc_max = 100 / (max_color - min_color)
     for color in range(256):
         proc = color * proc_max
-        colors_palette.append(np.int(np.clip(proc * 2.55, 0, 255)))
+        colors_palette.append(np.int(proc * 2.55))
+        # print((color - min_color) * (255 - 0) / (max_color - min_color) + 0)
 
-    print('\n', len(colors_palette), min_color, max_color)
+    colors_palette = np.clip(colors_palette, 0, 255)
+
+    print('\n', np.size(colors_palette), min_color, max_color)
     print(min_color, '-min>', colors_palette[min_color])
     print(max_color, '-max>', colors_palette[max_color])
 
@@ -89,8 +90,9 @@ def histogramsLevelFix(img):
             # print(color, '->', colors_palette[color])
             img2[y, x] = colors_palette[color]
 
+    # img3 = img * 255.0/img.max()
     writeImage("histograms_level_fix", np.hstack([
-        img2
+        img2,
     ]), True)  # show the images ===========
 
     return img
