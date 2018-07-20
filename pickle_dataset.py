@@ -38,49 +38,38 @@ def writeImage(path, image, force=False):
         )
 
 
+def sigma(x, x_0=1.5, a=0.15):
+    return 1/(1 + math.pow(math.e, -(x-x_0)/a))
+
+
 # Auto adjust levels colors
 def histogramsLevelFix(img):
-    """
-    hist, bins = np.histogram(img.flatten(), 256, [0, 256])
-    cdf = hist.cumsum()
-    cdf = cdf * hist.max() / cdf.max()
-    cdf_m = np.ma.masked_equal(cdf, 0)
-    cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
-    cdf = np.ma.filled(cdf_m, 0).astype('uint8')
-    img2 = cdf[img]
-
-    hist = cv2.calcHist([img], [0], None, [256], [0, 255])
-    cv2.normalize(hist, hist, 0, 1, norm_type=cv2.NORM_MINMAX)
-    min_color = 255
-    max_color = 0
-    for color, frequency in enumerate(hist):
-        if color != 0 and color != 255:
-            # print(color, frequency[0])
-            if frequency > 0.004:
-                if color > max_color:
-                    max_color = color
-                if color < min_color:
-                    min_color = color
-    print('\n', min_color, max_color)
-    """
-    # -----------------------------
     min_color, max_color = np.percentile(img, (2.5, 99.4))
+    # hist, _ = np.histogram(img, 'auto', (min_color, max_color))
+    # print('\n', len(np.where(hist > 0)[0]))
+
     min_color = int(min_color)
     max_color = int(max_color)
+    med_color = int(max_color - (max_color-min_color) / 2)
 
     # Armar una nueva paleta de colores
     colors_palette = []
-    proc_max = 100 / (max_color - min_color)
+    proc_color = 50 / med_color
     for color in range(256):
-        proc = color * proc_max
-        colors_palette.append(np.int(proc * 2.55))
-        # print((color - min_color) * (255 - 0) / (max_color - min_color) + 0)
+        if color <= min_color:
+            proc = 0
+        elif color >= max_color:
+            proc = 255
+        else:
+            proc = color * proc_color
+        # print(((color - min_color)*256/max_color - min_color))
+        colors_palette.append(int(proc * 2.55))
 
     colors_palette = np.clip(colors_palette, 0, 255)
 
-    print('\n', np.size(colors_palette), min_color, max_color)
-    print(min_color, '-min>', colors_palette[min_color])
-    print(max_color, '-max>', colors_palette[max_color])
+    # print('\n',  min_color, med_color, max_color)
+    # print(min_color, '-min>', colors_palette[min_color])
+    # print(max_color, '-max>', colors_palette[max_color])
 
     img2 = img.copy()
     height, width = img.shape
