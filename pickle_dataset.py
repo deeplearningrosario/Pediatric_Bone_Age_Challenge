@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
 from six.moves import cPickle
-# from functools import reduce
 import cv2
 import fnmatch
 import math
 import numpy as np
-# import operator
 import os
 import pandas as pd
 import sys
