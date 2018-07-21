@@ -3,11 +3,11 @@
 from six.moves import cPickle
 import cv2
 import fnmatch
+import math
 import numpy as np
 import os
 import pandas as pd
 import sys
-import math
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -18,7 +18,7 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = False
+EXTRACTING_HANDS = not False
 
 # Turn rotate image on/off
 ROTATE_IMAGE = False
@@ -28,20 +28,50 @@ IMAGE_GRADIENTS = False
 
 
 # Show the images
-def writeImage(path, image):
-    if SAVE_IMAGE_FOR_DEBUGGER:
+def writeImage(path, image, force=False):
+    if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(
             os.path.join(__location__, "dataset_sample", path, img_file),
             image
         )
 
 
-# Histogram Calculation
-# https://en.wikipedia.org/wiki/Histogram_equalization
-def histogramsEqualization(img):
+# Auto adjust levels colors
+# We order the colors of the image with their frequency and
+# obtain the accumulated one, then we obtain the colors that
+# accumulate 2.5% and 99.4% of the frequency.
+def histogramsLevelFix(img):
+    # This function is only prepared for images in scale of gripes
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    return clahe.apply(img)
+    # Find the acceptable limits of the intensity histogram
+    min_color, max_color = np.percentile(img, (2.5, 99.4))
+    min_color = int(min_color)
+    max_color = int(max_color)
+
+    # To improve the preform we created a color palette with the new values
+    colors_palette = []
+    # Auxiliary calculation, avoid doing calculations within the 'for'
+    dif_color = 255 / (max_color - min_color)
+    for color in range(256):
+        if color <= min_color:
+            colors_palette.append(0)
+        elif color >= max_color:
+            colors_palette.append(255)
+        else:
+            colors_palette.append(int((color - min_color) * dif_color))
+
+    # We paint the image with the new color palette
+    height, width = img.shape
+    for y in range(0, height):
+        for x in range(0, width):
+            color = img[y, x]
+            img[y, x] = colors_palette[color]
+
+    writeImage("histograms_level_fix", np.hstack([
+        img,
+    ]))  # show the images ===========
+
+    return img
 
 
 # Cut the hand of the image
@@ -88,14 +118,14 @@ def cutHand(image):
     image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
     writeImage("cut_hand", np.hstack([
-        image_cut,
+        image_cut
     ]))  # show the images ===========
 
     return image_cut
 
 
 def rotateImage(imageToRotate):
-    edges = cv2.Canny(imageToRotate, 100, 150, apertureSize=3)
+    edges = cv2.Canny(imageToRotate, 50, 150, apertureSize=3)
     # Obtener una línea de la imágen
     lines = cv2.HoughLines(edges, 1, np.pi/180, 180)
     if (not(lines is None) and len(lines) >= 1):
@@ -175,7 +205,7 @@ m = a.shape[0]
 
 # Create the directories to save the images
 if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ['cut_hand', 'render']:
+    for folder in ['histograms_level_fix', 'cut_hand', 'render']:
         if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
             os.makedirs(os.path.join(__location__, "dataset_sample", folder))
 if SAVE_RENDERS:
@@ -207,7 +237,7 @@ for i in range(total_file):
     img_path = os.path.join(train_dir, img_file)
     img = cv2.imread(img_path)
 
-    img = histogramsEqualization(img)
+    img = histogramsLevelFix(img)
 
     if EXTRACTING_HANDS:
         # Trim the hand of the image
