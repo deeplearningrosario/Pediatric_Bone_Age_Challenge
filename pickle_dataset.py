@@ -18,13 +18,13 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = not False
+EXTRACTING_HANDS = True
 
 # Turn rotate image on/off
 ROTATE_IMAGE = False
 
-# Usar el descriptor basado en gradiente
-IMAGE_GRADIENTS = False
+# Adjust color levels
+ADJUST_COLOR_LEVELS = True
 
 
 # Show the images
@@ -58,7 +58,7 @@ def histogramsLevelFix(img):
         elif color >= max_color:
             colors_palette.append(255)
         else:
-            colors_palette.append(int((color - min_color) * dif_color))
+            colors_palette.append(int(round((color - min_color) * dif_color)))
 
     # We paint the image with the new color palette
     height, width = img.shape
@@ -80,7 +80,10 @@ def histogramsLevelFix(img):
 def cutHand(image):
     image_copy = image.copy()
 
-    img = cv2.medianBlur(image, 5)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    img = clahe.apply(image)
+
+    img = cv2.medianBlur(img, 5)
     th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
                                 cv2.THRESH_BINARY, 11, 2)
     th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -237,7 +240,9 @@ for i in range(total_file):
     img_path = os.path.join(train_dir, img_file)
     img = cv2.imread(img_path)
 
-    img = histogramsLevelFix(img)
+    if ADJUST_COLOR_LEVELS:
+        # Adjust color levels
+        img = histogramsLevelFix(img)
 
     if EXTRACTING_HANDS:
         # Trim the hand of the image
@@ -246,18 +251,6 @@ for i in range(total_file):
     if ROTATE_IMAGE:
         # Rotate hands
         img = rotateImage(img)
-
-    # TODO Image Gradients
-    if IMAGE_GRADIENTS:
-        laplacian = cv2.Laplacian(img, cv2.CV_64F)
-        sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
-        sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
-        img = cv2.bitwise_or(sobelx, sobely)
-
-        # sobelx8u = cv2.Sobel(img, cv2.CV_8U, 1, 0, ksize=5)
-        # sobelx64f = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
-        # abs_sobel64f = np.absolute(sobelx64f)
-        # sobel_8u = np.uint8(abs_sobel64f)
 
     # ====================== show the images ================================
     if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
