@@ -105,7 +105,7 @@ def cutHand(image):
         contours,  # objects
         largest_object_index,  # índice de objeto (-1, todos)
         (255, 255, 255),  # color
-        2,  # tamaño del borde (-1, pintar adentro)
+        -1,  # tamaño del borde (-1, pintar adentro)
     )
 
     # Trim that object of mask and image
