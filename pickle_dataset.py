@@ -23,17 +23,11 @@ EXTRACTING_HANDS = True
 # Turn rotate image on/off
 ROTATE_IMAGE = False
 
-# Adjust color levels
-ADJUST_COLOR_LEVELS = True
-
 
 # Show the images
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
-        cv2.imwrite(
-            os.path.join(__location__, "dataset_sample", path, img_file),
-            image
-        )
+        cv2.imwrite(os.path.join(__location__, "dataset_sample", path, img_file), image)
 
 
 # Auto adjust levels colors
@@ -67,9 +61,7 @@ def histogramsLevelFix(img):
             color = img[y, x]
             img[y, x] = colors_palette[color]
 
-    writeImage("histograms_level_fix", np.hstack([
-        img,
-    ]))  # show the images ===========
+    writeImage("histograms_level_fix", np.hstack([img]))  # show the images ===========
 
     return img
 
@@ -84,10 +76,12 @@ def cutHand(image):
     img = clahe.apply(image)
 
     img = cv2.medianBlur(img, 5)
-    th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
-                                cv2.THRESH_BINARY, 11, 2)
-    th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                cv2.THRESH_BINARY, 11, 2)
+    th2 = cv2.adaptiveThreshold(
+        img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+    th3 = cv2.adaptiveThreshold(
+        img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
 
     thresh = cv2.bitwise_not(th3, th2)
     thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
@@ -99,30 +93,29 @@ def cutHand(image):
     for i, cnt in enumerate(contours):
         if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
             largest_object_index = i
+    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
 
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
     # White background below the largest object
-    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 255, 255), -1)
+    cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), -1)
 
     cv2.drawContours(
         image,  # image,
         contours,  # objects
         largest_object_index,  # índice de objeto (-1, todos)
         (255, 255, 255),  # color
-        -1  # tamaño del borde (-1, pintar adentro)
+        2,  # tamaño del borde (-1, pintar adentro)
     )
 
     # Trim that object of mask and image
-    mask = image[y:y+h, x:x+w]
-    image_cut = image_copy[y:y+h, x:x+w]
+    mask = image[y: y + h, x: x + w]
+    image_cut = image_copy[y: y + h, x: x + w]
 
     # Apply mask
     image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
 
-    writeImage("cut_hand", np.hstack([
-        image_cut
-    ]))  # show the images ===========
+    writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
     return image_cut
 
@@ -130,44 +123,46 @@ def cutHand(image):
 def rotateImage(imageToRotate):
     edges = cv2.Canny(imageToRotate, 50, 150, apertureSize=3)
     # Obtener una línea de la imágen
-    lines = cv2.HoughLines(edges, 1, np.pi/180, 180)
-    if (not(lines is None) and len(lines) >= 1):
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, 180)
+    if not (lines is None) and len(lines) >= 1:
         for i in range(1):
             for rho, theta in lines[i]:
                 a = np.cos(theta)
                 b = np.sin(theta)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0 + 1000*(-b))
-                y1 = int(y0 + 1000*(a))
-                x2 = int(x0 - 1000*(-b))
-                y2 = int(y0 - 1000*(a))
+                x0 = a * rho
+                y0 = b * rho
+                x1 = int(x0 + 1000 * (-b))
+                y1 = int(y0 + 1000 * (a))
+                x2 = int(x0 - 1000 * (-b))
+                y2 = int(y0 - 1000 * (a))
                 # cv2.line(imageToRotate, (x1, y1), (x2, y2), (0, 0, 255), 2)
                 angle = math.atan2(y1 - y2, x1 - x2)
-                angleDegree = (angle*180)/math.pi
-            if (angleDegree < 0):
+                angleDegree = (angle * 180) / math.pi
+            if angleDegree < 0:
                 angleDegree = angleDegree + 360
-            if (angleDegree >= 0 and angleDegree < 45):
+            if angleDegree >= 0 and angleDegree < 45:
                 angleToSubtract = 0
-            elif (angleDegree >= 45 and angleDegree < 135):
+            elif angleDegree >= 45 and angleDegree < 135:
                 angleToSubtract = 90
-            elif (angleDegree >= 135 and angleDegree < 225):
+            elif angleDegree >= 135 and angleDegree < 225:
                 angleToSubtract = 180
-            elif (angleDegree >= 225 and angleDegree < 315):
+            elif angleDegree >= 225 and angleDegree < 315:
                 angleToSubtract = 270
             else:
                 angleToSubtract = 0
             angleToRotate = angleDegree - angleToSubtract
             num_rows, num_cols = imageToRotate.shape[:2]
             rotation_matrix = cv2.getRotationMatrix2D(
-                (num_cols/2, num_rows/2), angleToRotate, 1)
+                (num_cols / 2, num_rows / 2), angleToRotate, 1
+            )
             imageToRotate = cv2.warpAffine(
-                imageToRotate, rotation_matrix, (num_cols, num_rows))
+                imageToRotate, rotation_matrix, (num_cols, num_rows)
+            )
     return imageToRotate
 
 
 # Show a progress bar
-def updateProgress(progress, tick='', total='', status='Loading...'):
+def updateProgress(progress, tick="", total="", status="Loading..."):
     lineLength = 80
     barLength = 23
     if isinstance(progress, int):
@@ -184,10 +179,10 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
         total,
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1),
-        status
+        status,
     )
     emptyBlock = lineLength - len(line)
-    emptyBlock = " "*emptyBlock if emptyBlock > 0 else ""
+    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
     sys.stdout.write(line + emptyBlock)
     sys.stdout.flush()
 
@@ -195,31 +190,31 @@ def updateProgress(progress, tick='', total='', status='Loading...'):
 # For this problem the validation and test data provided by the concerned authority did not have labels, so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-train_dir = os.path.join(__location__, 'dataset_sample')
+train_dir = os.path.join(__location__, "dataset_sample")
 
 X_train = []
 y_age = []
 y_gender = []
 
-df = pd.read_csv(os.path.join(train_dir, 'boneage-training-dataset.csv'))
+df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 a = df.values
 m = a.shape[0]
 
 
 # Create the directories to save the images
 if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ['histograms_level_fix', 'cut_hand', 'render']:
+    for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
         if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
             os.makedirs(os.path.join(__location__, "dataset_sample", folder))
 if SAVE_RENDERS:
     if not os.path.exists(os.path.join(__location__, "dataset_sample", "render")):
         os.makedirs(os.path.join(__location__, "dataset_sample", "render"))
 
-print('Loading data set...')
+print("Loading data set...")
 # file names on train_dir
 files = os.listdir(train_dir)
 # filter image files
-files = [f for f in files if fnmatch.fnmatch(f, '*.png')]
+files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
 total_file = len(files)
 
 for i in range(total_file):
@@ -240,9 +235,8 @@ for i in range(total_file):
     img_path = os.path.join(train_dir, img_file)
     img = cv2.imread(img_path)
 
-    if ADJUST_COLOR_LEVELS:
-        # Adjust color levels
-        img = histogramsLevelFix(img)
+    # Adjust color levels
+    img = histogramsLevelFix(img)
 
     if EXTRACTING_HANDS:
         # Trim the hand of the image
@@ -252,6 +246,7 @@ for i in range(total_file):
         # Rotate hands
         img = rotateImage(img)
 
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # ====================== show the images ================================
     if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
         cv2.imwrite(os.path.join(__location__, "dataset_sample", "render", img_file), img)
@@ -264,17 +259,17 @@ for i in range(total_file):
 
 updateProgress(1, total_file, total_file, img_file)
 
-print('\nSaving data...')
+print("\nSaving data...")
 # Save data
-train_pkl = open('data.pkl', 'wb')
+train_pkl = open("data.pkl", "wb")
 cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
 train_pkl.close()
 
-train_age_pkl = open('data_age.pkl', 'wb')
+train_age_pkl = open("data_age.pkl", "wb")
 cPickle.dump(y_age, train_age_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
 train_age_pkl.close()
 
-train_gender_pkl = open('data_gender.pkl', 'wb')
+train_gender_pkl = open("data_gender.pkl", "wb")
 cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
 train_gender_pkl.close()
-print('\nCompleted saved data')
+print("\nCompleted saved data")
