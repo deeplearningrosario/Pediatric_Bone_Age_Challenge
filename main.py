@@ -122,8 +122,11 @@ model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "a
 # Save weights after every epoch
 if not os.path.exists(os.path.join(__location__, "weights")):
     os.makedirs(os.path.join(__location__, "weights"))
-if not os.path.exists(os.path.join(__location__, "tensorboard")):
-    os.makedirs(os.path.join(__location__, "tensorboard"))
+
+# Save log for tensorboard
+LOG_DIR_TENSORBOARD = os.path.join(__location__, "tensorboard")
+if not os.path.exists(LOG_DIR_TENSORBOARD):
+    os.makedirs(LOG_DIR_TENSORBOARD)
 
 checkpoint = keras.callbacks.ModelCheckpoint(
     filepath="weights/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
@@ -133,11 +136,7 @@ checkpoint = keras.callbacks.ModelCheckpoint(
 
 
 # TensorBoard
-# https://www.tensorflow.org/guide/summaries_and_tensorboard
-# More info on https://keras.io/callbacks, sheard tensorboard
-#
 # how to use: $ tensorboard --logdir path_to_current_dir/Graph
-LOG_DIR_TENSORBOARD = os.path.join(__location__, "tensorboard")
 tbCallBack = keras.callbacks.TensorBoard(
     log_dir=LOG_DIR_TENSORBOARD,
     batch_size=BATCH_SIZE,
