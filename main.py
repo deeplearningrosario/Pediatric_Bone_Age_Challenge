@@ -56,7 +56,7 @@ age_final = np.asarray(age_final)
 gdr_final = np.asarray(gdr_final)
 
 # Split images dataset
-k = int(len(img_final)/6)  # Decides split count
+k = int(len(img_final) / 6)  # Decides split count
 
 img_test = img_final[:k, :, :, :]
 age_test = age_final[:k]
@@ -122,11 +122,30 @@ model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "a
 # Save weights after every epoch
 if not os.path.exists(os.path.join(__location__, "weights")):
     os.makedirs(os.path.join(__location__, "weights"))
+if not os.path.exists(os.path.join(__location__, "tensorboard")):
+    os.makedirs(os.path.join(__location__, "tensorboard"))
+
 checkpoint = keras.callbacks.ModelCheckpoint(
     filepath="weights/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
     save_weights_only=True,
     period=1,
 )
+
+
+# TensorBoard
+# https://www.tensorflow.org/guide/summaries_and_tensorboard
+# More info on https://keras.io/callbacks, sheard tensorboard
+#
+# how to use: $ tensorboard --logdir path_to_current_dir/Graph
+LOG_DIR_TENSORBOARD = os.path.join(__location__, "tensorboard")
+tbCallBack = keras.callbacks.TensorBoard(
+    log_dir=LOG_DIR_TENSORBOARD,
+    batch_size=BATCH_SIZE,
+    histogram_freq=0,
+    write_graph=True,
+    write_images=True,
+)
+print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
 
 history = model.fit(
     [img_train, gdr_train],
@@ -135,7 +154,7 @@ history = model.fit(
     epochs=EPOCHS,
     verbose=VERBOSE,
     validation_data=([img_valid, gdr_valid], [age_valid]),
-    callbacks=[checkpoint],
+    callbacks=[tbCallBack, checkpoint],
 )
 
 model.save_weights("model.h5")
