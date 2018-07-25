@@ -1,3 +1,6 @@
+/boneage-test-dataset/**/*
+/boneage-training-dataset/**/*
+
 # File created for pickle_dataset.py script
 /**/*.pkl
 

@@ -9,6 +9,10 @@ import os
 import pandas as pd
 import sys
 
+# Directory of dataset to use
+TRAIN_DIR = 'dataset_sample'
+# TRAIN_DIR = "boneage-training-dataset"
+
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
@@ -21,13 +25,13 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 EXTRACTING_HANDS = True
 
 # Turn rotate image on/off
-ROTATE_IMAGE = False
+ROTATE_IMAGE = True
 
 
 # Show the images
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
-        cv2.imwrite(os.path.join(__location__, "dataset_sample", path, img_file), image)
+        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
 
 
 # Auto adjust levels colors
@@ -187,10 +191,11 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     sys.stdout.flush()
 
 
-# For this problem the validation and test data provided by the concerned authority did not have labels, so the training data was split into train, test and validation sets
+# For this problem the validation and test data provided by the concerned authority did not have labels,
+# so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-train_dir = os.path.join(__location__, "dataset_sample")
+train_dir = os.path.join(__location__, TRAIN_DIR)
 
 X_train = []
 y_age = []
@@ -204,11 +209,11 @@ m = a.shape[0]
 # Create the directories to save the images
 if SAVE_IMAGE_FOR_DEBUGGER:
     for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-        if not os.path.exists(os.path.join(__location__, "dataset_sample", folder)):
-            os.makedirs(os.path.join(__location__, "dataset_sample", folder))
+        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+            os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
 if SAVE_RENDERS:
-    if not os.path.exists(os.path.join(__location__, "dataset_sample", "render")):
-        os.makedirs(os.path.join(__location__, "dataset_sample", "render"))
+    if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+        os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
 print("Loading data set...")
 # file names on train_dir
@@ -249,7 +254,7 @@ for i in range(total_file):
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # ====================== show the images ================================
     if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-        cv2.imwrite(os.path.join(__location__, "dataset_sample", "render", img_file), img)
+        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
 
     # Resize the images
     img = cv2.resize(img, (224, 224))
