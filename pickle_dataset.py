@@ -4,9 +4,11 @@ from six.moves import cPickle
 import cv2
 import fnmatch
 import math
+import multiprocessing
 import numpy as np
 import os
 import pandas as pd
+import platform
 import sys
 
 # Directory of dataset to use
@@ -191,6 +193,58 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     sys.stdout.flush()
 
 
+def loadDataSet():
+
+    print("Loading data set...")
+    # file names on train_dir
+    files = os.listdir(train_dir)
+    # filter image files
+    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    total_file = len(files)
+
+    for i in range(total_file):
+        img_file = files[i]
+
+        # Update the progress bar
+        progress = float(i / total_file), (i + 1)
+        updateProgress(progress[0], progress[1], total_file, img_file)
+
+        y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
+        a = df.male[df.id == int(img_file[:-4])].tolist()[0]
+        if a:
+            y_gender.append(1)
+        else:
+            y_gender.append(0)
+
+        # Read a image
+        img_path = os.path.join(train_dir, img_file)
+        img = cv2.imread(img_path)
+
+        # Adjust color levels
+        img = histogramsLevelFix(img)
+
+        if EXTRACTING_HANDS:
+            # Trim the hand of the image
+            img = cutHand(img)
+
+        if ROTATE_IMAGE:
+            # Rotate hands
+            img = rotateImage(img)
+
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        # ====================== show the images ================================
+        if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
+            cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
+
+        # Resize the images
+        img = cv2.resize(img, (224, 224))
+
+        x = np.asarray(img, dtype=np.uint8)
+        X_train.append(x)
+
+    updateProgress(1, total_file, total_file, img_file)
+
+
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -205,76 +259,62 @@ df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 a = df.values
 m = a.shape[0]
 
+# Usado en caso de usar multiples core
+output = multiprocessing.Queue()
 
-# Create the directories to save the images
-if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-            os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
-if SAVE_RENDERS:
-    if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-        os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-print("Loading data set...")
-# file names on train_dir
-files = os.listdir(train_dir)
-# filter image files
-files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-total_file = len(files)
+def mp_slice(x, output, img_to_start):
+    print("A mi me toca", img_to_start)
+    output.put(x, img_to_start+x)
 
-for i in range(total_file):
-    img_file = files[i]
 
-    # Update the progress bar
-    progress = float(i / total_file), (i + 1)
-    updateProgress(progress[0], progress[1], total_file, img_file)
+# Como vamos a usar multi processos uno pro core.
+# 'main' se refiere al archivo donde comienza el proceso, programa, luego es llamado a si mismo
+# N veces, donde N es el numero de core, CPU, de la PC.
+if __name__ == "main":
+    # Create the directories to save the images
+    if SAVE_IMAGE_FOR_DEBUGGER:
+        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
+            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
+    if SAVE_RENDERS:
+        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-    y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
-    a = df.male[df.id == int(img_file[:-4])].tolist()[0]
-    if a:
-        y_gender.append(1)
-    else:
-        y_gender.append(0)
+    # TODO leer el total de archivos, y tenerlos en un array, dividerlo en 8 partes
+    # para pasarlos a cada procesaros
 
-    # Read a image
-    img_path = os.path.join(train_dir, img_file)
-    img = cv2.imread(img_path)
+    # En windows crear hilos, y sub procesos suele ser más costoso que en linux
+    if platform.system() == "linux":
+        num_processes = multiprocessing.cpu_count()
+        lot_size = 209/num_processes
+        processes = [
+            multiprocessing.Processes(target=mp_slice, args=(x, output, x*lot_size)) for x in num_processes
+        ]
 
-    # Adjust color levels
-    img = histogramsLevelFix(img)
+        for p in processes:
+            p.start()
 
-    if EXTRACTING_HANDS:
-        # Trim the hand of the image
-        img = cutHand(img)
+        result = []
+        for _ in range(num_processes):
+            result.append(output.get(True))
 
-    if ROTATE_IMAGE:
-        # Rotate hands
-        img = rotateImage(img)
+        for p in processes:
+            p.join()
+    # else:
+    #    loadDataSet()
 
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    # ====================== show the images ================================
-    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
+    print("\nSaving data...")
+    # Save data
+    train_pkl = open("data.pkl", "wb")
+    cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_pkl.close()
 
-    # Resize the images
-    img = cv2.resize(img, (224, 224))
+    train_age_pkl = open("data_age.pkl", "wb")
+    cPickle.dump(y_age, train_age_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_age_pkl.close()
 
-    x = np.asarray(img, dtype=np.uint8)
-    X_train.append(x)
-
-updateProgress(1, total_file, total_file, img_file)
-
-print("\nSaving data...")
-# Save data
-train_pkl = open("data.pkl", "wb")
-cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_pkl.close()
-
-train_age_pkl = open("data_age.pkl", "wb")
-cPickle.dump(y_age, train_age_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_age_pkl.close()
-
-train_gender_pkl = open("data_gender.pkl", "wb")
-cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_gender_pkl.close()
-print("\nCompleted saved data")
+    train_gender_pkl = open("data_gender.pkl", "wb")
+    cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_gender_pkl.close()
+    print("\nCompleted saved data")
