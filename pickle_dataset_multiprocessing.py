@@ -72,8 +72,9 @@ if __name__ == "__main__":
                 X_train = X_train + mp_X_train
                 y_age = y_age + mp_y_age
                 y_gender = y_gender + mp_y_gender
+            # TODO:FIXME creo que no procesa todas las imgenes
             print(len(X_train))
-            # saleData(X_train, y_age, y_gender)
+            saveData(X_train, y_age, y_gender)
     else:
         print("No podemos dividir la cargan en distintos procesadores")
         exit(0)

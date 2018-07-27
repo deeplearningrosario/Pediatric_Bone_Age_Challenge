@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -239,7 +237,8 @@ def loadDataSet(files=[]):
     return X_train, y_age, y_gender
 
 
-def saleData(X_train, y_age, y_gender):
+# Save dataset
+def saveData(X_train, y_age, y_gender):
     print("\nSaving data...")
     # Save data
     train_pkl = open("data.pkl", "wb")
@@ -293,4 +292,4 @@ if __name__ == "__main__":
     print("Image total:", total_file)
 
     (X_train, y_age, y_gender) = loadDataSet(files)
-    saleData(X_train, y_age, y_gender)
+    saveData(X_train, y_age, y_gender)
