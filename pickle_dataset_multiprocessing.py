@@ -71,7 +71,7 @@ if __name__ == "__main__":
                 y_gender = y_gender + mp_y_gender
             # TODO:FIXME creo que no procesa todas las imgenes
             print(len(X_train))
-            saveData(X_train, y_age, y_gender)
+            pDataset.saveDataSet(X_train, y_age, y_gender)
     else:
         print("No podemos dividir la cargan en distintos procesadores")
         exit(0)
