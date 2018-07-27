@@ -19,9 +19,6 @@ def mpStart(files, output):
     output.put(pDataset.loadDataSet(files))
 
 
-# Como vamos a usar multi processos uno pro core.
-# 'main' se refiere al archivo donde comienza el proceso, programa, luego es llamado a si mismo
-# N veces, donde N es el numero de core, CPU, de la PC.
 if __name__ == "__main__":
     # Create the directories to save the images
     if pDataset.SAVE_IMAGE_FOR_DEBUGGER:

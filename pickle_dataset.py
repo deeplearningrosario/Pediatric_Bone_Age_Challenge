@@ -271,9 +271,10 @@ df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 a = df.values
 m = a.shape[0]
 
-# Como vamos a usar multi processos uno pro core.
-# 'main' se refiere al archivo donde comienza el proceso, programa, luego es llamado a si mismo
-# N veces, donde N es el numero de core, CPU, de la PC.
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
 if __name__ == "__main__":
     # Create the directories to save the images
     if SAVE_IMAGE_FOR_DEBUGGER:
