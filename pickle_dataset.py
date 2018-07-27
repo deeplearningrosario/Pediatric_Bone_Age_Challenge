@@ -1,15 +1,12 @@
 #!/usr/bin/python3
 
 from six.moves import cPickle
-from multiprocessing import Process
 import cv2
 import fnmatch
 import math
-import multiprocessing
 import numpy as np
 import os
 import pandas as pd
-import platform
 import sys
 
 # Directory of dataset to use
@@ -275,15 +272,6 @@ df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 a = df.values
 m = a.shape[0]
 
-
-# Usado en caso de usar multiples core
-output = multiprocessing.Queue()
-
-
-def mpStart(files, output):
-    output.put(loadDataSet(files))
-
-
 # Como vamos a usar multi processos uno pro core.
 # 'main' se refiere al archivo donde comienza el proceso, programa, luego es llamado a si mismo
 # N veces, donde N es el numero de core, CPU, de la PC.
@@ -304,44 +292,5 @@ if __name__ == "__main__":
     total_file = len(files)
     print("Image total:", total_file)
 
-    num_processes = multiprocessing.cpu_count()
-    if platform.system() == "Linux" and num_processes > 1:
-        processes = []
-
-        lot_size = int(total_file / num_processes)
-
-        for x in range(1, num_processes + 1):
-            if x < num_processes:
-                lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
-            else:
-                lot_img = files[x * lot_size:]
-            print(x, lot_img)
-            processes.append(Process(target=mpStart, args=(lot_img, output)))
-
-        if len(processes) > 0:
-            print("Loading data set...")
-            for p in processes:
-                p.start()
-
-            result = []
-            for x in range(num_processes):
-                result.append(output.get(True))
-
-            for p in processes:
-                p.join()
-
-            X_train = []
-            y_age = []
-            y_gender = []
-            for mp_X_train, mp_y_age, mp_y_gender in result:
-                X_train = X_train + mp_X_train
-                y_age = y_age + mp_y_age
-                y_gender = y_gender + mp_y_gender
-            print(len(X_train))
-            # saleData(X_train, y_age, y_gender)
-        else:
-            print("No podemos dividir la cargan en distintos procesadores")
-            exit(0)
-    else:
-        (X_train, y_age, y_gender) = loadDataSet(total_file)
-        saleData(X_train, y_age, y_gender)
+    (X_train, y_age, y_gender) = loadDataSet(files)
+    saleData(X_train, y_age, y_gender)
