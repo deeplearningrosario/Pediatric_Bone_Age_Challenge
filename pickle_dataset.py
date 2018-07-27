@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -10,7 +8,7 @@ import pandas as pd
 import sys
 
 # Directory of dataset to use
-TRAIN_DIR = 'dataset_sample'
+TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
 # Turn saving renders feature on/off
@@ -191,11 +189,79 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     sys.stdout.flush()
 
 
+def loadDataSet(files=[]):
+    total_file = len(files)
+    for i in range(total_file):
+        img_file = files[i]
+
+        # Update the progress bar
+        progress = float(i / total_file), (i + 1)
+        updateProgress(progress[0], progress[1], total_file, img_file)
+
+        y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
+        a = df.male[df.id == int(img_file[:-4])].tolist()[0]
+        if a:
+            y_gender.append(1)
+        else:
+            y_gender.append(0)
+
+        # Read a image
+        img_path = os.path.join(train_dir, img_file)
+        img = cv2.imread(img_path)
+
+        # Adjust color levels
+        img = histogramsLevelFix(img)
+
+        if EXTRACTING_HANDS:
+            # Trim the hand of the image
+            img = cutHand(img)
+
+        if ROTATE_IMAGE:
+            # Rotate hands
+            img = rotateImage(img)
+
+        # ====================== show the images ================================
+        if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
+            cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
+
+        # Resize the images
+        img = cv2.resize(img, (224, 224))
+        # Return to original colors
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
+        x = np.asarray(img, dtype=np.uint8)
+        X_train.append(x)
+
+    updateProgress(1, total_file, total_file, img_file)
+
+    return X_train, y_age, y_gender
+
+
+# Save dataset
+def saveData(X_train, y_age, y_gender):
+    print("\nSaving data...")
+    # Save data
+    train_pkl = open("data.pkl", "wb")
+    cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_pkl.close()
+
+    train_age_pkl = open("data_age.pkl", "wb")
+    cPickle.dump(y_age, train_age_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_age_pkl.close()
+
+    train_gender_pkl = open("data_gender.pkl", "wb")
+    cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
+    train_gender_pkl.close()
+    print("\nCompleted saved data")
+
+
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 train_dir = os.path.join(__location__, TRAIN_DIR)
+
+img_file = "id_img"
 
 X_train = []
 y_age = []
@@ -205,76 +271,26 @@ df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 a = df.values
 m = a.shape[0]
 
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
+if __name__ == "__main__":
+    # Create the directories to save the images
+    if SAVE_IMAGE_FOR_DEBUGGER:
+        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
+            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
+    if SAVE_RENDERS:
+        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-# Create the directories to save the images
-if SAVE_IMAGE_FOR_DEBUGGER:
-    for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-            os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
-if SAVE_RENDERS:
-    if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-        os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
+    # file names on train_dir
+    files = os.listdir(train_dir)
+    # filter image files
+    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    total_file = len(files)
+    print("Image total:", total_file)
 
-print("Loading data set...")
-# file names on train_dir
-files = os.listdir(train_dir)
-# filter image files
-files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-total_file = len(files)
-
-for i in range(total_file):
-    img_file = files[i]
-
-    # Update the progress bar
-    progress = float(i / total_file), (i + 1)
-    updateProgress(progress[0], progress[1], total_file, img_file)
-
-    y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
-    a = df.male[df.id == int(img_file[:-4])].tolist()[0]
-    if a:
-        y_gender.append(1)
-    else:
-        y_gender.append(0)
-
-    # Read a image
-    img_path = os.path.join(train_dir, img_file)
-    img = cv2.imread(img_path)
-
-    # Adjust color levels
-    img = histogramsLevelFix(img)
-
-    if EXTRACTING_HANDS:
-        # Trim the hand of the image
-        img = cutHand(img)
-
-    if ROTATE_IMAGE:
-        # Rotate hands
-        img = rotateImage(img)
-
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    # ====================== show the images ================================
-    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
-
-    # Resize the images
-    img = cv2.resize(img, (224, 224))
-
-    x = np.asarray(img, dtype=np.uint8)
-    X_train.append(x)
-
-updateProgress(1, total_file, total_file, img_file)
-
-print("\nSaving data...")
-# Save data
-train_pkl = open("data.pkl", "wb")
-cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_pkl.close()
-
-train_age_pkl = open("data_age.pkl", "wb")
-cPickle.dump(y_age, train_age_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_age_pkl.close()
-
-train_gender_pkl = open("data_gender.pkl", "wb")
-cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
-train_gender_pkl.close()
-print("\nCompleted saved data")
+    (X_train, y_age, y_gender) = loadDataSet(files)
+    saveData(X_train, y_age, y_gender)
