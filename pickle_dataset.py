@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -238,7 +240,7 @@ def loadDataSet(files=[]):
 
 
 # Save dataset
-def saveData(X_train, y_age, y_gender):
+def saveDataSet(X_train, y_age, y_gender):
     print("\nSaving data...")
     # Save data
     train_pkl = open("data.pkl", "wb")
@@ -289,8 +291,6 @@ if __name__ == "__main__":
     files = os.listdir(train_dir)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-    total_file = len(files)
-    print("Image total:", total_file)
 
     (X_train, y_age, y_gender) = loadDataSet(files)
-    saveData(X_train, y_age, y_gender)
+    saveDataSet(X_train, y_age, y_gender)
