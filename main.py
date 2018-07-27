@@ -66,8 +66,8 @@ img_valid = img_final[k: 2 * k, :, :, :]
 age_valid = age_final[k: 2 * k]
 gdr_valid = gdr_final[k: 2 * k]
 
-gdr_train = gdr_final[2 * k:]
 img_train = img_final[2 * k:, :, :, :]
+gdr_train = gdr_final[2 * k:]
 age_train = age_final[2 * k:]
 
 print("img_train shape:" + str(img_train.shape))
