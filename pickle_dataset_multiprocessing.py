@@ -46,8 +46,7 @@ if __name__ == "__main__":
             if x < num_processes:
                 lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
-                lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
-                lot_img = lot_img + files[x * lot_size:]
+                lot_img = files[(x - 1) * lot_size:]
             processes.append(Process(target=mpStart, args=(lot_img, output)))
 
         if len(processes) > 0:
