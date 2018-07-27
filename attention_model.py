@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt  # showing and rendering figures
 # io related
 from skimage.io import imread
 import os
+from six.moves import cPickle
 from glob import glob
 
 # not needed in Kaggle, but required in Jupyter
@@ -35,27 +36,55 @@ boneage_mean = 0
 boneage_div = 1.0
 age_df['boneage_zscore'] = age_df['boneage'].map(lambda x: (x - boneage_mean) / boneage_div)
 age_df.dropna(inplace=True)
+# dropping the ones that weren't found
+age_df = age_df[age_df['exists']]
 print(age_df.sample(3))
 
 # Lets examine the distribution of age and gender (age is shown in months)
 age_df[['boneage', 'male', 'boneage_zscore']].hist(figsize=(10, 5))
 age_df['boneage_category'] = pd.cut(age_df['boneage'], 10)
 
+'''
 # split data into training and validation
 from sklearn.model_selection import train_test_split
 
 raw_train_df, valid_df = train_test_split(age_df,
-                                          test_size=0.2,
+                                          test_size=0.3,
                                           random_state=42,
                                           stratify=age_df['boneage_category']
                                           )
-print('train', raw_train_df.shape[0], 'validation', valid_df.shape[0])
 
+'''
+print('...loading training data')
+f = open((os.path.join(__location__, 'data.pkl')), 'rb')
+img = cPickle.load(f)
+f.close()
+
+img = np.asarray(img, dtype=np.float32)
+# this is to normalize x since RGB scale is [0,255]
+img /= 255.
+img_final = []
+
+# Shuffle images and split into train, validation and test sets
+random_no = np.random.choice(img.shape[0], size=img.shape[0], replace=False)
+for i in random_no:
+    img_final.append(img[i, :, :])
+
+img_final = np.asarray(img_final)
+
+k = int(img_final.shape[0]/3)  # Decides split count
+valid_df = img_final[: k, :, :]
+train_df = img_final[k:, :, :]
+
+print('train', train_df.shape[0], 'validation', valid_df.shape[0])
+
+'''
 # Balance the distribution on the training set
 train_df = raw_train_df.groupby(['boneage_category', 'male']).apply(lambda x: x.sample(500, replace=True)
                                                                     ).reset_index(drop=True)
 print('New Data Size:', train_df.shape[0], 'Old Size:', raw_train_df.shape[0])
 train_df[['boneage', 'male']].hist(figsize=(10, 5))
+'''
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.vgg16 import preprocess_input
