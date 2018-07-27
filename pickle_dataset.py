@@ -251,13 +251,14 @@ for i in range(total_file):
         # Rotate hands
         img = rotateImage(img)
 
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # ====================== show the images ================================
     if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
 
     # Resize the images
     img = cv2.resize(img, (224, 224))
+    # Return to original colors
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
     x = np.asarray(img, dtype=np.uint8)
     X_train.append(x)
