@@ -46,8 +46,8 @@ if __name__ == "__main__":
             if x < num_processes:
                 lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
-                lot_img = files[x * lot_size:]
-            print(x, len(lot_img))
+                lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
+                lot_img = lot_img + files[x * lot_size:]
             processes.append(Process(target=mpStart, args=(lot_img, output)))
 
         if len(processes) > 0:
@@ -69,8 +69,7 @@ if __name__ == "__main__":
                 X_train = X_train + mp_X_train
                 y_age = y_age + mp_y_age
                 y_gender = y_gender + mp_y_gender
-            # TODO:FIXME creo que no procesa todas las imgenes
-            print(len(X_train))
+            print("Image processed:", len(X_train))
             pDataset.saveDataSet(X_train, y_age, y_gender)
     else:
         print("No podemos dividir la cargan en distintos procesadores")
