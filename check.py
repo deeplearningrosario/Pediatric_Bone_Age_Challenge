@@ -81,9 +81,9 @@ x = keras.layers.concatenate([flat_iv3, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1000, activation="relu")(x)
-x = Dropout(0.2)(x)
+x = Dropout(0)(x)
 x = Dense(1000, activation="relu")(x)
-x = Dropout(0.2)(x)
+x = Dropout(0)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
 # predictions = Dense(1, activation='sigmoid', name='predictions')(x)
