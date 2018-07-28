@@ -3,7 +3,7 @@
 from keras.applications.inception_v3 import InceptionV3
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam, RMSprop, Adadelta
 from six.moves import cPickle
 import keras
 import matplotlib.pyplot as plt
@@ -16,8 +16,10 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 EPOCHS = 30
 BATCH_SIZE = 35
 VERBOSE = 1
+# https://keras.io/optimizers
 # OPTIMIZER = Adam()
 OPTIMIZER = RMSprop()
+# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 
 # Load data
 print("...loading training data")
