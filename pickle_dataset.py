@@ -13,6 +13,9 @@ import sys
 TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
+# Use the first N images, If it is -1 using all dataset
+CUT_DATASET = -1
+
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
@@ -294,6 +297,8 @@ if __name__ == "__main__":
     files = os.listdir(train_dir)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    if CUT_DATASET > 0:
+        files = files[:CUT_DATASET]
 
     (X_train, y_age, y_gender) = loadDataSet(files)
     saveDataSet(X_train, y_age, y_gender)
