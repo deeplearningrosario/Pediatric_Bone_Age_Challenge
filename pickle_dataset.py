@@ -27,6 +27,18 @@ EXTRACTING_HANDS = True
 # Turn rotate image on/off
 ROTATE_IMAGE = True
 
+# For this problem the validation and test data provided by the concerned authority did not have labels,
+# so the training data was split into train, test and validation sets
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+train_dir = os.path.join(__location__, TRAIN_DIR)
+
+img_file = ""
+
+df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
+a = df.values
+m = a.shape[0]
+
 
 # Show the images
 def writeImage(path, image, force=False):
@@ -192,8 +204,13 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 
 
 def loadDataSet(files=[]):
+    X_train = []
+    y_age = []
+    y_gender = []
+
     total_file = len(files)
     for i in range(total_file):
+        global img_file
         img_file = files[i]
 
         # Update the progress bar
@@ -256,22 +273,6 @@ def saveDataSet(X_train, y_age, y_gender):
     train_gender_pkl.close()
     print("\nCompleted saved data")
 
-
-# For this problem the validation and test data provided by the concerned authority did not have labels,
-# so the training data was split into train, test and validation sets
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-train_dir = os.path.join(__location__, TRAIN_DIR)
-
-img_file = "id_img"
-
-X_train = []
-y_age = []
-y_gender = []
-
-df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
-a = df.values
-m = a.shape[0]
 
 # Como vamos a usar multi procesos uno por core.
 # Los procesos hijos cargan el mismo código.
