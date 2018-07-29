@@ -100,7 +100,7 @@ def cutHand(image):
     )
 
     thresh = cv2.bitwise_not(th3, th2)
-    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
+    # thresh = cv2.GaussianBlur(thresh, (5, 5), 0.5)
 
     (_, contours, _) = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -109,18 +109,19 @@ def cutHand(image):
     for i, cnt in enumerate(contours):
         if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
             largest_object_index = i
-    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:100]
+    # areaLargestObject = cv2.contourArea(contours[largest_object_index]) * 0.6
 
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
     # White background below the largest object
-    cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), -1)
+    cv2.rectangle(image, (x, y), (x + w, y + h), (0), -1)
 
     cv2.drawContours(
         image,  # image,
         contours,  # objects
         largest_object_index,  # índice de objeto (-1, todos)
-        (255, 255, 255),  # color
+        (255),  # color
         -1,  # tamaño del borde (-1, pintar adentro)
     )
 
@@ -133,7 +134,8 @@ def cutHand(image):
 
     writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
-    return image_cut
+    return thresh
+    # return image_cut
 
 
 def rotateImage(imageToRotate):
