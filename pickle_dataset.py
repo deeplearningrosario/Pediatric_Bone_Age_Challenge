@@ -14,7 +14,7 @@ TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
 # Use the first N images, If it is -1 using all dataset
-CUT_DATASET = 3000
+CUT_DATASET = 7200
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -112,8 +112,6 @@ def cutHand(image):
     for i, cnt in enumerate(contours):
         if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
             largest_object_index = i
-    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:100]
-    # areaLargestObject = cv2.contourArea(contours[largest_object_index]) * 0.6
 
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
@@ -137,7 +135,6 @@ def cutHand(image):
 
     writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
-    # return thresh
     return image_cut
 
 
