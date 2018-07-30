@@ -288,6 +288,7 @@ def getFiles():
     # Cut list of file
     if CUT_DATASET > 0:
         files = files[:CUT_DATASET]
+    return files
 
 
 # Create the directories to save the images
