@@ -10,11 +10,11 @@ import pandas as pd
 import sys
 
 # Directory of dataset to use
-# TRAIN_DIR = "dataset_sample"
-TRAIN_DIR = "boneage-training-dataset"
+TRAIN_DIR = "dataset_sample"
+# TRAIN_DIR = "boneage-training-dataset"
 
 # Use the first N images, If it is -1 using all dataset
-CUT_DATASET = 1000
+CUT_DATASET = 3000
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
