@@ -276,12 +276,22 @@ def saveDataSet(X_train, y_age, y_gender):
     print("\nCompleted saved data")
 
 
-# Como vamos a usar multi procesos uno por core.
-# Los procesos hijos cargan el mismo código.
-# Este if permite que solo se ejecute lo que sigue si es llamado
-# como proceso raíz.
-if __name__ == "__main__":
-    # Create the directories to save the images
+# list all the image files and randomly unravel them,
+# in each case you take the first N from the unordered list
+def getFiles():
+    # file names on train_dir
+    files = os.listdir(train_dir)
+    # filter image files
+    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    # Sort randomly
+    files = np.random.shuffle(files)
+    # Cut list of file
+    if CUT_DATASET > 0:
+        files = files[:CUT_DATASET]
+
+
+# Create the directories to save the images
+def checkPath():
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
             if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
@@ -290,12 +300,14 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
             os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-    # file names on train_dir
-    files = os.listdir(train_dir)
-    # filter image files
-    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-    if CUT_DATASET > 0:
-        files = files[:CUT_DATASET]
 
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
+if __name__ == "__main__":
+    checkPath()
+
+    files = getFiles()
     (X_train, y_age, y_gender) = loadDataSet(files)
     saveDataSet(X_train, y_age, y_gender)

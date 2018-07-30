@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from multiprocessing import Process
-import fnmatch
 import multiprocessing
 import os
 import pickle_dataset as pDataset
@@ -21,20 +20,9 @@ def mpStart(files, output):
 
 if __name__ == "__main__":
     # Create the directories to save the images
-    if pDataset.SAVE_IMAGE_FOR_DEBUGGER:
-        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-            if not os.path.exists(os.path.join(__location__, pDataset.TRAIN_DIR, folder)):
-                os.makedirs(os.path.join(__location__, pDataset.TRAIN_DIR, folder))
-    if pDataset.SAVE_RENDERS:
-        if not os.path.exists(os.path.join(__location__, pDataset.TRAIN_DIR, "render")):
-            os.makedirs(os.path.join(__location__, pDataset.TRAIN_DIR, "render"))
+    pDataset.checkPath()
 
-    # file names on train_dir
-    files = os.listdir(pDataset.train_dir)
-    # filter image files
-    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-    if pDataset.CUT_DATASET > 0:
-        files = files[:pDataset.CUT_DATASET]
+    files = pDataset.getFiles()
     total_file = len(files)
     print("Image total:", total_file)
 
