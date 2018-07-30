@@ -10,11 +10,11 @@ import pandas as pd
 import sys
 
 # Directory of dataset to use
-TRAIN_DIR = "dataset_sample"
-# TRAIN_DIR = "boneage-training-dataset"
+# TRAIN_DIR = "dataset_sample"
+TRAIN_DIR = "boneage-training-dataset"
 
 # Use the first N images, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 1000
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -103,7 +103,7 @@ def cutHand(image):
     )
 
     thresh = cv2.bitwise_not(th3, th2)
-    # thresh = cv2.GaussianBlur(thresh, (5, 5), 0.5)
+    thresh = cv2.GaussianBlur(thresh, (5, 5), 0)
 
     (_, contours, _) = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -118,7 +118,7 @@ def cutHand(image):
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
     # White background below the largest object
-    cv2.rectangle(image, (x, y), (x + w, y + h), (0), -1)
+    cv2.rectangle(image, (x, y), (x + w, y + h), (255), -1)
 
     cv2.drawContours(
         image,  # image,
@@ -137,8 +137,8 @@ def cutHand(image):
 
     writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
-    return thresh
-    # return image_cut
+    # return thresh
+    return image_cut
 
 
 def rotateImage(imageToRotate):
