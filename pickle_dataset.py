@@ -13,6 +13,9 @@ import sys
 TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
+# Use the first N images, If it is -1 using all dataset
+CUT_DATASET = 3000
+
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
@@ -26,6 +29,18 @@ EXTRACTING_HANDS = True
 
 # Turn rotate image on/off
 ROTATE_IMAGE = True
+
+# For this problem the validation and test data provided by the concerned authority did not have labels,
+# so the training data was split into train, test and validation sets
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+train_dir = os.path.join(__location__, TRAIN_DIR)
+
+img_file = ""
+
+df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
+a = df.values
+m = a.shape[0]
 
 
 # Show the images
@@ -97,18 +112,19 @@ def cutHand(image):
     for i, cnt in enumerate(contours):
         if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
             largest_object_index = i
-    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
+    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:100]
+    # areaLargestObject = cv2.contourArea(contours[largest_object_index]) * 0.6
 
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
     # White background below the largest object
-    cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), -1)
+    cv2.rectangle(image, (x, y), (x + w, y + h), (255), -1)
 
     cv2.drawContours(
         image,  # image,
         contours,  # objects
         largest_object_index,  # índice de objeto (-1, todos)
-        (255, 255, 255),  # color
+        (255),  # color
         -1,  # tamaño del borde (-1, pintar adentro)
     )
 
@@ -121,6 +137,7 @@ def cutHand(image):
 
     writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
+    # return thresh
     return image_cut
 
 
@@ -192,8 +209,13 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 
 
 def loadDataSet(files=[]):
+    X_train = []
+    y_age = []
+    y_gender = []
+
     total_file = len(files)
     for i in range(total_file):
+        global img_file
         img_file = files[i]
 
         # Update the progress bar
@@ -257,22 +279,6 @@ def saveDataSet(X_train, y_age, y_gender):
     print("\nCompleted saved data")
 
 
-# For this problem the validation and test data provided by the concerned authority did not have labels,
-# so the training data was split into train, test and validation sets
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-train_dir = os.path.join(__location__, TRAIN_DIR)
-
-img_file = "id_img"
-
-X_train = []
-y_age = []
-y_gender = []
-
-df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
-a = df.values
-m = a.shape[0]
-
 # Como vamos a usar multi procesos uno por core.
 # Los procesos hijos cargan el mismo código.
 # Este if permite que solo se ejecute lo que sigue si es llamado
@@ -291,6 +297,8 @@ if __name__ == "__main__":
     files = os.listdir(train_dir)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    if CUT_DATASET > 0:
+        files = files[:CUT_DATASET]
 
     (X_train, y_age, y_gender) = loadDataSet(files)
     saveDataSet(X_train, y_age, y_gender)

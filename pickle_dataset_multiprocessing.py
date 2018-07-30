@@ -33,6 +33,8 @@ if __name__ == "__main__":
     files = os.listdir(pDataset.train_dir)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    if pDataset.CUT_DATASET > 0:
+        files = files[:pDataset.CUT_DATASET]
     total_file = len(files)
     print("Image total:", total_file)
 
