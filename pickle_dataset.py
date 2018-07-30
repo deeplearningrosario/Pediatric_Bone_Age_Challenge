@@ -14,7 +14,7 @@ TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
 # Use the first N images, If it is -1 using all dataset
-CUT_DATASET = 3000
+CUT_DATASET = 7200
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -112,8 +112,6 @@ def cutHand(image):
     for i, cnt in enumerate(contours):
         if cv2.contourArea(contours[largest_object_index]) < cv2.contourArea(cnt):
             largest_object_index = i
-    # cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:100]
-    # areaLargestObject = cv2.contourArea(contours[largest_object_index]) * 0.6
 
     # create bounding rectangle around the contour (can skip below two lines)
     [x, y, w, h] = cv2.boundingRect(contours[largest_object_index])
@@ -137,7 +135,6 @@ def cutHand(image):
 
     writeImage("cut_hand", np.hstack([image_cut]))  # show the images ===========
 
-    # return thresh
     return image_cut
 
 
@@ -279,12 +276,23 @@ def saveDataSet(X_train, y_age, y_gender):
     print("\nCompleted saved data")
 
 
-# Como vamos a usar multi procesos uno por core.
-# Los procesos hijos cargan el mismo código.
-# Este if permite que solo se ejecute lo que sigue si es llamado
-# como proceso raíz.
-if __name__ == "__main__":
-    # Create the directories to save the images
+# list all the image files and randomly unravel them,
+# in each case you take the first N from the unordered list
+def getFiles():
+    # file names on train_dir
+    files = os.listdir(train_dir)
+    # filter image files
+    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    # Sort randomly
+    np.random.shuffle(files)
+    # Cut list of file
+    if CUT_DATASET > 0:
+        files = files[:CUT_DATASET]
+    return files
+
+
+# Create the directories to save the images
+def checkPath():
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
             if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
@@ -293,12 +301,14 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
             os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-    # file names on train_dir
-    files = os.listdir(train_dir)
-    # filter image files
-    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-    if CUT_DATASET > 0:
-        files = files[:CUT_DATASET]
 
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
+if __name__ == "__main__":
+    checkPath()
+
+    files = getFiles()
     (X_train, y_age, y_gender) = loadDataSet(files)
     saveDataSet(X_train, y_age, y_gender)
