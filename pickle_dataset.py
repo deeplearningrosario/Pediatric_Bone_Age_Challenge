@@ -284,7 +284,7 @@ def getFiles():
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
     # Sort randomly
-    files = np.random.shuffle(files)
+    np.random.shuffle(files)
     # Cut list of file
     if CUT_DATASET > 0:
         files = files[:CUT_DATASET]
