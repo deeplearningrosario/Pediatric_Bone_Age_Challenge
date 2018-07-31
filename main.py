@@ -14,17 +14,17 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 # network and training
 EPOCHS = 30
-BATCH_SIZE = 35
+BATCH_SIZE = 25
 VERBOSE = 1
 # https://keras.io/optimizers
 # OPTIMIZER = Adam()
-OPTIMIZER = RMSprop()
-# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = RMSprop()
+OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 
 # Image processing layer
 # CNN = 'Xception'
-CNN = 'IV3'
-# CNN = 'RN50'
+# CNN = 'IV3'
+CNN = 'RN50'
 
 # Load data
 print("...loading training data")
