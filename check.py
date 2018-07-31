@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # Check metrics using trained weight files
-from keras.applications.inception_v3 import InceptionV3
+from keras.applications import InceptionV3, ResNet50, Xception
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.optimizers import Adam, RMSprop
@@ -16,8 +16,16 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 EPOCHS = 30
 BATCH_SIZE = 35
 VERBOSE = 1
+
+# https://keras.io/optimizers
 # OPTIMIZER = Adam()
 OPTIMIZER = RMSprop()
+# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+
+# Image processing layer
+# CNN = 'Xception'
+CNN = 'IV3'
+# CNN = 'RN50'
 
 # Load data
 print("...loading training data")
@@ -60,14 +68,27 @@ print("age_final shape:" + str(age_final.shape))
 print("gdr_final shape:" + str(gdr_final.shape))
 
 # First we need to create a model structure
-# Iv3-like input layer
+# input layer
 image_input = Input(shape=img_final.shape[1:], name="image_input")
-# Inception V3 layer with pretrained weights from Imagenet
-base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
-# Inception V3 output from input layer
-output_vgg16 = base_iv3_model(image_input)
-# flattening it #why?
-flat_iv3 = Flatten()(output_vgg16)
+
+if CNN == 'IV3':
+    # Inception V3 layer with pre-trained weights from ImageNet
+    # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
+    base_iv3_model = InceptionV3(weights="imagenet")
+    # Inception V3 output from input layer
+    output_vgg16 = base_iv3_model(image_input)
+    # flattening it #why?
+    # flat_iv3 = Flatten()(output_vgg16)
+elif CNN == 'RN50':
+    # ResNet50 layer with pre-trained weights from ImageNet
+    base_rn50_model = ResNet50(weights="imagenet")
+    # ResNet50 output from input layer
+    output_rn50 = base_rn50_model(image_input)
+elif CNN == 'Xception':
+    # Xception layer with pre-trained weights from ImageNet
+    base_xp_model = Xception(weights="imagenet")
+    # Xception output from input layer
+    output_xp = base_xp_model(image_input)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
@@ -76,8 +97,15 @@ gdr_dense = Dense(32, activation="relu")
 # Gender dense output
 output_gdr_dense = gdr_dense(gdr_input)
 
-# Concatenating iv3 output with sex_dense output after going through shared layer
-x = keras.layers.concatenate([flat_iv3, output_gdr_dense])
+if CNN == 'IV3':
+    # Concatenating iv3 output with sex_dense output after going through shared layer
+    x = keras.layers.concatenate([output_vgg16, output_gdr_dense])
+elif CNN == 'RN50':
+    # Concatenating ResNet50 output with gender_dense output after going through shared layer
+    x = keras.layers.concatenate([output_rn50, output_gdr_dense])
+elif CNN == 'Xception':
+    # Concatenating Xception output with gender_dense output after going through shared layer
+    x = keras.layers.concatenate([output_xp, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1000, activation="relu")(x)
