@@ -14,7 +14,7 @@ TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 1000
 # Sort dataset randomly
 SORT_RANDOMLY = True
 
@@ -239,39 +239,23 @@ def processImage(img_path):
 
 def loadDataSet(files=[]):
     global img_file
-
-    df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
     X_train = []
     y_age = []
     y_gender = []
 
     total_file = len(files)
     for i in range(total_file):
-        img_file = files[i]
-
+        (img_file, bone_age, gender) = files[i]
         # Update the progress bar
         progress = float(i / total_file), (i + 1)
         updateProgress(progress[0], progress[1], total_file, img_file)
 
-        # Get bone age
-        bone_age = df.boneage[df.id == int(img_file[:-4])].tolist()[0]
-        # Get gender
-        male = df.male[df.id == int(img_file[:-4])].tolist()[0]
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
 
-        if SPLIT_GENDER == 'female' and not(male):
-            X_train.append(processImage(img_path))
-            y_gender.append(1 if male else 0)
-            y_age.append(bone_age)
-        if SPLIT_GENDER == 'male' and male:
-            X_train.append(processImage(img_path))
-            y_gender.append(1 if male else 0)
-            y_age.append(bone_age)
-        if SPLIT_GENDER == 'both':
-            X_train.append(processImage(img_path))
-            y_gender.append(1 if male else 0)
-            y_age.append(bone_age)
+        X_train.append(processImage(img_path))
+        y_gender.append(gender)
+        y_age.append(bone_age)
 
     updateProgress(1, total_file, total_file, img_file)
 
@@ -299,6 +283,10 @@ def saveDataSet(X_train, y_age, y_gender):
 # list all the image files and randomly unravel them,
 # in each case you take the first N from the unordered list
 def getFiles():
+    rta = []
+    # Read csv
+    df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
+
     # file names on train_dir
     files = os.listdir(train_dir)
     # filter image files
@@ -306,10 +294,24 @@ def getFiles():
     # Sort randomly
     if SORT_RANDOMLY:
         np.random.shuffle(files)
-    # Cut list of file
-    if CUT_DATASET > 0:
-        files = files[:CUT_DATASET]
-    return files
+
+    for file_name in files:
+        # Cut list of file
+        if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
+            # Get row with id equil image's name
+            csv_row = df[df.id == int(file_name[:-4])]
+            # Get bone age
+            bone_age = csv_row.boneage.tolist()[0]
+            # Get gender
+            male = csv_row.male.tolist()[0]
+
+            if SPLIT_GENDER == 'female' and not(male):
+                rta.append((file_name, bone_age, 1 if male else 0))
+            if SPLIT_GENDER == 'male' and male:
+                rta.append((file_name, bone_age, 1 if male else 0))
+            if SPLIT_GENDER == 'both':
+                rta.append((file_name, bone_age, 1 if male else 0))
+    return rta
 
 
 # Create the directories to save the images
