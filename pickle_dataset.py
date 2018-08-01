@@ -13,8 +13,14 @@ import sys
 TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
-# Use the first N images, If it is -1 using all dataset
-CUT_DATASET = 7200
+# Use N images of dataset, If it is -1 using all dataset
+CUT_DATASET = 8000
+# Sort dataset randomly
+SORT_RANDOMLY = True
+
+# Separate data set by gender
+# male, female, both
+SPLIT_GENDER = True
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -37,10 +43,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 train_dir = os.path.join(__location__, TRAIN_DIR)
 
 img_file = ""
-
-df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
-a = df.values
-m = a.shape[0]
 
 
 # Show the images
@@ -206,6 +208,8 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 
 
 def loadDataSet(files=[]):
+    df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
+
     X_train = []
     y_age = []
     y_gender = []
@@ -284,7 +288,8 @@ def getFiles():
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
     # Sort randomly
-    np.random.shuffle(files)
+    if SORT_RANDOMLY:
+        np.random.shuffle(files)
     # Cut list of file
     if CUT_DATASET > 0:
         files = files[:CUT_DATASET]
