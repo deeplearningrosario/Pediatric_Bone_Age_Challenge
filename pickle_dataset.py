@@ -268,7 +268,7 @@ def loadDataSet(files=[]):
             X_train.append(processImage(img_path))
             y_gender.append(1 if male else 0)
             y_age.append(bone_age)
-        if SPLIT_GENDER == 'both' and male:
+        if SPLIT_GENDER == 'both':
             X_train.append(processImage(img_path))
             y_gender.append(1 if male else 0)
             y_age.append(bone_age)
