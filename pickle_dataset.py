@@ -13,8 +13,16 @@ import sys
 TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
-# Use the first N images, If it is -1 using all dataset
-CUT_DATASET = 7200
+# Use N images of dataset, If it is -1 using all dataset
+CUT_DATASET = 1000
+# Sort dataset randomly
+SORT_RANDOMLY = True
+
+# Separate data set by gender
+# male, female, both
+SPLIT_GENDER = 'both'
+# SPLIT_GENDER = 'female'
+# SPLIT_GENDER = 'male'
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -37,10 +45,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 train_dir = os.path.join(__location__, TRAIN_DIR)
 
 img_file = ""
-
-df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
-a = df.values
-m = a.shape[0]
 
 
 # Show the images
@@ -205,53 +209,53 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     sys.stdout.flush()
 
 
+def processImage(img_path):
+    # Read a image
+    img = cv2.imread(img_path)
+
+    # Adjust color levels
+    img = histogramsLevelFix(img)
+
+    if EXTRACTING_HANDS:
+        # Trim the hand of the image
+        img = cutHand(img)
+
+    if ROTATE_IMAGE:
+        # Rotate hands
+        img = rotateImage(img)
+
+    # ====================== show the images ================================
+    if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
+        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
+
+    # Resize the images
+    img = cv2.resize(img, (224, 224))
+    # Return to original colors
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
+    # Convert the image into an 8 bit array
+    return np.asarray(img, dtype=np.uint8)
+
+
 def loadDataSet(files=[]):
+    global img_file
     X_train = []
     y_age = []
     y_gender = []
 
     total_file = len(files)
     for i in range(total_file):
-        global img_file
-        img_file = files[i]
-
+        (img_file, bone_age, gender) = files[i]
         # Update the progress bar
         progress = float(i / total_file), (i + 1)
         updateProgress(progress[0], progress[1], total_file, img_file)
 
-        y_age.append(df.boneage[df.id == int(img_file[:-4])].tolist()[0])
-        a = df.male[df.id == int(img_file[:-4])].tolist()[0]
-        if a:
-            y_gender.append(1)
-        else:
-            y_gender.append(0)
-
-        # Read a image
+        # Get image's path
         img_path = os.path.join(train_dir, img_file)
-        img = cv2.imread(img_path)
 
-        # Adjust color levels
-        img = histogramsLevelFix(img)
-
-        if EXTRACTING_HANDS:
-            # Trim the hand of the image
-            img = cutHand(img)
-
-        if ROTATE_IMAGE:
-            # Rotate hands
-            img = rotateImage(img)
-
-        # ====================== show the images ================================
-        if SAVE_IMAGE_FOR_DEBUGGER or SAVE_RENDERS:
-            cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
-
-        # Resize the images
-        img = cv2.resize(img, (224, 224))
-        # Return to original colors
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-
-        x = np.asarray(img, dtype=np.uint8)
-        X_train.append(x)
+        X_train.append(processImage(img_path))
+        y_gender.append(gender)
+        y_age.append(bone_age)
 
     updateProgress(1, total_file, total_file, img_file)
 
@@ -260,7 +264,7 @@ def loadDataSet(files=[]):
 
 # Save dataset
 def saveDataSet(X_train, y_age, y_gender):
-    print("\nSaving data...")
+    print("\nSaving data...", "\nGender to use %s " % (SPLIT_GENDER))
     # Save data
     train_pkl = open("data.pkl", "wb")
     cPickle.dump(X_train, train_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
@@ -273,22 +277,41 @@ def saveDataSet(X_train, y_age, y_gender):
     train_gender_pkl = open("data_gender.pkl", "wb")
     cPickle.dump(y_gender, train_gender_pkl, protocol=cPickle.HIGHEST_PROTOCOL)
     train_gender_pkl.close()
-    print("\nCompleted saved data")
+    print("Completed saved data")
 
 
 # list all the image files and randomly unravel them,
 # in each case you take the first N from the unordered list
 def getFiles():
+    rta = []
+    # Read csv
+    df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
+
     # file names on train_dir
     files = os.listdir(train_dir)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
     # Sort randomly
-    np.random.shuffle(files)
-    # Cut list of file
-    if CUT_DATASET > 0:
-        files = files[:CUT_DATASET]
-    return files
+    if SORT_RANDOMLY:
+        np.random.shuffle(files)
+
+    for file_name in files:
+        # Cut list of file
+        if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
+            # Get row with id equil image's name
+            csv_row = df[df.id == int(file_name[:-4])]
+            # Get bone age
+            bone_age = csv_row.boneage.tolist()[0]
+            # Get gender
+            male = csv_row.male.tolist()[0]
+
+            if SPLIT_GENDER == 'female' and not(male):
+                rta.append((file_name, bone_age, 1 if male else 0))
+            if SPLIT_GENDER == 'male' and male:
+                rta.append((file_name, bone_age, 1 if male else 0))
+            if SPLIT_GENDER == 'both':
+                rta.append((file_name, bone_age, 1 if male else 0))
+    return rta
 
 
 # Create the directories to save the images
