@@ -3,7 +3,7 @@
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
-from keras.optimizers import Adam, RMSprop, Adadelta
+from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
 import keras
 import matplotlib.pyplot as plt
@@ -18,13 +18,14 @@ BATCH_SIZE = 35
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
-#OPTIMIZER = RMSprop()
+# OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adagrad(lr=0.05)
 
 # Image processing layer
 # CNN = 'Xception'
-CNN = 'IV3'
-# CNN = 'RN50'
+# CNN = 'IV3'
+CNN = "RN50"
 
 # Load data
 print("...loading training data")
@@ -78,7 +79,7 @@ print("age_test shape:" + str(age_test.shape))
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
-if CNN == 'IV3':
+if CNN == "IV3":
     # Inception V3 layer with pre-trained weights from ImageNet
     # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
     base_iv3_model = InceptionV3(weights="imagenet")
@@ -86,17 +87,16 @@ if CNN == 'IV3':
     x = base_iv3_model(image_input)
     # flattening it #why?
     # flat_iv3 = Flatten()(output_vgg16)
-elif CNN == 'RN50':
+elif CNN == "RN50":
     # ResNet50 layer with pre-trained weights from ImageNet
     base_rn50_model = ResNet50(weights="imagenet")
     # ResNet50 output from input layer
     x = base_rn50_model(image_input)
-elif CNN == 'Xception':
+elif CNN == "Xception":
     # Xception layer with pre-trained weights from ImageNet
     base_xp_model = Xception(weights="imagenet")
     # Xception output from input layer
     x = base_xp_model(image_input)
-
 
 
 # We stack dense layers and dropout layers to avoid overfitting after that
@@ -132,11 +132,7 @@ checkpoint = keras.callbacks.ModelCheckpoint(
 
 # Reduce learning rate
 reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss',
-    factor=0.8,
-    patience=3,
-    verbose=1,
-    min_lr=0.0001
+    monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
 )
 
 # TensorBoard
@@ -168,9 +164,7 @@ history = model.fit(
 
 model.save_weights("model.h5")
 
-score = model.evaluate(
-    [img_test], age_test, batch_size=BATCH_SIZE, verbose=VERBOSE
-)
+score = model.evaluate([img_test], age_test, batch_size=BATCH_SIZE, verbose=VERBOSE)
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
