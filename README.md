@@ -62,7 +62,7 @@ In our repository
 kaggle datasets download -d kmader/rsna-bone-age -W
 ```
 
-5. Un zip
+5. Unzip
 
 ```shell
 cd ./rsna-bone-age
