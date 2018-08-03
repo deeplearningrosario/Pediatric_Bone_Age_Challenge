@@ -163,7 +163,7 @@ history = model.fit(
     verbose=VERBOSE,
     validation_data=([img_valid], [age_valid]),
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
-    #    callbacks=[tbCallBack, checkpoint],
+    #     callbacks=[tbCallBack, checkpoint],
 )
 
 model.save_weights("model.h5")
