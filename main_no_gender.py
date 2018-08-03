@@ -104,8 +104,8 @@ x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
 x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
-x = Dense(240, activation="relu")(x)
-x = Dropout(0.1)(x)
+# x = Dense(240, activation="relu")(x)
+# x = Dropout(0.1)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
 # predictions = Dense(1, activation='sigmoid', name='predictions')(x)
@@ -163,6 +163,7 @@ history = model.fit(
     verbose=VERBOSE,
     validation_data=([img_valid], [age_valid]),
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
+    #    callbacks=[tbCallBack, checkpoint],
 )
 
 model.save_weights("model.h5")
