@@ -18,14 +18,14 @@ BATCH_SIZE = 35
 VERBOSE = 1
 
 # https://keras.io/optimizers
-# OPTIMIZER = Adam()
-OPTIMIZER = RMSprop()
+OPTIMIZER = Adam()
+# OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 
 # Image processing layer
 # CNN = 'Xception'
-CNN = 'IV3'
-# CNN = 'RN50'
+# CNN = "IV3"
+CNN = 'RN50'
 
 # Load data
 print("...loading training data")
@@ -71,7 +71,7 @@ print("gdr_final shape:" + str(gdr_final.shape))
 # input layer
 image_input = Input(shape=img_final.shape[1:], name="image_input")
 
-if CNN == 'IV3':
+if CNN == "IV3":
     # Inception V3 layer with pre-trained weights from ImageNet
     # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
     base_iv3_model = InceptionV3(weights="imagenet")
@@ -79,12 +79,12 @@ if CNN == 'IV3':
     output_vgg16 = base_iv3_model(image_input)
     # flattening it #why?
     # flat_iv3 = Flatten()(output_vgg16)
-elif CNN == 'RN50':
+elif CNN == "RN50":
     # ResNet50 layer with pre-trained weights from ImageNet
     base_rn50_model = ResNet50(weights="imagenet")
     # ResNet50 output from input layer
     output_rn50 = base_rn50_model(image_input)
-elif CNN == 'Xception':
+elif CNN == "Xception":
     # Xception layer with pre-trained weights from ImageNet
     base_xp_model = Xception(weights="imagenet")
     # Xception output from input layer
@@ -97,13 +97,13 @@ gdr_dense = Dense(32, activation="relu")
 # Gender dense output
 output_gdr_dense = gdr_dense(gdr_input)
 
-if CNN == 'IV3':
+if CNN == "IV3":
     # Concatenating iv3 output with sex_dense output after going through shared layer
     x = keras.layers.concatenate([output_vgg16, output_gdr_dense])
-elif CNN == 'RN50':
+elif CNN == "RN50":
     # Concatenating ResNet50 output with gender_dense output after going through shared layer
     x = keras.layers.concatenate([output_rn50, output_gdr_dense])
-elif CNN == 'Xception':
+elif CNN == "Xception":
     # Concatenating Xception output with gender_dense output after going through shared layer
     x = keras.layers.concatenate([output_xp, output_gdr_dense])
 
@@ -127,7 +127,7 @@ model = Model(inputs=[image_input, gdr_input], outputs=predictions)
 print(model.summary())
 
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
-model.load_weights('model.h5')
+model.load_weights("model.h5")
 
 score = model.evaluate(
     [img_final, gdr_final], age_final, batch_size=BATCH_SIZE, verbose=VERBOSE

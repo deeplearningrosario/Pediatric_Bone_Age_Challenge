@@ -3,7 +3,7 @@
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
-from keras.optimizers import Adam, RMSprop, Adadelta
+from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
 import keras
 import matplotlib.pyplot as plt
@@ -20,11 +20,12 @@ VERBOSE = 1
 OPTIMIZER = Adam(lr=0.001)
 # OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adagrad(lr=0.05)
 
 # Image processing layer
 # CNN = 'Xception'
-CNN = 'IV3'
-# CNN = 'RN50'
+# CNN = 'IV3'
+CNN = "RN50"
 
 # Load data
 print("...loading training data")
@@ -91,7 +92,7 @@ print("gdr_test shape:" + str(gdr_test.shape))
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
-if CNN == 'IV3':
+if CNN == "IV3":
     # Inception V3 layer with pre-trained weights from ImageNet
     # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
     base_iv3_model = InceptionV3(weights="imagenet")
@@ -99,12 +100,12 @@ if CNN == 'IV3':
     output_vgg16 = base_iv3_model(image_input)
     # flattening it #why?
     # flat_iv3 = Flatten()(output_vgg16)
-elif CNN == 'RN50':
+elif CNN == "RN50":
     # ResNet50 layer with pre-trained weights from ImageNet
     base_rn50_model = ResNet50(weights="imagenet")
     # ResNet50 output from input layer
     output_rn50 = base_rn50_model(image_input)
-elif CNN == 'Xception':
+elif CNN == "Xception":
     # Xception layer with pre-trained weights from ImageNet
     base_xp_model = Xception(weights="imagenet")
     # Xception output from input layer
@@ -117,13 +118,13 @@ gdr_dense = Dense(32, activation="relu")
 # Gender dense output
 output_gdr_dense = gdr_dense(gdr_input)
 
-if CNN == 'IV3':
+if CNN == "IV3":
     # Concatenating iv3 output with sex_dense output after going through shared layer
     x = keras.layers.concatenate([output_vgg16, output_gdr_dense])
-elif CNN == 'RN50':
+elif CNN == "RN50":
     # Concatenating ResNet50 output with gender_dense output after going through shared layer
     x = keras.layers.concatenate([output_rn50, output_gdr_dense])
-elif CNN == 'Xception':
+elif CNN == "Xception":
     # Concatenating Xception output with gender_dense output after going through shared layer
     x = keras.layers.concatenate([output_xp, output_gdr_dense])
 
@@ -160,11 +161,7 @@ checkpoint = keras.callbacks.ModelCheckpoint(
 
 # Reduce learning rate
 reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss',
-    factor=0.8,
-    patience=3,
-    verbose=1,
-    min_lr=0.0001
+    monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
 )
 
 # TensorBoard
@@ -191,7 +188,6 @@ history = model.fit(
     verbose=VERBOSE,
     validation_data=([img_valid, gdr_valid], [age_valid]),
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
-    #    callbacks=[tbCallBack, checkpoint],
 )
 
 model.save_weights("model.h5")
