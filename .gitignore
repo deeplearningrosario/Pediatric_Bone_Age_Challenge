@@ -15,4 +15,8 @@
 # TensorBoard log
 /tensorboard/**/*
 
+# IDE-specific stuff:
+.idea/*
+
+
 __pycache__
