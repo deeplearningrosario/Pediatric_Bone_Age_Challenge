@@ -4,9 +4,10 @@
 # File created for pickle_dataset.py script
 /**/*.pkl
 
-# Ignore weight
+# Ignore weight and model
 /**/*.h5
 /weights/**/*
+/model-backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png
