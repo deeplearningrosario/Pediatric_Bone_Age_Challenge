@@ -12,6 +12,9 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
+# Path to save model
+PATHE_SAVE_MODEL = "model-backup"
+
 # network and training
 EPOCHS = 30
 BATCH_SIZE = 35
@@ -190,7 +193,19 @@ history = model.fit(
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
 )
 
-model.save_weights("model.h5")
+# Save weights after every epoch
+PATHE_SAVE_MODEL = os.path.join(__location__, PATHE_SAVE_MODEL)
+if not os.path.exists(PATHE_SAVE_MODEL):
+    os.makedirs(PATHE_SAVE_MODEL)
+
+
+# serialize model to YAML
+model_yaml = model.to_yaml()
+with open(os.path.join(PATHE_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
+    yaml_file.write(model_yaml)
+# serialize weights to HDF5
+model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model.h5"))
+print("Saved model to disk")
 
 score = model.evaluate(
     [img_test, gdr_test], age_test, batch_size=BATCH_SIZE, verbose=VERBOSE
@@ -199,6 +214,11 @@ score = model.evaluate(
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
 print("Test accuracy:", score[2])
+
+# Save all data in history
+with open("history.pkl", "wb") as f:
+    cPickle.dump(history.history, f)
+f.close()
 
 # list all data in history
 print(history.history.keys())
@@ -218,7 +238,3 @@ plt.ylabel("loss")
 plt.xlabel("epoch")
 plt.legend(["train", "test"], loc="upper left")
 plt.show()
-
-with open("history.pkl", "wb") as f:
-    cPickle.dump(history.history, f)
-f.close()
