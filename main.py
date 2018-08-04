@@ -12,9 +12,6 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-# Path to save model
-PATHE_SAVE_MODEL = "model-backup"
-
 # network and training
 EPOCHS = 30
 BATCH_SIZE = 35
@@ -193,11 +190,12 @@ history = model.fit(
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
 )
 
+# Path to save model
+PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup")
+
 # Save weights after every epoch
-PATHE_SAVE_MODEL = os.path.join(__location__, PATHE_SAVE_MODEL)
 if not os.path.exists(PATHE_SAVE_MODEL):
     os.makedirs(PATHE_SAVE_MODEL)
-
 
 # serialize model to YAML
 model_yaml = model.to_yaml()
@@ -216,7 +214,7 @@ print("Test MAE:", score[1])
 print("Test accuracy:", score[2])
 
 # Save all data in history
-with open("history.pkl", "wb") as f:
+with open(os.path.join(PATHE_SAVE_MODEL, "history.pkl"), "wb") as f:
     cPickle.dump(history.history, f)
 f.close()
 
