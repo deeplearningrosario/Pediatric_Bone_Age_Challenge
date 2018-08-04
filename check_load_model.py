@@ -73,10 +73,19 @@ print("Loaded model from disk")
 # printing a model summary to check what we constructed
 print(model.summary())
 
+# I think there is another way to do this
+input_values = img_final
+try:
+    if model.get_layer(name="gdr_input") is not None:
+        print("Model with gender")
+        input_values = [img_final, gdr_final]
+except:
+    pass
+
 # evaluate loaded model on test data
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
 score = model.evaluate(
-    [img_final, gdr_final], age_final, batch_size=BATCH_SIZE, verbose=VERBOSE
+    input_values, age_final, batch_size=BATCH_SIZE, verbose=VERBOSE
 )
 
 print("\nTest loss:", score[0])
