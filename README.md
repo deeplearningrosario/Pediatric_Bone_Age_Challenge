@@ -63,7 +63,7 @@ mv ./kaggle.json /root/.kaggle/kaggle.json
 In our repository
 
 ```shell
-kaggle datasets download -d kmader/rsna-bone-age -p ./
+kaggle datasets download -d kmader/rsna-bone-age -p ./rsna-bone-age
 ```
 
 5. Unzip
