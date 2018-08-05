@@ -47,6 +47,10 @@ pip install kaggle
 3. Move our API key to kaggle path
 
 ```shell
+kaggle
+```
+
+```shell
 mv ./kaggle.json ~/.kaggle/kaggle.json
 ```
 or
@@ -59,7 +63,7 @@ mv ./kaggle.json /root/.kaggle/kaggle.json
 In our repository
 
 ```shell
-kaggle datasets download -d kmader/rsna-bone-age -W
+kaggle datasets download -d kmader/rsna-bone-age -p ./
 ```
 
 5. Unzip
