@@ -58,19 +58,15 @@ or
 mv ./kaggle.json /root/.kaggle/kaggle.json
 ```
 
-4. Downloader dataset
-
-In our repository
+4. Downloader dataset in our repository
 
 ```shell
-kaggle datasets download -d kmader/rsna-bone-age -p ./rsna-bone-age
+kaggle datasets download -d kmader/rsna-bone-age -p ./
 ```
 
 5. Unzip
 
 ```shell
-cd ./rsna-bone-age
-
 unzip boneage-test-dataset.zip
 
 unzip boneage-training-dataset.zip
@@ -84,15 +80,7 @@ mv boneage-training-dataset.csv ./boneage-training-dataset
 mv boneage-test-dataset.csv ./boneage-test-dataset
 ```
 
-7. Move dataset to project root folder
-
-```shell
-mv ./boneage-training-dataset ../
-
-mv ./boneage-test-dataset ../
-```
-
-8. Result
+7. Result
 
 ```shell
 .
