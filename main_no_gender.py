@@ -20,7 +20,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 5
+EPOCHS = 30
 BATCH_SIZE = 35
 VERBOSE = 1
 # https://keras.io/optimizers
