@@ -44,4 +44,8 @@
 /paper/*.out
 /paper/*.synctex.gz
 
+# Python
 __pycache__
+
+# mac
+./**/.DS_Store
