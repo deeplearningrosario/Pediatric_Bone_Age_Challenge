@@ -1,14 +1,21 @@
 #!/usr/bin/python3
+# ./main.py --load_weight ./weight_file.h5
 
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
+import argparse
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+args = vars(ap.parse_args())
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
@@ -118,6 +125,11 @@ model = Model(inputs=[image_input], outputs=predictions)
 # printing a model summary to check what we constructed
 print(model.summary())
 
+# Load weight
+if args["load_weights"] != None:
+    print("Loading weights for", args["load_weights"])
+    model.load_weights(args["load_weights"])
+
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
 
 # Save weights after every epoch
@@ -190,19 +202,69 @@ f.close()
 
 # list all data in history
 print(history.history.keys())
+
+# plot the training loss and accuracy
+plt.style.use("ggplot")
+plt.figure()
+
+plt.plot(history.history["loss"], label="loss")
+plt.plot(history.history["val_loss"], label="val_loss")
+plt.title("Training Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend(["train", "test"], loc="upper left")
+plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_loss.png"))
+plt.close()
+
+plt.plot(history.history["acc"], label="acc")
+plt.plot(history.history["val_acc"], label="val_acc")
+plt.title("Training Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend(["train", "test"], loc="upper left")
+plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
+plt.close()
+
+plt.plot(history.history["mean_absolute_error"], label="mean")
+plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
+plt.title("Training Absolute Error")
+plt.xlabel("Epoch")
+plt.ylabel("Absolute Error")
+plt.legend(["train", "test"], loc="upper left")
+plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_mean.png"))
+plt.close()
+
 # summarize history for accuracy
-plt.plot(history.history["acc"])
-plt.plot(history.history["val_acc"])
+plt.plot(history.history["acc"], label="train_acc")
+plt.plot(history.history["val_acc"], label="val_acc")
 plt.title("model accuracy")
-plt.ylabel("accuracy")
-plt.xlabel("epoch")
+plt.ylabel("Accuracy")
+plt.xlabel("Epoch")
 plt.legend(["train", "test"], loc="upper left")
 plt.show()
+
 # summarize history for loss
-plt.plot(history.history["loss"])
-plt.plot(history.history["val_loss"])
+plt.plot(history.history["loss"], label="train_loss")
+plt.plot(history.history["val_loss"], label="val_loss")
 plt.title("model loss")
-plt.ylabel("loss")
-plt.xlabel("epoch")
+plt.ylabel("Loss")
+plt.xlabel("Epoch")
 plt.legend(["train", "test"], loc="upper left")
+plt.show()
+
+# summarize history for mean
+plt.plot(history.history["mean_absolute_error"], label="mean")
+plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
+plt.title("Training Absolute Error")
+plt.xlabel("Epoch")
+plt.ylabel("Absolute Error")
+plt.legend(["train", "test"], loc="upper left")
+plt.show()
+
+# Reduce learning rate
+plt.plot(history.history["lr"], label="Reduce learning rate")
+plt.title("Reduce learning rate")
+plt.xlabel("Epoch")
+plt.ylabel("Reduce learning rate")
+plt.legend(loc="upper left")
 plt.show()
