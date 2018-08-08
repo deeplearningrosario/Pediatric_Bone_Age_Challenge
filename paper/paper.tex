@@ -1,3 +1,4 @@
+
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
@@ -8,11 +9,28 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 
-\usepackage[utf8]{inputenc} % Acentos, etc
-\usepackage[spanish]{babel} % Idioma
+% spanish symbols for narrative
+\usepackage[utf8]{inputenc} 
+% language
+\usepackage[spanish]{babel} 
 
-\renewcommand{\thesection}{\arabic{section}} %Se cambia de números romanos a número
-\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}} %Se cambia de %números romanos a número
+%changing from roman number to integers
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}} 
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+    \pgfplotsset{
+        % use this `compat' level or higher to position the bars in one group
+        % next to each other
+        compat=1.7,
+    }
+    % load the data table ...
+    \pgfplotstableread[col sep=comma]{femaleAgeDistribution.csv}{\femaleAgeDistribution}
+        % and store the number of columns in `\NoOfCols'
+        % (minus 1 because counting in `\foreach' starts with zero
+        \pgfplotstablegetcolsof{\femaleAgeDistribution}
+        \pgfmathtruncatemacro{\NoOfCols}{\pgfplotsretval-1}
 
 
 
@@ -22,9 +40,6 @@
 \begin{document}
 
 \title{Título\\
-%{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
-%should not be used}
-%\thanks{Identify applicable funding agency here. If none, delete this.}
 }
 
 \author{\IEEEauthorblockN{Autores}
@@ -33,7 +48,7 @@
 \textit{Departamento Ingeniería en Sistemas de Información}\\
 \textit{Universidad Tecnológica Nacional}\\
 \textit{Facultad Regional Rosario}\\
-mail@frro.utn.edu.ar} %hacerlo hyperlink
+mail@frro.utn.edu.ar} %should be hyperlink
 }
 
 \maketitle
@@ -67,6 +82,69 @@ measures proportionately more than is customary. This measurement
 and others are deliberate, using specifications that anticipate your paper 
 as one part of the entire proceedings, and not as an independent document. 
 Please do not revise any of the current designations.
+
+% used PGFPlots v1.14
+
+\begin{tikzpicture}
+    \begin{semilogyaxis}[
+        % adjust the `width' a bit by keeping the default `height'
+        width=1.05*\axisdefaultwidth,
+        height=\axisdefaultheight,
+        % set appropriate `ymax' value so the `nodes near coords' fit to the plot
+        % (adjusting the `ymin' value is just to make it look a little bit better)
+        ymin=0,
+        ymax=2000,
+        % there should be no gap between the bars in one group
+        ybar=0pt,
+        % use data from the table for the xticklabels
+        xtick=data,
+        xticklabels from table={\femaleAgeDistribution}{Anio},
+        % adjust the size of the bars so they don't overlap
+        % (you can play with the numerator to change the gap between the groups)
+        bar width=0.6/\NoOfCols,
+        % enlarge the x limits so all of the bars are shown
+        % (play with the value to adjust the gap on the sides of the plot)
+        enlarge x limits={abs=0.6},
+        % and position the legend outside of the plot to not overlap with the data
+        %legend pos=outer north east,
+        % add `nodes near coords'
+        nodes near coords={
+            % because internally PGFPlots works with floating point numbers, we
+            % change them to fixed point numbers
+            \pgfkeys{
+                /pgf/fpu=true,
+                /pgf/fpu/output format=fixed,
+            }
+            % truncate value count to integer
+            \pgfmathparse{\pgfplotspointmeta}
+            \pgfmathprintnumber{\pgfmathresult}\,
+        },
+        % set the style of the `nodes near coords'
+        nodes near coords style={
+            font=\tiny,
+            rotate=90,
+            anchor=west,
+        },
+        % as basis for the `nodes near coords' use the raw y values
+        point meta=rawy,
+    ]
+        % add the data rows for each column 
+        \foreach \i in {1,...,\NoOfCols} {
+            \addplot table [
+                x expr=\coordindex,
+                y index=\i,
+                col sep=comma,
+            ] {\femaleAgeDistribution};
+                % to automatically add the legend entries first extract the
+                % column name and store it in `\colname'
+                    \pgfplotstablegetcolumnnamebyindex{\i}\of{\femaleAgeDistribution}\to{\colname}
+                % now you can add the legend entry
+                % (because we are in a loop we have to use the "expanded" version)
+                \addlegendentryexpanded{\colname};
+        }
+    \end{semilogyaxis}
+\end{tikzpicture}
+
 
 \subsection{Preprocesamiento}
 Define abbreviations and acronyms the first time they are used in the text, 
