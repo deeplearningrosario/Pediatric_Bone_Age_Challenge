@@ -104,19 +104,19 @@ if CNN == "IV3":
     # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
     base_iv3_model = InceptionV3(weights="imagenet")
     # Inception V3 output from input layer
-    output_vgg16 = base_iv3_model(image_input)
+    output_cnn = base_iv3_model(image_input)
     # flattening it #why?
     # flat_iv3 = Flatten()(output_vgg16)
 elif CNN == "RN50":
     # ResNet50 layer with pre-trained weights from ImageNet
     base_rn50_model = ResNet50(weights="imagenet")
     # ResNet50 output from input layer
-    output_rn50 = base_rn50_model(image_input)
+    output_cnn = base_rn50_model(image_input)
 elif CNN == "Xception":
     # Xception layer with pre-trained weights from ImageNet
     base_xp_model = Xception(weights="imagenet")
     # Xception output from input layer
-    output_xp = base_xp_model(image_input)
+    output_cnn = base_xp_model(image_input)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
@@ -125,15 +125,8 @@ gdr_dense = Dense(32, activation="relu")
 # Gender dense output
 output_gdr_dense = gdr_dense(gdr_input)
 
-if CNN == "IV3":
-    # Concatenating iv3 output with sex_dense output after going through shared layer
-    x = keras.layers.concatenate([output_vgg16, output_gdr_dense])
-elif CNN == "RN50":
-    # Concatenating ResNet50 output with gender_dense output after going through shared layer
-    x = keras.layers.concatenate([output_rn50, output_gdr_dense])
-elif CNN == "Xception":
-    # Concatenating Xception output with gender_dense output after going through shared layer
-    x = keras.layers.concatenate([output_xp, output_gdr_dense])
+# Concatenating CNN output with sex_dense output after going through shared layer
+x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1000, activation="relu")(x)
@@ -156,7 +149,7 @@ print(model.summary())
 
 # Load weight
 if args["load_weights"] != None:
-    print("Loading weights for", args["load_weights"])
+    print("Loading weights from", args["load_weights"])
     model.load_weights(args["load_weights"])
 
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
