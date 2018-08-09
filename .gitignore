@@ -4,9 +4,10 @@
 # File created for pickle_dataset.py script
 /**/*.pkl
 
-# Ignore weight
+# Ignore weight and model
 /**/*.h5
 /weights/**/*
+/model-backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png
@@ -15,4 +16,36 @@
 # TensorBoard log
 /tensorboard/**/*
 
+# IDE-specific stuff:
+.idea/*
+
+# Ignore LaTeX project files
+/paper/*.aux
+/paper/*.glo
+/paper/*.idx
+/paper/*.log
+/paper/*.toc
+/paper/*.ist
+/paper/*.acn
+/paper/*.acr
+/paper/*.alg
+/paper/*.bbl
+/paper/*.blg
+/paper/*.dvi
+/paper/*.glg
+/paper/*.gls
+/paper/*.ilg
+/paper/*.ind
+/paper/*.lof
+/paper/*.lot
+/paper/*.maf
+/paper/*.mtc
+/paper/*.mtc1
+/paper/*.out
+/paper/*.synctex.gz
+
+# Python
 __pycache__
+
+# mac
+./**/.DS_Store

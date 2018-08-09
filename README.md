@@ -7,7 +7,7 @@ The order of execution would be
 2. main
 3. check
 
-Dependencies needed
+## Dependencies needed
 
 * [python3](https://www.python.org/)
 * [tensorflow](https://www.tensorflow.org/)
@@ -27,4 +27,76 @@ python3 -mpip install opencv-python --user
 python3 -mpip install pandas --user
 
 python3 -mpip install numpy --user
+```
+
+
+## Download DataSet [rsna-bone-age](https://www.kaggle.com/kmader/rsna-bone-age)
+
+1. Generate the API key
+
+Go to the __Kaggle account__, link https://www.kaggle.com/ `your user name` /account
+
+Click __Create New API Token__ and then save the json file in 'home' (linux users), mode info [kaggle-api](https://github.com/Kaggle/kaggle-api#api-credentials)
+
+2. Install kaggle cli
+
+```shell
+pip install kaggle
+```
+
+3. Move our API key to kaggle path
+
+```shell
+kaggle
+```
+
+```shell
+mv ./kaggle.json ~/.kaggle/kaggle.json
+```
+or
+```shell
+mv ./kaggle.json /root/.kaggle/kaggle.json
+```
+
+4. Downloader dataset in our repository
+
+```shell
+kaggle datasets download -d kmader/rsna-bone-age -p ./
+```
+
+5. Unzip
+
+```shell
+unzip boneage-test-dataset.zip
+
+unzip boneage-training-dataset.zip
+```
+
+6. Move CSV  to dataset folder
+
+```shell
+mv boneage-training-dataset.csv ./boneage-training-dataset
+
+mv boneage-test-dataset.csv ./boneage-test-dataset
+```
+
+7. Result
+
+```shell
+.
+├── attention_model.py
+├── boneage-test-dataset
+├── boneage-training-dataset
+├── check_no_gender.py
+├── check.py
+├── dataset_sample
+├── .git
+├── .gitignore
+├── main_no_gender.py
+├── main.py
+├── pickle_dataset_multiprocessing.py
+├── pickle_dataset.py
+├── prueba.py
+├── README.md
+...
 ```
