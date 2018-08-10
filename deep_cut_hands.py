@@ -1,72 +1,197 @@
 #!/usr/bin/python3
-# python keras_mnist.py --output output/keras_mnist.png
 
-# import the necessary packages
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from keras.models import Sequential
-from keras.layers.core import Dense
-from keras.optimizers import SGD
-from sklearn import datasets
-import matplotlib.pyplot as plt
+import cv2
+import fnmatch
 import numpy as np
-import argparse
+import os
+import pandas as pd
+import sys
 
-# construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument(
-    "-o", "--output", required=True, help="path to the output loss/accuracy plot"
-)
-args = vars(ap.parse_args())
+# Directory of dataset to use
+TRAIN_DIR = "dataset_sample"
+# TRAIN_DIR = "boneage-training-dataset"
 
-# grab the MNIST dataset (if this is your first time running this
-# script, the download may take a minute -- the 55MB MNIST dataset
-# will be downloaded)
-print("[INFO] loading MNIST (full) dataset...")
-dataset = datasets.fetch_mldata("MNIST Original")
-# scale the raw pixel intensities to the range [0, 1.0], then
-# construct the training and testing splits
-data = dataset.data.astype("float") / 255.0
-(trainX, testX, trainY, testY) = train_test_split(data, dataset.target, test_size=0.25)
+# Use N images of dataset, If it is -1 using all dataset
+CUT_DATASET = 1000
+# Sort dataset randomly
+SORT_RANDOMLY = not True
 
-# convert the labels from integers to vectors
-lb = LabelBinarizer()
-trainY = lb.fit_transform(trainY)
-testY = lb.transform(testY)
+# Turn saving renders feature on/off
+SAVE_RENDERS = False
 
-# define the 784-256-128-10 architecture using Keras
-model = Sequential()
-model.add(Dense(256, input_shape=(784,), activation="sigmoid"))
-model.add(Dense(128, activation="sigmoid"))
-model.add(Dense(10, activation="softmax"))
+# Create intermediate images in separate folders for debugger.
+# mask, cut_hand, delete_object, render
+SAVE_IMAGE_FOR_DEBUGGER = False
 
-# train the model using SGD
-print("[INFO] training network...")
-sgd = SGD(0.01)
-model.compile(loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
-H = model.fit(trainX, trainY, validation_data=(testX, testY), epochs=100, batch_size=128)
+# Extracting hands from images and using that new dataset.
+# Simple dataset is correct, I am verifying the original.
+EXTRACTING_HANDS = True
 
-# evaluate the network
-print("[INFO] evaluating network...")
-predictions = model.predict(testX, batch_size=128)
-print(
-    classification_report(
-        testY.argmax(axis=1),
-        predictions.argmax(axis=1),
-        target_names=[str(x) for x in lb.classes_],
+# For this problem the validation and test data provided by the concerned authority did not have labels,
+# so the training data was split into train, test and validation sets
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+train_dir = os.path.join(__location__, TRAIN_DIR)
+
+img_file = ""
+
+
+# Show the images
+def writeImage(path, image, force=False):
+    if SAVE_IMAGE_FOR_DEBUGGER or force:
+        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
+
+
+# Auto adjust levels colors
+# We order the colors of the image with their frequency and
+# obtain the accumulated one, then we obtain the colors that
+# accumulate 2.5% and 99.4% of the frequency.
+def histogramsLevelFix(img):
+    # This function is only prepared for images in scale of gripes
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Find the acceptable limits of the intensity histogram
+    min_color, max_color = np.percentile(img, (2.5, 99.4))
+    min_color = int(min_color)
+    max_color = int(max_color)
+
+    # To improve the preform we created a color palette with the new values
+    colors_palette = []
+    # Auxiliary calculation, avoid doing calculations within the 'for'
+    dif_color = 255 / (max_color - min_color)
+    for color in range(256):
+        if color <= min_color:
+            colors_palette.append(0)
+        elif color >= max_color:
+            colors_palette.append(255)
+        else:
+            colors_palette.append(int(round((color - min_color) * dif_color)))
+
+    # We paint the image with the new color palette
+    height, width = img.shape
+    for y in range(0, height):
+        for x in range(0, width):
+            color = img[y, x]
+            img[y, x] = colors_palette[color]
+
+    writeImage("histograms_level_fix", np.hstack([img]))  # show the images ===========
+
+    return img
+
+
+# Show a progress bar
+def updateProgress(progress, tick="", total="", status="Loading..."):
+    lineLength = 80
+    barLength = 23
+    if isinstance(progress, int):
+        progress = float(progress)
+    if progress < 0:
+        progress = 0
+        status = "Waiting...\r"
+    if progress >= 1:
+        progress = 1
+        status = "Completed loading data\r\n"
+    block = int(round(barLength * progress))
+    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+        tick,
+        total,
+        str(("#" * block)) + str("." * (barLength - block)),
+        round(progress * 100, 1),
+        status,
     )
-)
+    emptyBlock = lineLength - len(line)
+    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
+    sys.stdout.write(line + emptyBlock)
+    sys.stdout.flush()
 
-# plot the training loss and accuracy
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(np.arange(0, 100), H.history["loss"], label="train_loss")
-plt.plot(np.arange(0, 100), H.history["val_loss"], label="val_loss")
-plt.plot(np.arange(0, 100), H.history["acc"], label="train_acc")
-plt.plot(np.arange(0, 100), H.history["val_acc"], label="val_acc")
-plt.title("Training Loss and Accuracy")
-plt.xlabel("Epoch #")
-plt.ylabel("Loss/Accuracy")
-plt.legend()
-plt.savefig(args["output"])
+
+def processImage(img_path):
+    # Read a image
+    img = cv2.imread(img_path)
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    hist, _ = np.histogram(img, 256, [0, 256])
+
+    cdf = hist.cumsum()
+    cdf_normalized = cdf * hist.max() / cdf.max()
+
+    return cdf_normalized
+
+
+def loadDataSet(files=[]):
+    global img_file
+    X_train = []
+    y_lower = []
+    y_upper = []
+
+    total_file = len(files)
+    for i in range(total_file):
+        (img_file, lower, upper) = files[i]
+        # Update the progress bar
+        progress = float(i / total_file), (i + 1)
+        updateProgress(progress[0], progress[1], total_file, img_file)
+
+        # Get image's path
+        img_path = os.path.join(train_dir, img_file)
+
+        X_train.append(processImage(img_path))
+        y_lower.append(lower)
+        y_upper.append(upper)
+
+    updateProgress(1, total_file, total_file, img_file)
+
+    return X_train, y_lower, y_upper
+
+
+# list all the image files and randomly unravel them,
+# in each case you take the first N from the unordered list
+def getFiles():
+    rta = []
+    # Read csv
+    df = pd.read_csv(os.path.join(train_dir, "histograma-dataset.csv"))
+
+    # file names on train_dir
+    files = os.listdir(train_dir)
+    # filter image files
+    files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
+    # Sort randomly
+    if SORT_RANDOMLY:
+        np.random.shuffle(files)
+
+    for file_name in files:
+        # Cut list of file
+        if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
+            # Get row with id equil image's name
+            csv_row = df[df.id == int(file_name[:-4])]
+            # Get lower color
+            lower = csv_row.lower.tolist()[0]
+            # Get upper color
+            upper = csv_row.upper.tolist()[0]
+
+            rta.append((file_name, lower, upper))
+
+    return rta
+
+
+# Create the directories to save the images
+def checkPath():
+    if SAVE_IMAGE_FOR_DEBUGGER:
+        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
+            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
+    if SAVE_RENDERS:
+        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
+
+
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
+if __name__ == "__main__":
+    checkPath()
+
+    files = getFiles()
+    (X_train, y_lower, y_upper) = loadDataSet(files)
+
+    print()
