@@ -1,7 +1,15 @@
 #!/usr/bin/python3
 
+from keras.applications import InceptionV3, ResNet50, Xception
+from keras.layers import Flatten, Dense, Input, Dropout
+from keras.models import Model, Sequential
+from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+from six.moves import cPickle
+import argparse
 import cv2
 import fnmatch
+import keras
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
@@ -13,19 +21,24 @@ TRAIN_DIR = "dataset_sample"
 
 # Use N images of dataset, If it is -1 using all dataset
 CUT_DATASET = 1000
+
+# network and training
+EPOCHS = 500
+BATCH_SIZE = 10
+
+# https://keras.io/optimizers
+# OPTIMIZER = Adam(lr=0.001)
+# OPTIMIZER = RMSprop()
+OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adagrad(lr=0.05)
+
 # Sort dataset randomly
-SORT_RANDOMLY = not True
+SORT_RANDOMLY = True
 
-# Turn saving renders feature on/off
-SAVE_RENDERS = False
-
-# Create intermediate images in separate folders for debugger.
-# mask, cut_hand, delete_object, render
-SAVE_IMAGE_FOR_DEBUGGER = False
-
-# Extracting hands from images and using that new dataset.
-# Simple dataset is correct, I am verifying the original.
-EXTRACTING_HANDS = True
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
@@ -34,6 +47,13 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 train_dir = os.path.join(__location__, TRAIN_DIR)
 
 img_file = ""
+
+# Turn saving renders feature on/off
+SAVE_RENDERS = False
+
+# Create intermediate images in separate folders for debugger.
+# mask, cut_hand, delete_object, render
+SAVE_IMAGE_FOR_DEBUGGER = False
 
 
 # Show the images
@@ -119,6 +139,7 @@ def processImage(img_path):
 
 
 def loadDataSet(files=[]):
+    print("\n[INFO] Get histogram of the images...")
     global img_file
     X_train = []
     y_lower = []
@@ -178,10 +199,48 @@ def checkPath():
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
             if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+                print("\n[INFO] Create folder", folder)
                 os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
     if SAVE_RENDERS:
         if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+            print("\n[INFO] Create folder render")
             os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
+
+    # Load weight
+    if args["load_weights"] != None:
+        print("Loading weights from", args["load_weights"])
+        model.load_weights(args["load_weights"])
+
+
+def loadCallBack():
+    checkpoint = keras.callbacks.ModelCheckpoint(
+        filepath="weights_deep_cut_hands/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+        save_weights_only=True,
+        period=1,
+    )
+
+    # Reduce learning rate
+    reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
+        monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
+    )
+
+    # TensorBoard
+    # how to use: $ tensorboard --logdir path_to_current_dir/Graph
+    # Save log for tensorboard
+    LOG_DIR_TENSORBOARD = os.path.join(__location__, "tensorboard")
+    if not os.path.exists(LOG_DIR_TENSORBOARD):
+        os.makedirs(LOG_DIR_TENSORBOARD)
+
+    tbCallBack = keras.callbacks.TensorBoard(
+        log_dir=LOG_DIR_TENSORBOARD,
+        batch_size=BATCH_SIZE,
+        histogram_freq=0,
+        write_graph=True,
+        write_images=True,
+    )
+    print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
+
+    return [tbCallBack, checkpoint, reduceLROnPlat]
 
 
 # Como vamos a usar multi procesos uno por core.
@@ -194,4 +253,110 @@ if __name__ == "__main__":
     files = getFiles()
     (X_train, y_lower, y_upper) = loadDataSet(files)
 
-    print()
+    print("\n[INFO] Create validation sets, training set, testing set...")
+    # Split images dataset
+    k = int(len(X_train) / 6)  # Decides split count
+    k = 5
+
+    hist_test = X_train[:k]
+    lower_test = y_lower[:k]
+    upper_test = y_upper[:k]
+
+    hist_valid = X_train[k: 2 * k]
+    lower_valid = y_lower[k: 2 * k]
+    upper_valid = y_upper[k: 2 * k]
+
+    hist_train = X_train[2 * k:]
+    lower_train = y_lower[2 * k:]
+    upper_train = y_upper[2 * k:]
+
+    print("\n[INFO] Sizes of the new set")
+    print("hist_train:", len(hist_train))
+    print("lower_train:", len(lower_train))
+    print("upper_train:", len(upper_train))
+    print("hist_valid:", len(hist_valid))
+    print("lower_valid:", len(lower_valid))
+    print("upper_valid:", len(upper_valid))
+    print("hist_test:", len(hist_test))
+    print("lower_test:", len(lower_test))
+    print("upper_test:", len(upper_test))
+
+    # Save weights after every epoch
+    if not os.path.exists(os.path.join(__location__, "weights_deep_cut_hands")):
+        os.makedirs(os.path.join(__location__, "weights_deep_cut_hands"))
+
+    # First we need to create a model structure
+    hist_input = Input(shape=(256,), name="hist_input")
+
+    x_lower = Dense(256, activation="sigmoid")(hist_input)
+    x_lower = Dense(256, activation="relu")(x_lower)
+    x_lower = Dense(200, activation="relu")(x_lower)
+    x_lower = Dense(128, activation="relu")(x_lower)
+    x_lower = Dense(64, activation="sigmoid")(x_lower)
+    x_lower = Dense(16, activation="relu")(x_lower)
+    x_lower = Dense(2, activation="relu")(x_lower)
+
+    x_upper = Dense(256, activation="sigmoid")(hist_input)
+    x_upper = Dense(256, activation="relu")(x_upper)
+    x_upper = Dense(200, activation="relu")(x_upper)
+    x_upper = Dense(128, activation="relu")(x_upper)
+    x_upper = Dense(64, activation="sigmoid")(x_upper)
+    x_upper = Dense(16, activation="relu")(x_upper)
+    x_upper = Dense(2, activation="relu")(x_upper)
+
+    # Prediction for the upper and lower value
+    lower_output = Dense(1, name="lower")(x_lower)
+    upper_output = Dense(1, name="upper")(x_upper)
+
+    model = Model(inputs=[hist_input], outputs=[lower_output, upper_output])
+
+    print("\n[INFO] Model summary")
+    print(model.summary())
+
+    print("\n[INFO] Training network...")
+    model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
+
+    history = model.fit(
+        [hist_train],
+        [lower_train, upper_train],
+        batch_size=BATCH_SIZE,
+        epochs=EPOCHS,
+        verbose=2,
+        validation_data=([hist_valid], [lower_valid, upper_valid]),
+        callbacks=loadCallBack()
+    )
+
+    print("\n[INFO] Save model to disck...")
+    # Path to save model
+    PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup", "cut-hand")
+
+    # Save weights after every epoch
+    if not os.path.exists(PATHE_SAVE_MODEL):
+        os.makedirs(PATHE_SAVE_MODEL)
+
+    # serialize model to YAML
+    model_yaml = model.to_yaml()
+    with open(os.path.join(PATHE_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
+        yaml_file.write(model_yaml)
+    # serialize weights to HDF5
+    model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model.h5"))
+    print("OK")
+
+    # evaluate the network
+    print("\n[INFO] Evaluating network...")
+    score = model.evaluate(
+        [hist_test], [lower_test, upper_test], batch_size=BATCH_SIZE, verbose=1
+    )
+
+    print("Test score:", score)
+    print("Test loss:", score[0])
+    print("Test MAE:", score[1])
+    print("Test MSE:", score[2])
+
+    # list all data in history
+    print("\n[INFO] Save model history graphics...")
+    print(history.history.keys())
+
+    # plot the training loss and accuracy
+    plt.style.use("ggplot")
+    plt.figure()
