@@ -193,17 +193,21 @@ def getFiles():
         if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
             # Get row with id equil image's name
             csv_row = df[df.id == int(file_name[:-4])]
-            # Get lower color
-            lower = csv_row.lower.tolist()[0]
-            # Get upper color
-            upper = csv_row.upper.tolist()[0]
 
-            rta.append((file_name, lower, upper))
+            # Get lower color
+            lower = csv_row.lower.tolist()
+            # Get upper color
+            upper = csv_row.upper.tolist()
+            if not(lower[0] != lower[0] and upper[0] != upper[0]):
+                rta.append((file_name, lower[0], upper[0]))
+            else:
+                print("Not data for", file_name)
 
     return rta
 
-
 # Create the directories to save the images
+
+
 def checkPath():
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
@@ -380,4 +384,11 @@ if __name__ == "__main__":
     model = makerModel()
     if args["train"] == True:
         trainModel(model, X_train, y_lower, y_upper)
-    # else:
+    else:
+        print("\n[INFO] Predict...")
+        # new instance where we do not know the answer
+        Xnew = X_train[19]
+        # make a prediction
+        ynew = model.predict(Xnew)
+        # show the inputs and predicted outputs
+        print("X=%s, Predicted=%s" % (Xnew[0], ynew[0]))
