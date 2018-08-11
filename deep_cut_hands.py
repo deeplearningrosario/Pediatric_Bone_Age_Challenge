@@ -40,14 +40,14 @@ SORT_RANDOMLY = True
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
-ap.add_argument("-tb", "--tensorBoard", default=False, help="Active tensorBoard")
-ap.add_argument("-cp", "--checkpoint", default=True, help="Active checkpoint")
+ap.add_argument("-tb", "--tensorBoard", default='False', help="Active tensorBoard")
+ap.add_argument("-cp", "--checkpoint", default='True', help="Active checkpoint")
 ap.add_argument(
-    "-rl", "--reduce_learning", default=False, help="Active reduce learning rate"
+    "-rl", "--reduce_learning", default='False', help="Active reduce learning rate"
 )
 
-ap.add_argument("-t", "--train", default=True, help="Run train model")
-ap.add_argument("-e", "--evaluate", default=True, help="Evaluating model")
+ap.add_argument("-t", "--train", default='True', help="Run train model")
+ap.add_argument("-e", "--evaluate", default='False', help="Evaluating model")
 ap.add_argument("-p", "--predict", help="File to predict values")
 args = vars(ap.parse_args())
 
@@ -189,11 +189,11 @@ def loadCallBack():
 
     cb = []
 
-    if args["tensorBoard"] == True:
+    if args["tensorBoard"] == 'True':
         cb.append(tbCallBack)
-    if args["checkpoint"] == True:
+    if args["checkpoint"] == 'True':
         cb.append(checkpoint)
-    if args["reduce_learning"] == True:
+    if args["reduce_learning"] == 'True':
         cb.append(reduceLROnPlat)
 
     return cb
@@ -379,16 +379,20 @@ class Console(object):
 if __name__ == "__main__":
     # Check if exixt folder
     checkPath()
+
+    if args["predict"] != None and args["train"] == 'False':
+        Console.info("Predict for", args["predict"])
+    else:
+        files = getFiles()
+        (X_train, y_lower, y_upper) = loadDataSet(files)
+
     # Create model
     model = makerModel()
 
-    files = getFiles()
-    (X_train, y_lower, y_upper) = loadDataSet(files)
-
-    if args["train"] == True:
+    if args["train"] == 'True' and args["evaluate"] == 'False':
         trainModel(model, X_train, y_lower, y_upper)
     else:
-        if args["evaluate"] == True:
+        if args["evaluate"] == 'True':
             Console.info("Evaluating model...")
             score = model.evaluate(
                 [X_train], [y_lower, y_upper], batch_size=BATCH_SIZE, verbose=1
@@ -424,6 +428,3 @@ if __name__ == "__main__":
                                   (files[i], lower, upper))
                 else:
                     Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
-
-    if args["predict"] == True:
-        Console.info("Predict for", args["predict"])
