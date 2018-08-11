@@ -41,11 +41,13 @@ SORT_RANDOMLY = True
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
 ap.add_argument("-tb", "--tensorBoard", default=False, help="Active tensorBoard")
+ap.add_argument("-cp", "--checkpoint", default=True, help="Active checkpoint")
 ap.add_argument(
     "-rl", "--reduce_learning", default=False, help="Active reduce learning rate"
 )
-ap.add_argument("-cp", "--checkpoint", default=True, help="Active checkpoint")
+
 ap.add_argument("-t", "--train", default=True, help="Run train model")
+ap.add_argument("-e", "--evaluate", default=True, help="Evaluating model")
 ap.add_argument("-p", "--predict", help="File to predict values")
 args = vars(ap.parse_args())
 
@@ -375,40 +377,53 @@ class Console(object):
 # Este if permite que solo se ejecute lo que sigue si es llamado
 # como proceso raíz.
 if __name__ == "__main__":
+    # Check if exixt folder
     checkPath()
+    # Create model
+    model = makerModel()
 
     files = getFiles()
     (X_train, y_lower, y_upper) = loadDataSet(files)
 
-    model = makerModel()
     if args["train"] == True:
         trainModel(model, X_train, y_lower, y_upper)
     else:
-        Console.info("Predict...")
-        # new instance where we do not know the answer
-        Xnew = X_train
-        Xnew = np.array(Xnew)
-        # make a prediction
-        ynew = model.predict(Xnew)
+        if args["evaluate"] == True:
+            Console.info("Evaluating model...")
+            score = model.evaluate(
+                [X_train], [y_lower, y_upper], batch_size=BATCH_SIZE, verbose=1
+            )
+            Console.log("Test loss:", score[1], score[4])
+            Console.log("Test MAE:", score[3], score[5])
+            Console.log("Test MSE:", score[0], score[2])
+        else:
+            Console.info("Predict...")
+            # new instance where we do not know the answer
+            Xnew = X_train
+            Xnew = np.array(Xnew)
 
-        for i in range(len(files)):
-            (name, x_lower, x_upper) = files[i]
-            lower = int(ynew[0][i])
-            upper = int(ynew[1][i])
-            e_lower = x_lower - lower
-            e_upper = x_upper - upper
+            # make a prediction
+            ynew = model.predict(Xnew)
 
-            e_tolerance = 10
-            e_lower = e_lower > e_tolerance or e_lower < -e_tolerance
-            e_upper = e_upper > e_tolerance or e_upper < -e_tolerance
+            for i in range(len(files)):
+                (name, x_lower, x_upper) = files[i]
+                lower = int(ynew[0][i])
+                upper = int(ynew[1][i])
+                e_lower = x_lower - lower
+                e_upper = x_upper - upper
 
-            if e_lower or e_upper:
-                lower = Console.Red + str(lower) + Console.NC if e_lower else lower
-                upper = Console.Red + str(upper) + Console.NC if e_upper else upper
-                # show the inputs and predicted outputs
-                Console.error("File %s, Lower: %s, Upper: %s" % (files[i], lower, upper))
-            else:
-                Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
+                e_tolerance = 10
+                e_lower = e_lower > e_tolerance or e_lower < -e_tolerance
+                e_upper = e_upper > e_tolerance or e_upper < -e_tolerance
 
-    if args["predict"] != None:
-        print(args["predict"])
+                if e_lower or e_upper:
+                    lower = Console.Red + str(lower) + Console.NC if e_lower else lower
+                    upper = Console.Red + str(upper) + Console.NC if e_upper else upper
+                    # show the inputs and predicted outputs
+                    Console.error("File %s, Lower: %s, Upper: %s" %
+                                  (files[i], lower, upper))
+                else:
+                    Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
+
+    if args["predict"] == True:
+        Console.info("Predict for", args["predict"])
