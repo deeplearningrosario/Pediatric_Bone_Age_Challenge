@@ -14,6 +14,7 @@ import keras
 import numpy as np
 import os
 import pandas as pd
+import platform
 import sys
 
 # Directory of dataset to use
@@ -72,68 +73,6 @@ def writeImage(path, image, force=False):
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
 
 
-# Auto adjust levels colors
-# We order the colors of the image with their frequency and
-# obtain the accumulated one, then we obtain the colors that
-# accumulate 2.5% and 99.4% of the frequency.
-def histogramsLevelFix(img):
-    # This function is only prepared for images in scale of gripes
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Find the acceptable limits of the intensity histogram
-    min_color, max_color = np.percentile(img, (2.5, 99.4))
-    min_color = int(min_color)
-    max_color = int(max_color)
-
-    # To improve the preform we created a color palette with the new values
-    colors_palette = []
-    # Auxiliary calculation, avoid doing calculations within the 'for'
-    dif_color = 255 / (max_color - min_color)
-    for color in range(256):
-        if color <= min_color:
-            colors_palette.append(0)
-        elif color >= max_color:
-            colors_palette.append(255)
-        else:
-            colors_palette.append(int(round((color - min_color) * dif_color)))
-
-    # We paint the image with the new color palette
-    height, width = img.shape
-    for y in range(0, height):
-        for x in range(0, width):
-            color = img[y, x]
-            img[y, x] = colors_palette[color]
-
-    writeImage("histograms_level_fix", np.hstack([img]))  # show the images ===========
-
-    return img
-
-
-# Show a progress bar
-def updateProgress(progress, tick="", total="", status="Loading..."):
-    lineLength = 80
-    barLength = 23
-    if isinstance(progress, int):
-        progress = float(progress)
-    if progress < 0:
-        progress = 0
-        status = "Waiting...\r"
-    if progress >= 1:
-        progress = 1
-        status = "Completed loading data\r\n"
-    block = int(round(barLength * progress))
-    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
-        tick,
-        total,
-        str(("#" * block)) + str("." * (barLength - block)),
-        round(progress * 100, 1),
-        status,
-    )
-    emptyBlock = lineLength - len(line)
-    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
-    sys.stdout.write(line + emptyBlock)
-    sys.stdout.flush()
-
-
 def processImage(img_path):
     # Read a image
     img = cv2.imread(img_path)
@@ -149,7 +88,7 @@ def processImage(img_path):
 
 
 def loadDataSet(files=[]):
-    print("\n[INFO] Get histogram of the images...")
+    Console.info("Get histogram of the images...")
     global img_file
     X_train = []
     y_lower = []
@@ -202,22 +141,22 @@ def getFiles():
             if not(lower[0] != lower[0] and upper[0] != upper[0]):
                 rta.append((file_name, lower[0], upper[0]))
             else:
-                print("Not data for", file_name)
+                Console.log("Not data for", file_name)
+                files.remove(file_name)
 
     return rta
 
+
 # Create the directories to save the images
-
-
 def checkPath():
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
             if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-                print("\n[INFO] Create folder", folder)
+                Console.info("Create folder", folder)
                 os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
     if SAVE_RENDERS:
         if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-            print("\n[INFO] Create folder render")
+            Console.info("Create folder render")
             os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
 
@@ -247,7 +186,7 @@ def loadCallBack():
         write_graph=True,
         write_images=True,
     )
-    print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
+    Console.log("tensorboard --logdir", LOG_DIR_TENSORBOARD)
 
     cb = []
 
@@ -287,19 +226,19 @@ def makerModel():
 
     model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
 
-    print("\n[INFO] Model summary")
+    Console.info("Model summary")
     print(model.summary())
 
     # Load weight
     if args["load_weights"] != None:
-        print("\n[INFO] Loading weights from", args["load_weights"])
+        Console.info("Loading weights from", args["load_weights"])
         model.load_weights(args["load_weights"])
 
     return model
 
 
 def trainModel(model, X_train, y_lower, y_upper):
-    print("\n[INFO] Create validation sets, training set, testing set...")
+    Console.info("Create validation sets, training set, testing set...")
     # Split images dataset
     k = int(len(X_train) / 6)  # Decides split count
 
@@ -315,7 +254,7 @@ def trainModel(model, X_train, y_lower, y_upper):
     lower_train = y_lower[2 * k:]
     upper_train = y_upper[2 * k:]
 
-    print("\n[INFO] Sizes of the new set")
+    Console.info("Sizes of the new set")
     print("hist_train:", len(hist_train))
     print("lower_train:", len(lower_train))
     print("upper_train:", len(upper_train))
@@ -330,7 +269,7 @@ def trainModel(model, X_train, y_lower, y_upper):
     if not os.path.exists(os.path.join(__location__, "weights_deep_cut_hands")):
         os.makedirs(os.path.join(__location__, "weights_deep_cut_hands"))
 
-    print("\n[INFO] Training network...")
+    Console.info("Training network...")
     history = model.fit(
         [hist_train],
         [lower_train, upper_train],
@@ -341,7 +280,7 @@ def trainModel(model, X_train, y_lower, y_upper):
         callbacks=loadCallBack()
     )
 
-    print("\n[INFO] Save model to disck...")
+    Console.info("Save model to disck...")
     # Path to save model
     PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup", "cut-hand")
 
@@ -358,18 +297,80 @@ def trainModel(model, X_train, y_lower, y_upper):
     print("OK")
 
     # evaluate the network
-    print("\n[INFO] Evaluating network...")
+    Console.info("Evaluating network...")
     score = model.evaluate(
         [hist_test], [lower_test, upper_test], batch_size=BATCH_SIZE, verbose=1
     )
 
-    print("Test loss:", score[1], score[4])
-    print("Test MAE:", score[3], score[5])
-    print("Test MSE:", score[0], score[2])
+    Console.log("Test loss:", score[1], score[4])
+    Console.log("Test MAE:", score[3], score[5])
+    Console.log("Test MSE:", score[0], score[2])
 
     # list all data in history
-    print("\n[INFO] Save model history graphics...")
+    Console.info("Save model history graphics...")
     print(history.history.keys())
+
+
+# Show a progress bar
+def updateProgress(progress, tick="", total="", status="Loading..."):
+    lineLength = 80
+    barLength = 23
+    if isinstance(progress, int):
+        progress = float(progress)
+    if progress < 0:
+        progress = 0
+        status = "Waiting...\r"
+    if progress >= 1:
+        progress = 1
+        status = "Completed loading data\r\n"
+    block = int(round(barLength * progress))
+    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+        tick,
+        total,
+        str(("#" * block)) + str("." * (barLength - block)),
+        round(progress * 100, 1),
+        status,
+    )
+    emptyBlock = lineLength - len(line)
+    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
+    sys.stdout.write(line + emptyBlock)
+    sys.stdout.flush()
+    if progress == 1:
+        print()
+
+
+class Console(object):
+    NC = '\033[0m'
+    Black = '\033[0;30m'
+    DarkGray = '\033[1;30m'
+    Red = '\033[0;31m'
+    LightRed = '\033[1;31m'
+    Green = '\033[0;32m'
+    LightGreen = '\033[1;32m'
+    BrownOrange = '\033[0;33m'
+    Yellow = '\033[1;33m'
+    Blue = '\033[0;34m'
+    LightBlue = '\033[1;34m'
+    Purple = '\033[0;35m'
+    LightPurple = '\033[1;35m'
+    Cyan = '\033[0;36m'
+    LightCyan = '\033[1;36m'
+    LightGray = '\033[0;37m'
+
+    def error(*args):
+        if platform.system() == "Linux":
+            print("[" + Console.Red + "ERROR"+Console.NC+"]", *args)
+        else:
+            print("[ERROR]", *args)
+
+    def log(*args):
+        print(*args)
+
+    def info(*args):
+        if platform.system() == "Linux":
+            print("[" + Console.Cyan + "INFO"+Console.NC+"]", *args)
+        else:
+            print("[INFO]", *args)
 
 
 # Como vamos a usar multi procesos uno por core.
@@ -386,11 +387,22 @@ if __name__ == "__main__":
     if args["train"] == True:
         trainModel(model, X_train, y_lower, y_upper)
     else:
-        print("\n[INFO] Predict...")
+        Console.info("Predict...")
         # new instance where we do not know the answer
         Xnew = X_train
         Xnew = np.array(Xnew)
         # make a prediction
         ynew = model.predict(Xnew)
-        # show the inputs and predicted outputs
-        print("Lower: %s, Upper: %s" % (ynew[0][0], ynew[1][0]))
+
+        for i in range(len(files)):
+            (name, x_lower, x_upper) = files[i]
+            lower = int(ynew[0][i])
+            upper = int(ynew[1][i])
+            e_lower = x_lower - lower
+            e_upper = x_upper - upper
+
+            if (e_lower > 10 or e_lower < -10 or e_upper > 10 or e_upper < -10):
+                # show the inputs and predicted outputs
+                Console.error("File %s, Lower: %s, Upper: %s" % (files[i], lower, upper))
+            else:
+                Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
