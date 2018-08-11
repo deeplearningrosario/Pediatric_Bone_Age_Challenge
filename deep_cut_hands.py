@@ -24,12 +24,12 @@ CUT_DATASET = 1000
 
 # network and training
 EPOCHS = 500
-BATCH_SIZE = 15
+BATCH_SIZE = 1
 
 # https://keras.io/optimizers
 # OPTIMIZER = Adam(lr=0.001)
-OPTIMIZER = RMSprop()
-# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = RMSprop()
+OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 # Sort dataset randomly
@@ -37,11 +37,16 @@ SORT_RANDOMLY = True
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
-ap.add_argument("-tb", "--tensorBoard", help="Active tensorBoard")
-ap.add_argument("-rl", "--reduce_learning", help="Active reduce learning rate")
-ap.add_argument("-not_cp", "--not_checkpoint", help="Active checkpoint")
-ap.add_argument("-t", "--train", help="Run train model")
+ap.add_argument("-lw", "--load_weights",
+                help="Path to the file weights")
+ap.add_argument("-tb", "--tensorBoard", default=False,
+                help="Active tensorBoard")
+ap.add_argument("-rl", "--reduce_learning", default=False,
+                help="Active reduce learning rate")
+ap.add_argument("-cp", "--checkpoint", default=True,
+                help="Active checkpoint")
+ap.add_argument("-t", "--train", default=True,
+                help="Run train model")
 args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
@@ -241,11 +246,11 @@ def loadCallBack():
 
     cb = []
 
-    if args["tensorBoard"] != None:
+    if args["tensorBoard"] == True:
         cb.append(tbCallBack)
-    if args["not_checkpoint"] == None:
+    if args["checkpoint"] == True:
         cb.append(checkpoint)
-    if args["reduce_learning"] != None:
+    if args["reduce_learning"] == True:
         cb.append(reduceLROnPlat)
 
     return cb
@@ -373,6 +378,6 @@ if __name__ == "__main__":
     (X_train, y_lower, y_upper) = loadDataSet(files)
 
     model = makerModel()
-    if args["train"] != None:
+    if args["train"] == True:
         trainModel(model, X_train, y_lower, y_upper)
-    else:
+    # else:
