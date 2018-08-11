@@ -297,19 +297,17 @@ if __name__ == "__main__":
 
     x_lower = Dense(256, activation="sigmoid")(hist_input)
     x_lower = Dense(256, activation="relu")(x_lower)
-    x_lower = Dense(200, activation="relu")(x_lower)
+    #x_lower = Dense(200, activation="relu")(x_lower)
     x_lower = Dense(128, activation="relu")(x_lower)
-    x_lower = Dense(64, activation="sigmoid")(x_lower)
-    x_lower = Dense(16, activation="relu")(x_lower)
-    x_lower = Dense(2, activation="relu")(x_lower)
+    #x_lower = Dense(32, activation="relu")(x_lower)
+    #x_lower = Dense(16, activation="relu")(x_lower)
 
     x_upper = Dense(256, activation="sigmoid")(hist_input)
     x_upper = Dense(256, activation="relu")(x_upper)
-    x_upper = Dense(200, activation="relu")(x_upper)
+    #x_upper = Dense(200, activation="relu")(x_upper)
     x_upper = Dense(128, activation="relu")(x_upper)
-    x_upper = Dense(64, activation="sigmoid")(x_upper)
-    x_upper = Dense(16, activation="relu")(x_upper)
-    x_upper = Dense(2, activation="relu")(x_upper)
+    #x_upper = Dense(32, activation="relu")(x_upper)
+    #x_upper = Dense(2, activation="relu")(x_upper)
 
     # Prediction for the upper and lower value
     lower_output = Dense(1, name="lower")(x_lower)
@@ -360,11 +358,9 @@ if __name__ == "__main__":
         [hist_test], [lower_test, upper_test], batch_size=BATCH_SIZE, verbose=1
     )
 
-    print("Test loss:", score[0])
-
-    print("Test loss:", score[1], score[2])
-    print("Test MAE:", score[3], score[4])
-    print("Test MSE:", score[5], score[6])
+    print("Test loss:", score[0], score[3])
+    print("Test MAE:", score[1], score[4])
+    print("Test MSE:", score[2], score[5])
 
     # list all data in history
     print("\n[INFO] Save model history graphics...")
