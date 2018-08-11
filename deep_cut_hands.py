@@ -209,11 +209,6 @@ def checkPath():
             print("\n[INFO] Create folder render")
             os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
-    # Load weight
-    if args["load_weights"] != None:
-        print("Loading weights from", args["load_weights"])
-        model.load_weights(args["load_weights"])
-
 
 def loadCallBack():
     checkpoint = keras.callbacks.ModelCheckpoint(
@@ -325,6 +320,11 @@ if __name__ == "__main__":
     print("\n[INFO] Model summary")
     print(model.summary())
 
+    # Load weight
+    if args["load_weights"] != None:
+        print("Loading weights from", args["load_weights"])
+        model.load_weights(args["load_weights"])
+
     print("\n[INFO] Training network...")
     model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
 
@@ -360,7 +360,6 @@ if __name__ == "__main__":
         [hist_test], [lower_test, upper_test], batch_size=BATCH_SIZE, verbose=1
     )
 
-    print("Test score:", score)
     print("Test loss:", score[0])
 
     print("Test loss:", score[1], score[2])
