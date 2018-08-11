@@ -358,9 +358,9 @@ if __name__ == "__main__":
         [hist_test], [lower_test, upper_test], batch_size=BATCH_SIZE, verbose=1
     )
 
-    print("Test loss:", score[0], score[3])
-    print("Test MAE:", score[1], score[4])
-    print("Test MSE:", score[2], score[5])
+    print("Test loss:", score[1], score[4])
+    print("Test MAE:", score[3], score[5])
+    print("Test MSE:", score[0], score[2])
 
     # list all data in history
     print("\n[INFO] Save model history graphics...")
