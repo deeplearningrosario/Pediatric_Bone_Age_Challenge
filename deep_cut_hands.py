@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5
+# ./deep_cut_hands.py --train False -lw ./model-backup/cut-hand/model.h5
 
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
@@ -191,9 +192,9 @@ def getFiles():
     for file_name in files:
         # Cut list of file
         if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
+            # print(file_name)
             # Get row with id equil image's name
             csv_row = df[df.id == int(file_name[:-4])]
-
             # Get lower color
             lower = csv_row.lower.tolist()
             # Get upper color
@@ -387,8 +388,9 @@ if __name__ == "__main__":
     else:
         print("\n[INFO] Predict...")
         # new instance where we do not know the answer
-        Xnew = X_train[19]
+        Xnew = X_train
+        Xnew = np.array(Xnew)
         # make a prediction
         ynew = model.predict(Xnew)
         # show the inputs and predicted outputs
-        print("X=%s, Predicted=%s" % (Xnew[0], ynew[0]))
+        print("Lower: %s, Upper: %s" % (ynew[0][0], ynew[1][0]))
