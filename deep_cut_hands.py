@@ -39,18 +39,14 @@ SORT_RANDOMLY = True
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-lw", "--load_weights",
-                help="Path to the file weights")
-ap.add_argument("-tb", "--tensorBoard", default=False,
-                help="Active tensorBoard")
-ap.add_argument("-rl", "--reduce_learning", default=False,
-                help="Active reduce learning rate")
-ap.add_argument("-cp", "--checkpoint", default=True,
-                help="Active checkpoint")
-ap.add_argument("-t", "--train", default=True,
-                help="Run train model")
-ap.add_argument("-p", "--predict",
-                help="File to predict values")
+ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+ap.add_argument("-tb", "--tensorBoard", default=False, help="Active tensorBoard")
+ap.add_argument(
+    "-rl", "--reduce_learning", default=False, help="Active reduce learning rate"
+)
+ap.add_argument("-cp", "--checkpoint", default=True, help="Active checkpoint")
+ap.add_argument("-t", "--train", default=True, help="Run train model")
+ap.add_argument("-p", "--predict", help="File to predict values")
 args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
@@ -140,7 +136,7 @@ def getFiles():
             lower = csv_row.lower.tolist()
             # Get upper color
             upper = csv_row.upper.tolist()
-            if not(lower[0] != lower[0] and upper[0] != upper[0]):
+            if not (lower[0] != lower[0] and upper[0] != upper[0]):
                 rta.append((file_name, lower[0], upper[0]))
             else:
                 Console.log("Not data for", file_name)
@@ -207,17 +203,17 @@ def makerModel():
 
     x_lower = Dense(256, activation="sigmoid")(hist_input)
     x_lower = Dense(256, activation="relu")(x_lower)
-    #x_lower = Dense(200, activation="relu")(x_lower)
+    # x_lower = Dense(200, activation="relu")(x_lower)
     x_lower = Dense(128, activation="relu")(x_lower)
-    #x_lower = Dense(32, activation="relu")(x_lower)
-    #x_lower = Dense(16, activation="relu")(x_lower)
+    # x_lower = Dense(32, activation="relu")(x_lower)
+    # x_lower = Dense(16, activation="relu")(x_lower)
 
     x_upper = Dense(256, activation="sigmoid")(hist_input)
     x_upper = Dense(256, activation="relu")(x_upper)
-    #x_upper = Dense(200, activation="relu")(x_upper)
+    # x_upper = Dense(200, activation="relu")(x_upper)
     x_upper = Dense(128, activation="relu")(x_upper)
-    #x_upper = Dense(32, activation="relu")(x_upper)
-    #x_upper = Dense(2, activation="relu")(x_upper)
+    # x_upper = Dense(32, activation="relu")(x_upper)
+    # x_upper = Dense(2, activation="relu")(x_upper)
 
     # Prediction for the upper and lower value
     lower_output = Dense(1, name="lower")(x_lower)
@@ -278,7 +274,7 @@ def trainModel(model, X_train, y_lower, y_upper):
         epochs=EPOCHS,
         verbose=2,
         validation_data=([hist_valid], [lower_valid, upper_valid]),
-        callbacks=loadCallBack()
+        callbacks=loadCallBack(),
     )
 
     Console.info("Save model to disck...")
@@ -341,26 +337,26 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 
 
 class Console(object):
-    NC = '\033[0m'
-    Black = '\033[0;30m'
-    DarkGray = '\033[1;30m'
-    Red = '\033[0;31m'
-    LightRed = '\033[1;31m'
-    Green = '\033[0;32m'
-    LightGreen = '\033[1;32m'
-    BrownOrange = '\033[0;33m'
-    Yellow = '\033[1;33m'
-    Blue = '\033[0;34m'
-    LightBlue = '\033[1;34m'
-    Purple = '\033[0;35m'
-    LightPurple = '\033[1;35m'
-    Cyan = '\033[0;36m'
-    LightCyan = '\033[1;36m'
-    LightGray = '\033[0;37m'
+    NC = "\033[0m"
+    Black = "\033[0;30m"
+    DarkGray = "\033[1;30m"
+    Red = "\033[0;31m"
+    LightRed = "\033[1;31m"
+    Green = "\033[0;32m"
+    LightGreen = "\033[1;32m"
+    BrownOrange = "\033[0;33m"
+    Yellow = "\033[1;33m"
+    Blue = "\033[0;34m"
+    LightBlue = "\033[1;34m"
+    Purple = "\033[0;35m"
+    LightPurple = "\033[1;35m"
+    Cyan = "\033[0;36m"
+    LightCyan = "\033[1;36m"
+    LightGray = "\033[0;37m"
 
     def error(*args):
         if platform.system() == "Linux":
-            print("[" + Console.Red + "ERROR"+Console.NC+"]", *args)
+            print("[" + Console.Red + "ERROR" + Console.NC + "]", *args)
         else:
             print("[ERROR]", *args)
 
@@ -369,7 +365,7 @@ class Console(object):
 
     def info(*args):
         if platform.system() == "Linux":
-            print("[" + Console.Cyan + "INFO"+Console.NC+"]", *args)
+            print("[" + Console.Cyan + "INFO" + Console.NC + "]", *args)
         else:
             print("[INFO]", *args)
 
@@ -402,7 +398,13 @@ if __name__ == "__main__":
             e_lower = x_lower - lower
             e_upper = x_upper - upper
 
-            if (e_lower > 10 or e_lower < -10 or e_upper > 10 or e_upper < -10):
+            e_tolerance = 10
+            e_lower = e_lower > e_tolerance or e_lower < -e_tolerance
+            e_upper = e_upper > e_tolerance or e_upper < -e_tolerance
+
+            if e_lower or e_upper:
+                lower = Console.Red + str(lower) + Console.NC if e_lower else lower
+                upper = Console.Red + str(upper) + Console.NC if e_upper else upper
                 # show the inputs and predicted outputs
                 Console.error("File %s, Lower: %s, Upper: %s" % (files[i], lower, upper))
             else:
