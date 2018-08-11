@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5
 # ./deep_cut_hands.py --train False -lw ./model-backup/cut-hand/model.h5
+# ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5 --train False --evaluate True --predict True
+
 
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
@@ -380,26 +382,28 @@ if __name__ == "__main__":
     # Check if exixt folder
     checkPath()
 
-    if args["predict"] != None and args["train"] == 'False':
-        Console.info("Predict for", args["predict"])
-    else:
+    if args["predict"] == None or args['predict'] == 'True':
         files = getFiles()
         (X_train, y_lower, y_upper) = loadDataSet(files)
 
     # Create model
     model = makerModel()
 
-    if args["train"] == 'True' and args["evaluate"] == 'False':
+    if args["train"] == 'True':
         trainModel(model, X_train, y_lower, y_upper)
-    else:
-        if args["evaluate"] == 'True':
-            Console.info("Evaluating model...")
-            score = model.evaluate(
-                [X_train], [y_lower, y_upper], batch_size=BATCH_SIZE, verbose=1
-            )
-            Console.log("Test loss:", score[1], score[4])
-            Console.log("Test MAE:", score[3], score[5])
-            Console.log("Test MSE:", score[0], score[2])
+
+    if args["evaluate"] == 'True':
+        Console.info("Evaluating model...")
+        score = model.evaluate(
+            [X_train], [y_lower, y_upper], batch_size=BATCH_SIZE, verbose=1
+        )
+        Console.log("Test loss:", score[1], score[4])
+        Console.log("Test MAE:", score[3], score[5])
+        Console.log("Test MSE:", score[0], score[2])
+
+    if args["predict"] != None and args['predict'] != 'False':
+        if args["predict"] != 'True':
+            Console.info("Predict for", args["predict"])
         else:
             Console.info("Predict...")
             # new instance where we do not know the answer
