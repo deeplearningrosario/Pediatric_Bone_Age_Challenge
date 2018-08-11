@@ -28,12 +28,12 @@ CUT_DATASET = 1000
 
 # network and training
 EPOCHS = 500
-BATCH_SIZE = 1
+BATCH_SIZE = 35
 
 # https://keras.io/optimizers
-# OPTIMIZER = Adam(lr=0.001)
+OPTIMIZER = Adam(lr=0.001)
 # OPTIMIZER = RMSprop()
-OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 # Show how it closed when the difference is N color
