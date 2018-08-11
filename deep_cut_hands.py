@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5
 
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
@@ -9,7 +10,6 @@ import argparse
 import cv2
 import fnmatch
 import keras
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
@@ -24,12 +24,12 @@ CUT_DATASET = 1000
 
 # network and training
 EPOCHS = 500
-BATCH_SIZE = 10
+BATCH_SIZE = 15
 
 # https://keras.io/optimizers
 # OPTIMIZER = Adam(lr=0.001)
-# OPTIMIZER = RMSprop()
-OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+OPTIMIZER = RMSprop()
+# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 # Sort dataset randomly
@@ -41,6 +41,7 @@ ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
 ap.add_argument("-tb", "--tensorBoard", help="Active tensorBoard")
 ap.add_argument("-rl", "--reduce_learning", help="Active reduce learning rate")
 ap.add_argument("-not_cp", "--not_checkpoint", help="Active checkpoint")
+ap.add_argument("-t", "--train", help="Run train model")
 args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
@@ -250,20 +251,47 @@ def loadCallBack():
     return cb
 
 
-# Como vamos a usar multi procesos uno por core.
-# Los procesos hijos cargan el mismo código.
-# Este if permite que solo se ejecute lo que sigue si es llamado
-# como proceso raíz.
-if __name__ == "__main__":
-    checkPath()
+def makerModel():
+    # First we need to create a model structure
+    hist_input = Input(shape=(256,), name="hist_input")
 
-    files = getFiles()
-    (X_train, y_lower, y_upper) = loadDataSet(files)
+    x_lower = Dense(256, activation="sigmoid")(hist_input)
+    x_lower = Dense(256, activation="relu")(x_lower)
+    #x_lower = Dense(200, activation="relu")(x_lower)
+    x_lower = Dense(128, activation="relu")(x_lower)
+    #x_lower = Dense(32, activation="relu")(x_lower)
+    #x_lower = Dense(16, activation="relu")(x_lower)
 
+    x_upper = Dense(256, activation="sigmoid")(hist_input)
+    x_upper = Dense(256, activation="relu")(x_upper)
+    #x_upper = Dense(200, activation="relu")(x_upper)
+    x_upper = Dense(128, activation="relu")(x_upper)
+    #x_upper = Dense(32, activation="relu")(x_upper)
+    #x_upper = Dense(2, activation="relu")(x_upper)
+
+    # Prediction for the upper and lower value
+    lower_output = Dense(1, name="lower")(x_lower)
+    upper_output = Dense(1, name="upper")(x_upper)
+
+    model = Model(inputs=[hist_input], outputs=[lower_output, upper_output])
+
+    model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
+
+    print("\n[INFO] Model summary")
+    print(model.summary())
+
+    # Load weight
+    if args["load_weights"] != None:
+        print("Loading weights from", args["load_weights"])
+        model.load_weights(args["load_weights"])
+
+    return model
+
+
+def trainModel(model, X_train, y_lower, y_upper):
     print("\n[INFO] Create validation sets, training set, testing set...")
     # Split images dataset
     k = int(len(X_train) / 6)  # Decides split count
-    k = 5
 
     hist_test = X_train[:k]
     lower_test = y_lower[:k]
@@ -292,40 +320,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(__location__, "weights_deep_cut_hands")):
         os.makedirs(os.path.join(__location__, "weights_deep_cut_hands"))
 
-    # First we need to create a model structure
-    hist_input = Input(shape=(256,), name="hist_input")
-
-    x_lower = Dense(256, activation="sigmoid")(hist_input)
-    x_lower = Dense(256, activation="relu")(x_lower)
-    #x_lower = Dense(200, activation="relu")(x_lower)
-    x_lower = Dense(128, activation="relu")(x_lower)
-    #x_lower = Dense(32, activation="relu")(x_lower)
-    #x_lower = Dense(16, activation="relu")(x_lower)
-
-    x_upper = Dense(256, activation="sigmoid")(hist_input)
-    x_upper = Dense(256, activation="relu")(x_upper)
-    #x_upper = Dense(200, activation="relu")(x_upper)
-    x_upper = Dense(128, activation="relu")(x_upper)
-    #x_upper = Dense(32, activation="relu")(x_upper)
-    #x_upper = Dense(2, activation="relu")(x_upper)
-
-    # Prediction for the upper and lower value
-    lower_output = Dense(1, name="lower")(x_lower)
-    upper_output = Dense(1, name="upper")(x_upper)
-
-    model = Model(inputs=[hist_input], outputs=[lower_output, upper_output])
-
-    print("\n[INFO] Model summary")
-    print(model.summary())
-
-    # Load weight
-    if args["load_weights"] != None:
-        print("Loading weights from", args["load_weights"])
-        model.load_weights(args["load_weights"])
-
     print("\n[INFO] Training network...")
-    model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
-
     history = model.fit(
         [hist_train],
         [lower_train, upper_train],
@@ -366,6 +361,18 @@ if __name__ == "__main__":
     print("\n[INFO] Save model history graphics...")
     print(history.history.keys())
 
-    # plot the training loss and accuracy
-    plt.style.use("ggplot")
-    plt.figure()
+
+# Como vamos a usar multi procesos uno por core.
+# Los procesos hijos cargan el mismo código.
+# Este if permite que solo se ejecute lo que sigue si es llamado
+# como proceso raíz.
+if __name__ == "__main__":
+    checkPath()
+
+    files = getFiles()
+    (X_train, y_lower, y_upper) = loadDataSet(files)
+
+    model = makerModel()
+    if args["train"] != None:
+        trainModel(model, X_train, y_lower, y_upper)
+    else:
