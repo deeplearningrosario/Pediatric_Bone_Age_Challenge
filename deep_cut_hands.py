@@ -36,6 +36,9 @@ BATCH_SIZE = 1
 OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
+# Show how it closed when the difference is N color
+E_TOLERANCE = 20
+
 # Sort dataset randomly
 SORT_RANDOMLY = True
 
@@ -420,9 +423,8 @@ if __name__ == "__main__":
                 e_lower = x_lower - lower
                 e_upper = x_upper - upper
 
-                e_tolerance = 10
-                e_lower = e_lower > e_tolerance or e_lower < -e_tolerance
-                e_upper = e_upper > e_tolerance or e_upper < -e_tolerance
+                e_lower = e_lower > E_TOLERANCE or e_lower < -E_TOLERANCE
+                e_upper = e_upper > E_TOLERANCE or e_upper < -E_TOLERANCE
 
                 if e_lower or e_upper:
                     lower = Console.Red + str(lower) + Console.NC if e_lower else lower
