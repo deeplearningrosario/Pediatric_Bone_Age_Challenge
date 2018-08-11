@@ -49,6 +49,8 @@ ap.add_argument("-cp", "--checkpoint", default=True,
                 help="Active checkpoint")
 ap.add_argument("-t", "--train", default=True,
                 help="Run train model")
+ap.add_argument("-p", "--predict",
+                help="File to predict values")
 args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
@@ -118,7 +120,7 @@ def loadDataSet(files=[]):
 def getFiles():
     rta = []
     # Read csv
-    df = pd.read_csv(os.path.join(train_dir, "histograma-dataset.csv"))
+    df = pd.read_csv(os.path.join(train_dir, "histogram-dataset.csv"))
 
     # file names on train_dir
     files = os.listdir(train_dir)
@@ -142,7 +144,6 @@ def getFiles():
                 rta.append((file_name, lower[0], upper[0]))
             else:
                 Console.log("Not data for", file_name)
-                files.remove(file_name)
 
     return rta
 
@@ -406,3 +407,6 @@ if __name__ == "__main__":
                 Console.error("File %s, Lower: %s, Upper: %s" % (files[i], lower, upper))
             else:
                 Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
+
+    if args["predict"] != None:
+        print(args["predict"])
