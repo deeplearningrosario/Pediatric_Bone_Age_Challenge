@@ -292,7 +292,7 @@ def makerModel():
 
     # Load weight
     if args["load_weights"] != None:
-        print("Loading weights from", args["load_weights"])
+        print("\n[INFO] Loading weights from", args["load_weights"])
         model.load_weights(args["load_weights"])
 
     return model
