@@ -11,7 +11,6 @@
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png
-/**/**/*.png
 
 # TensorBoard log
 /tensorboard/**/*
