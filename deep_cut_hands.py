@@ -38,6 +38,9 @@ SORT_RANDOMLY = True
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+ap.add_argument("-tb", "--tensorBoard", help="Active tensorBoard")
+ap.add_argument("-rl", "--reduce_learning", help="Active reduce learning rate")
+ap.add_argument("-not_cp", "--not_checkpoint", help="Active checkpoint")
 args = vars(ap.parse_args())
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
@@ -240,7 +243,16 @@ def loadCallBack():
     )
     print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
 
-    return [tbCallBack, checkpoint, reduceLROnPlat]
+    cb = []
+
+    if args["tensorBoard"] != None:
+        cb.append(tbCallBack)
+    if args["not_checkpoint"] == None:
+        cb.append(checkpoint)
+    if args["reduce_learning"] != None:
+        cb.append(reduceLROnPlat)
+
+    return cb
 
 
 # Como vamos a usar multi procesos uno por core.
@@ -350,8 +362,10 @@ if __name__ == "__main__":
 
     print("Test score:", score)
     print("Test loss:", score[0])
-    print("Test MAE:", score[1])
-    print("Test MSE:", score[2])
+
+    print("Test loss:", score[1], score[2])
+    print("Test MAE:", score[3], score[4])
+    print("Test MSE:", score[5], score[6])
 
     # list all data in history
     print("\n[INFO] Save model history graphics...")
