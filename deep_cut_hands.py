@@ -3,12 +3,9 @@
 # ./deep_cut_hands.py --train False -lw ./model-backup/cut-hand/model.h5
 # ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5 --train False --evaluate True --predict True
 
-
-from keras.applications import InceptionV3, ResNet50, Xception
-from keras.layers import Flatten, Dense, Input, Dropout
-from keras.models import Model, Sequential
+from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization
+from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
-from six.moves import cPickle
 import argparse
 import cv2
 import fnmatch
@@ -27,8 +24,8 @@ TRAIN_DIR = "dataset_sample"
 CUT_DATASET = 1000
 
 # network and training
-EPOCHS = 500
-BATCH_SIZE = 35
+EPOCHS = 600
+BATCH_SIZE = 24
 
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
@@ -78,12 +75,7 @@ def writeImage(path, image, force=False):
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
 
 
-def processImage(img_path):
-    # Read a image
-    img = cv2.imread(img_path)
-
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+def getHistogram(img):
     hist, _ = np.histogram(img, 256, [0, 256])
 
     cdf = hist.cumsum()
@@ -108,8 +100,11 @@ def loadDataSet(files=[]):
 
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
+        # Read a image
+        img = cv2.imread(img_path, 0)
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        X_train.append(processImage(img_path))
+        X_train.append(getHistogram(img))
         y_lower.append(lower)
         y_upper.append(upper)
 
@@ -210,6 +205,7 @@ def makerModel():
 
     x_lower = Dense(256, activation="sigmoid")(hist_input)
     x_lower = Dense(256, activation="relu")(x_lower)
+    # x_lower = BatchNormalization(mode=0, axis=1)(x_lower)
     # x_lower = Dense(200, activation="relu")(x_lower)
     x_lower = Dense(128, activation="relu")(x_lower)
     # x_lower = Dense(32, activation="relu")(x_lower)
@@ -217,6 +213,7 @@ def makerModel():
 
     x_upper = Dense(256, activation="sigmoid")(hist_input)
     x_upper = Dense(256, activation="relu")(x_upper)
+    # x_upper = BatchNormalization(mode=0, axis=1)(x_upper)
     # x_upper = Dense(200, activation="relu")(x_upper)
     x_upper = Dense(128, activation="relu")(x_upper)
     # x_upper = Dense(32, activation="relu")(x_upper)
