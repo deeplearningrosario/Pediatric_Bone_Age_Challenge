@@ -21,7 +21,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 # network and training
 EPOCHS = 30
-BATCH_SIZE = 25
+BATCH_SIZE = 35
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
