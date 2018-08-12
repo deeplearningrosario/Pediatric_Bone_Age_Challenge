@@ -26,11 +26,11 @@ SPLIT_GENDER = 'both'
 # SPLIT_GENDER = 'male'
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = False
+SAVE_RENDERS = not False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
-SAVE_IMAGE_FOR_DEBUGGER = not False
+SAVE_IMAGE_FOR_DEBUGGER = False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
@@ -53,9 +53,8 @@ img_file = ""
 # Save model
 deep_model = None
 
+
 # Show the images
-
-
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
@@ -76,6 +75,8 @@ def histogramsLevelFix(img):
         predict = deep_model.predict(X_new)
         min_color = int(predict[0][0])
         max_color = int(predict[1][0])
+        min_color = min_color if min_color > 0 else 0
+        max_color = max_color if max_color < 255 else 255
         # print("Lower: %s, Upper: %s" % (min_color, max_color))
     else:
         # Find the acceptable limits of the intensity histogram
