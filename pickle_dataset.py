@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from deep_cut_hand.main_histogram import makerModel, getHistogram
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -35,8 +36,11 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 # Simple dataset is correct, I am verifying the original.
 EXTRACTING_HANDS = True
 
+# Using deep learning for normalizing histogram of level colors
+IA_EXTRACTING_HANDS = True
+
 # Turn rotate image on/off
-ROTATE_IMAGE = True
+ROTATE_IMAGE = False
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
@@ -45,6 +49,9 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 train_dir = os.path.join(__location__, TRAIN_DIR)
 
 img_file = ""
+
+# Save model
+deep_model = None
 
 
 # Show the images
@@ -57,13 +64,9 @@ def writeImage(path, image, force=False):
 # We order the colors of the image with their frequency and
 # obtain the accumulated one, then we obtain the colors that
 # accumulate 2.5% and 99.4% of the frequency.
-def histogramsLevelFix(img):
+def histogramsLevelFix(img, min_color, max_color):
     # This function is only prepared for images in scale of gripes
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Find the acceptable limits of the intensity histogram
-    min_color, max_color = np.percentile(img, (2.5, 99.4))
-    min_color = int(min_color)
-    max_color = int(max_color)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # To improve the preform we created a color palette with the new values
     colors_palette = []
@@ -209,12 +212,33 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     sys.stdout.flush()
 
 
+def getColorsHands(img):
+    if IA_EXTRACTING_HANDS == True:
+        X_img = getHistogram(img)
+        X_new = np.array([X_img])
+
+        predict = deep_model.predict(X_new)
+        min_color = int(predict[0][0])
+        max_color = int(predict[1][0])
+        min_color = min_color if min_color > 0 else 0
+        max_color = max_color if max_color < 255 else 255
+        # print("Lower: %s, Upper: %s" % (min_color, max_color))
+    else:
+        # Find the acceptable limits of the intensity histogram
+        min_color, max_color = np.percentile(img, (2.5, 99.4))
+        min_color = int(min_color)
+        max_color = int(max_color)
+
+    return (min_color, max_color)
+
+
 def processImage(img_path):
     # Read a image
-    img = cv2.imread(img_path)
+    img = cv2.imread(img_path, 0)
 
     # Adjust color levels
-    img = histogramsLevelFix(img)
+    min_color, max_color = getColorsHands(img)
+    img = histogramsLevelFix(img, min_color, max_color)
 
     if EXTRACTING_HANDS:
         # Trim the hand of the image
@@ -238,10 +262,20 @@ def processImage(img_path):
 
 
 def loadDataSet(files=[]):
+    global deep_model
     global img_file
     X_train = []
     y_age = []
     y_gender = []
+
+    if IA_EXTRACTING_HANDS == True:
+        deep_model = makerModel()
+        try:
+            deep_model.load_weights(os.path.join(
+                __location__, "deep_cut_hand", "model", "model_histogram.h5"))
+        except:
+            print("I can not find the weights for the model.")
+            exit(0)
 
     total_file = len(files)
     for i in range(total_file):

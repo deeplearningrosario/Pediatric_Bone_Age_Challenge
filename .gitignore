@@ -7,11 +7,11 @@
 # Ignore weight and model
 /**/*.h5
 /weights/**/*
+/deep_cut_hand/weights/**/*
 /model-backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png
-/**/**/*.png
 
 # TensorBoard log
 /tensorboard/**/*
