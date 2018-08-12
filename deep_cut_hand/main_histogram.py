@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-# ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5
-# ./deep_cut_hands.py --train False -lw ./model-backup/cut-hand/model.h5
-# ./deep_cut_hands.py -lw ./model-backup/cut-hand/model.h5 --train False --evaluate True --predict True
+# ./main_histogram.py -lw ./model/model_histogram.h5
+# ./main_histogram.py -lw ./model/model_histogram.h5 --train False
+# ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization
 from keras.models import Model
@@ -57,7 +57,7 @@ args = vars(ap.parse_args())
 # so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-train_dir = os.path.join(__location__, TRAIN_DIR)
+train_dir = os.path.join(__location__, '..', TRAIN_DIR)
 
 img_file = ""
 
@@ -147,53 +147,59 @@ def getFiles():
 
 
 # Create the directories to save the images
-def checkPath():
-    if SAVE_IMAGE_FOR_DEBUGGER:
-        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-                Console.info("Create folder", folder)
-                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
-    if SAVE_RENDERS:
-        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-            Console.info("Create folder render")
-            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
+# def checkPath():
+#    if SAVE_IMAGE_FOR_DEBUGGER:
+#        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
+#            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
+#                Console.info("Create folder", folder)
+#                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
+#    if SAVE_RENDERS:
+#        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
+#            Console.info("Create folder render")
+#            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
 
+# Make Keras callback
 def loadCallBack():
-    checkpoint = keras.callbacks.ModelCheckpoint(
-        filepath="weights_deep_cut_hands/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
-        save_weights_only=True,
-        period=1,
-    )
-
-    # Reduce learning rate
-    reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
-    )
+    cb = []
 
     # TensorBoard
     # how to use: $ tensorboard --logdir path_to_current_dir/Graph
-    # Save log for tensorboard
-    LOG_DIR_TENSORBOARD = os.path.join(__location__, "tensorboard")
-    if not os.path.exists(LOG_DIR_TENSORBOARD):
-        os.makedirs(LOG_DIR_TENSORBOARD)
-
-    tbCallBack = keras.callbacks.TensorBoard(
-        log_dir=LOG_DIR_TENSORBOARD,
-        batch_size=BATCH_SIZE,
-        histogram_freq=0,
-        write_graph=True,
-        write_images=True,
-    )
-    Console.log("tensorboard --logdir", LOG_DIR_TENSORBOARD)
-
-    cb = []
-
     if args["tensorBoard"] == 'True':
+        # Save log for tensorboard
+        LOG_DIR_TENSORBOARD = os.path.join(__location__, '..', "tensorboard")
+        if not os.path.exists(LOG_DIR_TENSORBOARD):
+            os.makedirs(LOG_DIR_TENSORBOARD)
+
+        tbCallBack = keras.callbacks.TensorBoard(
+            log_dir=LOG_DIR_TENSORBOARD,
+            batch_size=BATCH_SIZE,
+            histogram_freq=0,
+            write_graph=True,
+            write_images=True,
+        )
+
+        Console.info("tensorboard --logdir", LOG_DIR_TENSORBOARD)
         cb.append(tbCallBack)
+
     if args["checkpoint"] == 'True':
+        # Save weights after every epoch
+        if not os.path.exists(os.path.join(__location__, "weights")):
+            os.makedirs(os.path.join(__location__, "weights"))
+        checkpoint = keras.callbacks.ModelCheckpoint(
+            filepath="weights/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+            save_weights_only=True,
+            period=1,
+        )
+        Console.info("Save weights after every epoch")
         cb.append(checkpoint)
+
+    # Reduce learning rate
     if args["reduce_learning"] == 'True':
+        reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
+        )
+        Console.info("Add Reduce learning rate")
         cb.append(reduceLROnPlat)
 
     return cb
@@ -267,10 +273,6 @@ def trainModel(model, X_train, y_lower, y_upper):
     print("lower_test:", len(lower_test))
     print("upper_test:", len(upper_test))
 
-    # Save weights after every epoch
-    if not os.path.exists(os.path.join(__location__, "weights_deep_cut_hands")):
-        os.makedirs(os.path.join(__location__, "weights_deep_cut_hands"))
-
     Console.info("Training network...")
     history = model.fit(
         [hist_train],
@@ -284,7 +286,7 @@ def trainModel(model, X_train, y_lower, y_upper):
 
     Console.info("Save model to disck...")
     # Path to save model
-    PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup", "cut-hand")
+    PATHE_SAVE_MODEL = os.path.join(__location__, "model")
 
     # Save weights after every epoch
     if not os.path.exists(PATHE_SAVE_MODEL):
@@ -292,10 +294,10 @@ def trainModel(model, X_train, y_lower, y_upper):
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open(os.path.join(PATHE_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
+    with open(os.path.join(PATHE_SAVE_MODEL, "model_histogram.yaml"), "w") as yaml_file:
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
-    model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model.h5"))
+    model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model_histogram.h5"))
     print("OK")
 
     # evaluate the network
@@ -381,7 +383,7 @@ class Console(object):
 # como proceso raíz.
 if __name__ == "__main__":
     # Check if exixt folder
-    checkPath()
+    # checkPath()
 
     if args["predict"] == None or args['predict'] == 'True':
         files = getFiles()

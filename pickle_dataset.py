@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from deep_cut_hands import makerModel, getHistogram
+from deep_cut_hand.main_histogram import makerModel, getHistogram
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -30,7 +30,7 @@ SAVE_RENDERS = False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
-SAVE_IMAGE_FOR_DEBUGGER = False
+SAVE_IMAGE_FOR_DEBUGGER = not False
 
 # Extracting hands from images and using that new dataset.
 # Simple dataset is correct, I am verifying the original.
@@ -40,7 +40,7 @@ EXTRACTING_HANDS = True
 IA_EXTRACTING_HANDS = True
 
 # Turn rotate image on/off
-ROTATE_IMAGE = True
+ROTATE_IMAGE = False
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
@@ -266,7 +266,7 @@ def loadDataSet(files=[]):
         deep_model = makerModel()
         try:
             deep_model.load_weights(os.path.join(
-                __location__, "model-backup", "cut-hand", "model.h5"))
+                __location__, "deep_cut_hand", "model", "model_histogram.h5"))
         except:
             print("I can not find the weights for the model.")
             exit(0)
