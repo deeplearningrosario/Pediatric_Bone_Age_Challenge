@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from deep_cut_hands import makerModel, getHistogram
 from six.moves import cPickle
 import cv2
 import fnmatch
@@ -35,6 +36,9 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 # Simple dataset is correct, I am verifying the original.
 EXTRACTING_HANDS = True
 
+# Using deep learning for normalizing histogram of level colors
+IA_EXTRACTING_HANDS = True
+
 # Turn rotate image on/off
 ROTATE_IMAGE = True
 
@@ -46,8 +50,12 @@ train_dir = os.path.join(__location__, TRAIN_DIR)
 
 img_file = ""
 
+# Save model
+deep_model = None
 
 # Show the images
+
+
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
@@ -60,10 +68,20 @@ def writeImage(path, image, force=False):
 def histogramsLevelFix(img):
     # This function is only prepared for images in scale of gripes
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Find the acceptable limits of the intensity histogram
-    min_color, max_color = np.percentile(img, (2.5, 99.4))
-    min_color = int(min_color)
-    max_color = int(max_color)
+
+    if IA_EXTRACTING_HANDS == True:
+        X_img = getHistogram(img)
+        X_new = np.array([X_img])
+
+        predict = deep_model.predict(X_new)
+        min_color = int(predict[0][0])
+        max_color = int(predict[1][0])
+        # print("Lower: %s, Upper: %s" % (min_color, max_color))
+    else:
+        # Find the acceptable limits of the intensity histogram
+        min_color, max_color = np.percentile(img, (2.5, 99.4))
+        min_color = int(min_color)
+        max_color = int(max_color)
 
     # To improve the preform we created a color palette with the new values
     colors_palette = []
@@ -238,10 +256,20 @@ def processImage(img_path):
 
 
 def loadDataSet(files=[]):
+    global deep_model
     global img_file
     X_train = []
     y_age = []
     y_gender = []
+
+    if IA_EXTRACTING_HANDS == True:
+        deep_model = makerModel()
+        try:
+            deep_model.load_weights(os.path.join(
+                __location__, "model-backup", "cut-hand", "model.h5"))
+        except:
+            print("I can not find the weights for the model.")
+            exit(0)
 
     total_file = len(files)
     for i in range(total_file):

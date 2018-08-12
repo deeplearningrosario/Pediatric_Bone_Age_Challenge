@@ -227,8 +227,9 @@ def makerModel():
 
     model.compile(loss="mean_squared_error", metrics=["MAE", "MSE"], optimizer=OPTIMIZER)
 
-    Console.info("Model summary")
-    print(model.summary())
+    if __name__ == "__main__":
+        Console.info("Model summary")
+        print(model.summary())
 
     # Load weight
     if args["load_weights"] != None:
