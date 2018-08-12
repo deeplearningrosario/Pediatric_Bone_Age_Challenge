@@ -26,7 +26,7 @@ SPLIT_GENDER = 'both'
 # SPLIT_GENDER = 'male'
 
 # Turn saving renders feature on/off
-SAVE_RENDERS = not False
+SAVE_RENDERS = False
 
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
