@@ -42,14 +42,14 @@ SORT_RANDOMLY = True
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
-ap.add_argument("-tb", "--tensorBoard", default='False', help="Active tensorBoard")
-ap.add_argument("-cp", "--checkpoint", default='True', help="Active checkpoint")
+ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensorBoard")
+ap.add_argument("-cp", "--checkpoint", default="True", help="Active checkpoint")
 ap.add_argument(
-    "-rl", "--reduce_learning", default='False', help="Active reduce learning rate"
+    "-rl", "--reduce_learning", default="False", help="Active reduce learning rate"
 )
 
-ap.add_argument("-t", "--train", default='True', help="Run train model")
-ap.add_argument("-e", "--evaluate", default='False', help="Evaluating model")
+ap.add_argument("-t", "--train", default="True", help="Run train model")
+ap.add_argument("-e", "--evaluate", default="False", help="Evaluating model")
 ap.add_argument("-p", "--predict", help="File to predict values")
 args = vars(ap.parse_args())
 
@@ -57,7 +57,7 @@ args = vars(ap.parse_args())
 # so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-train_dir = os.path.join(__location__, '..', TRAIN_DIR)
+train_dir = os.path.join(__location__, "..", TRAIN_DIR)
 
 img_file = ""
 
@@ -138,7 +138,9 @@ def getFiles():
             lower = csv_row.lower.tolist()
             # Get upper color
             upper = csv_row.upper.tolist()
-            if not (lower[0] != lower[0] and upper[0] != upper[0]):
+            if (lower and upper) and (
+                not (lower[0] != lower[0] and upper[0] != upper[0])
+            ):
                 rta.append((file_name, lower[0], upper[0]))
             else:
                 Console.log("Not data for", file_name)
@@ -165,9 +167,9 @@ def loadCallBack():
 
     # TensorBoard
     # how to use: $ tensorboard --logdir path_to_current_dir/Graph
-    if args["tensorBoard"] == 'True':
+    if args["tensorBoard"] == "True":
         # Save log for tensorboard
-        LOG_DIR_TENSORBOARD = os.path.join(__location__, '..', "tensorboard")
+        LOG_DIR_TENSORBOARD = os.path.join(__location__, "..", "tensorboard")
         if not os.path.exists(LOG_DIR_TENSORBOARD):
             os.makedirs(LOG_DIR_TENSORBOARD)
 
@@ -182,7 +184,7 @@ def loadCallBack():
         Console.info("tensorboard --logdir", LOG_DIR_TENSORBOARD)
         cb.append(tbCallBack)
 
-    if args["checkpoint"] == 'True':
+    if args["checkpoint"] == "True":
         # Save weights after every epoch
         if not os.path.exists(os.path.join(__location__, "weights")):
             os.makedirs(os.path.join(__location__, "weights"))
@@ -195,7 +197,7 @@ def loadCallBack():
         cb.append(checkpoint)
 
     # Reduce learning rate
-    if args["reduce_learning"] == 'True':
+    if args["reduce_learning"] == "True":
         reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
             monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
         )
@@ -385,17 +387,17 @@ if __name__ == "__main__":
     # Check if exixt folder
     # checkPath()
 
-    if args["predict"] == None or args['predict'] == 'True':
+    if args["predict"] == None or args["predict"] == "True":
         files = getFiles()
         (X_train, y_lower, y_upper) = loadDataSet(files)
 
     # Create model
     model = makerModel()
 
-    if args["train"] == 'True':
+    if args["train"] == "True":
         trainModel(model, X_train, y_lower, y_upper)
 
-    if args["evaluate"] == 'True':
+    if args["evaluate"] == "True":
         Console.info("Evaluating model...")
         score = model.evaluate(
             [X_train], [y_lower, y_upper], batch_size=BATCH_SIZE, verbose=1
@@ -404,8 +406,8 @@ if __name__ == "__main__":
         Console.log("Test MAE:", score[3], score[5])
         Console.log("Test MSE:", score[0], score[2])
 
-    if args["predict"] != None and args['predict'] != 'False':
-        if args["predict"] != 'True':
+    if args["predict"] != None and args["predict"] != "False":
+        if args["predict"] != "True":
             Console.info("Predict for", args["predict"])
         else:
             Console.info("Predict...")
@@ -430,7 +432,8 @@ if __name__ == "__main__":
                     lower = Console.Red + str(lower) + Console.NC if e_lower else lower
                     upper = Console.Red + str(upper) + Console.NC if e_upper else upper
                     # show the inputs and predicted outputs
-                    Console.error("File %s, Lower: %s, Upper: %s" %
-                                  (files[i], lower, upper))
+                    Console.error(
+                        "File %s, Lower: %s, Upper: %s" % (files[i], lower, upper)
+                    )
                 else:
                     Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
