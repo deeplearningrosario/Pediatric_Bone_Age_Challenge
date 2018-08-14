@@ -97,7 +97,7 @@ print("gdr_test shape:" + str(gdr_test.shape))
 
 # First we need to create a model structure
 # input layer
-image_input = Input(shape=img_train.shape[1:], name="image_input")
+image_input = Input(shape=(224, 224, 3), name="image_input")
 
 if CNN == "IV3":
     # Inception V3 layer with pre-trained weights from ImageNet
