@@ -24,7 +24,7 @@ TRAIN_DIR = "dataset_sample"
 CUT_DATASET = 1000
 
 # network and training
-EPOCHS = 600
+EPOCHS = 1000
 BATCH_SIZE = 24
 
 # https://keras.io/optimizers
