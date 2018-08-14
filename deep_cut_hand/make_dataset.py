@@ -1,12 +1,15 @@
 #!/usr/bin/python3
-import h5py
+from multiprocessing import Process
 from utilities import Console
 import cv2
 import fnmatch
+import h5py
+import multiprocessing
 import numpy as np
 import os
-import sys
 import pandas as pd
+import platform
+import sys
 
 # Directory of dataset to use
 TRAIN_DIR = "dataset_sample"
@@ -33,7 +36,7 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
         status = "Waiting...\r"
     if progress >= 1:
         progress = 1
-        status = "Completed loading data\r\n"
+        status = ""
     block = int(round(barLength * progress))
     line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
         tick,
@@ -53,10 +56,11 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 # Show the images
 def writeImage(path, image, force=False):
     if force:
-        cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
+        cv2.imwrite(os.path.join(__location__, path, img_file), image)
 
 
 def saveDataSet(X_train, y_train):
+    Console.info("Save dataset")
     with h5py.File("histogram-hand-dataset.hdf5", "w") as f:
         f.create_dataset("hist", data=X_train,)
         f.create_dataset("valid", data=y_train)
@@ -74,7 +78,6 @@ def getHistogram(img):
 
 
 def loadDataSet(files=[]):
-    Console.info("Get histogram of the images...")
     global img_file
     X_train = []
     y_train = []
@@ -94,8 +97,6 @@ def loadDataSet(files=[]):
 
         X_train.append(getHistogram(img))
         y_train.append(1)
-
-    updateProgress(1, total_file, total_file, img_file)
 
     return X_train, y_train
 
@@ -126,7 +127,7 @@ def histogramsLevelFix(img, min_color, max_color):
             color = img[y, x]
             img[y, x] = colors_palette[color]
 
-    writeImage("histograms_level_fix", np.hstack([img]))  # show the images ===========
+    writeImage("histograms_level", np.hstack([img]), True)  # show the images ===========
 
     return img
 
@@ -165,7 +166,63 @@ def getFiles():
     return rta
 
 
+def openDataSet():
+    with h5py.File("histogram-hand-dataset.hdf5", "r+") as f:
+        hist = f['hist'][()]
+        valid = f['valid'][()]
+        print(len(hist[0]), len(valid))
+        # f.flush()
+        f.close()
+
+
+# Usado en caso de usar multiples core
+output = multiprocessing.Queue()
+
+
+def mpStart(files, output):
+    output.put(loadDataSet(files))
+
+
 if __name__ == "__main__":
     files = getFiles()
-    (X_train, y_train) = loadDataSet(files)
-    saveDataSet(X_train, y_train)
+    total_file = len(files)
+    Console.info("Image total:", total_file)
+
+    num_processes = multiprocessing.cpu_count()
+    if platform.system() == "Linux" and num_processes > 1:
+        processes = []
+
+        lot_size = int(total_file / num_processes)
+
+        for x in range(1, num_processes + 1):
+            if x < num_processes:
+                lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
+            else:
+                lot_img = files[(x - 1) * lot_size:]
+            processes.append(Process(target=mpStart, args=(lot_img, output)))
+
+        if len(processes) > 0:
+            Console.info("Get histogram of the images...")
+            for p in processes:
+                p.start()
+
+            result = []
+            for x in range(num_processes):
+                result.append(output.get(True))
+
+            for p in processes:
+                p.join()
+
+            X_train = []
+            y_train = []
+            for mp_X_train, mp_y_train in result:
+                X_train = X_train + mp_X_train
+                y_train = y_train + mp_y_train
+            updateProgress(1, total_file, total_file, img_file)
+
+            saveDataSet(X_train, y_train)
+    else:
+        Console.info("No podemos dividir la cargan en distintos procesadores")
+        exit(0)
+
+    openDataSet()
