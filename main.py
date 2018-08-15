@@ -80,17 +80,25 @@ img_test, gdr_test, age_test = readFile(
     genderType, "testing", img_test, gdr_test, age_test
 )
 
-"""
-img_final = []
-age_final = []
-gdr_final = []
-# Shuffle images
-random_no = np.random.choice(img.shape[0], size=img.shape[0], replace=False)
-for i in random_no:
-    img_final.append(img[i, :, :, :])
-    age_final.append(age[i])
-    gdr_final.append(gender[i])
-"""
+
+def randomDataSet(X_img, x_gender, y_age):
+    random_id = np.random.choice(
+        X_img.shape[0],
+        size=X_img.shape[0],
+        replace=False
+    )
+    X_img = X_img[random_id]
+    x_gender = x_gender[random_id]
+    y_age = y_age[random_id]
+    return X_img, x_gender, y_age
+
+
+print("Random order of the train dataset...")
+img_train, gdr_train, age_train = randomDataSet(img_train, gdr_train, age_train)
+print("Random order of the valid dataset...")
+img_valid, gdr_valid, age_valid = randomDataSet(img_valid, gdr_valid, age_valid)
+print("Random order of the test dataset...")
+img_test, gdr_test, age_test = randomDataSet(img_test, gdr_test, age_test)
 
 print("img_train shape:", img_train.shape)
 print("gdr_train shape:", gdr_train.shape)
