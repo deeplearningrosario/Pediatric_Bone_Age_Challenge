@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-from six.moves import cPickle
 import cv2
 import math
 import numpy as np
@@ -276,8 +275,8 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
             dtype=np.float32,
             compression="gzip", compression_opts=5
         )
-        f.create_dataset("age", data=y_age, dtype=np.int)
-        f.create_dataset("gender", data=x_gender, dtype=np.int)
+        f.create_dataset("age", data=y_age, dtype=np.uint8)
+        f.create_dataset("gender", data=x_gender, dtype=np.uint8)
         f.close()
 
 
@@ -285,8 +284,8 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
     img = np.asarray(X_train)
-    gender = np.asarray(x_gender, dtype=np.int)
-    age = np.asarray(y_age, dtype=np.int)
+    gender = np.asarray(x_gender, dtype=np.uint8)
+    age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
     k = int(len(X_train) / 6)
     writeFile(
