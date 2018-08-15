@@ -13,7 +13,8 @@ TRAIN_DIR = "dataset_sample"
 # TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+# TODO
+CUT_DATASET = 1000
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -233,7 +234,7 @@ def processImage(img_path):
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
     # Convert the image into an 8 bit array
-    return np.asarray(img, dtype=np.uint8)
+    return np.asarray(img, dtype=np.float32)
 
 
 def loadDataSet(files=[]):
@@ -253,7 +254,8 @@ def loadDataSet(files=[]):
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
         if os.path.exists(img_path):
-            X_train.append(processImage(img_path))
+            img = processImage(img_path) / 255.
+            X_train.append(img)
             x_gender.append(gender)
             y_age.append(bone_age)
 
@@ -264,12 +266,14 @@ def loadDataSet(files=[]):
 
 # Write hdf5 file
 def writeFile(gender, dataset, X_train, x_gender, y_age):
-    print("\nSaving", gender, dataset, "data...")
-    with h5py.File(
-        os.path.join(train_dir, "packaging-dataset", gender + dataset + ".hdf5"), "w"
-    ) as f:
+    print("Saving", gender, dataset, "data...")
+    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "w") as f:
         f.create_dataset(
-            "img", data=X_train, dtype=np.float  # compression="gzip", compression_opts=5
+            "img",
+            data=X_train,
+            dtype=np.float32,
+            # compression="gzip", compression_opts=5
         )
         f.create_dataset("age", data=y_age)
         f.create_dataset("gender", data=x_gender)
@@ -277,19 +281,23 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 
 
 # Save dataset
-def saveDataSet(gender, X_train, x_gender, y_age):
+def saveDataSet(genderType, X_train, x_gender, y_age):
+    print("\nDivide the data set...")
+    img = np.asarray(X_train)
+    gender = np.asarray(x_gender)
+    age = np.asarray(y_age)
     # Split images dataset
     k = int(len(X_train) / 6)
-    writeFile(gender, "testing", X_train[:k, :, :, :], x_gender[:k], y_age[:k])
+    writeFile(genderType, "testing", img[:k, :, :, :], gender[:k], age[:k])
     writeFile(
-        gender,
+        genderType,
         "validation",
-        X_train[k: 2 * k, :, :, :],
-        x_gender[k: 2 * k],
-        y_age[k: 2 * k],
+        img[k: 2 * k, :, :, :],
+        gender[k: 2 * k],
+        age[k: 2 * k],
     )
     writeFile(
-        gender, "training", X_train[2 * k:, :, :, :], x_gender[2 * k:], y_age[2 * k:]
+        genderType, "training", img[2 * k:, :, :, :], gender[2 * k:], age[2 * k:]
     )
 
 
@@ -346,5 +354,4 @@ if __name__ == "__main__":
 
     print("Processing male images...")
     (X_train, x_gender, y_age) = loadDataSet(male)
-    print(len(male), len(X_train))
     saveDataSet("male", X_train, x_gender, y_age)
