@@ -21,7 +21,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 30
+EPOCHS = 3
 BATCH_SIZE = 35
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -223,7 +223,7 @@ score = model.evaluate(
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
-print("Test accuracy:", score[2])
+#print("Test accuracy:", score[2])
 
 # Save all data in history
 with open(os.path.join(PATHE_SAVE_MODEL, "history.pkl"), "wb") as f:
@@ -246,14 +246,14 @@ plt.legend(["train", "test"], loc="upper left")
 plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_loss.png"))
 plt.close()
 
-plt.plot(history.history["acc"], label="acc")
-plt.plot(history.history["val_acc"], label="val_acc")
-plt.title("Training Accuracy")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.legend(["train", "test"], loc="upper left")
-plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
-plt.close()
+#plt.plot(history.history["acc"], label="acc")
+#plt.plot(history.history["val_acc"], label="val_acc")
+#plt.title("Training Accuracy")
+# plt.xlabel("Epoch")
+# plt.ylabel("Accuracy")
+#plt.legend(["train", "test"], loc="upper left")
+#plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
+# plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
 plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
@@ -265,13 +265,13 @@ plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_mean.png"))
 plt.close()
 
 # summarize history for accuracy
-plt.plot(history.history["acc"], label="train_acc")
-plt.plot(history.history["val_acc"], label="val_acc")
-plt.title("model accuracy")
-plt.ylabel("Accuracy")
-plt.xlabel("Epoch")
-plt.legend(["train", "test"], loc="upper left")
-plt.show()
+#plt.plot(history.history["acc"], label="train_acc")
+#plt.plot(history.history["val_acc"], label="val_acc")
+#plt.title("model accuracy")
+# plt.ylabel("Accuracy")
+# plt.xlabel("Epoch")
+#plt.legend(["train", "test"], loc="upper left")
+# plt.show()
 
 # summarize history for loss
 plt.plot(history.history["loss"], label="train_loss")
