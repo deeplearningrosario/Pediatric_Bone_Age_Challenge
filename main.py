@@ -7,9 +7,10 @@ from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
 import argparse
+import h5py
 import keras
+# import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 
 # construct the argument parse and parse the arguments
@@ -34,70 +35,74 @@ OPTIMIZER = Adam(lr=0.001)
 # CNN = 'IV3'
 CNN = "RN50"
 
+
+def readFile(gender, dataset, X_img, x_gender, y_age):
+    print("Reading", gender, dataset, "data...")
+    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "r+") as f:
+        f_img = f["img"][()]
+        f_gender = f["gender"][()]
+        f_age = f["age"][()]
+        f.close()
+    for img in f_img:
+        X_img.append(img)
+    for gdr in f_gender:
+        x_gender.append(x_gender)
+    for age in f_age:
+        y_age.append(age)
+
+    return X_img, x_gender, y_age
+
+
 # Load data
 print("...loading training data")
-f = open((os.path.join(__location__, "data.pkl")), "rb")
-img = cPickle.load(f)
-f.close()
+img_train = []
+gdr_train = []
+age_train = []
 
-f = open((os.path.join(__location__, "data_age.pkl")), "rb")
-age = cPickle.load(f)
-f.close()
+img_valid = []
+gdr_valid = []
+age_valid = []
 
-f = open((os.path.join(__location__, "data_gender.pkl")), "rb")
-gender = cPickle.load(f)
-f.close()
+img_test = []
+gdr_test = []
+age_test = []
 
-img = np.asarray(img, dtype=np.float32)
-age = np.asarray(age)
-gender = np.asarray(gender)
+for genderType in ["famale", "male"]:
+    img_train, gdr_train, age_train = readFile(
+        genderType, "training", img_train, gdr_train, age_train
+    )
+    img_valid, gdr_valid, age_valid = readFile(
+        genderType, "validation", img_valid, gdr_valid, age_valid
+    )
+    img_test, gdr_test, age_test = readFile(
+        genderType, "testing", img_test, gdr_test, age_test
+    )
 
-# this is to normalize x since RGB scale is [0,255]
-img /= 255.
-
+"""
 img_final = []
 age_final = []
 gdr_final = []
-
-# Shuffle images and split into train, validation and test sets
+# Shuffle images
 random_no = np.random.choice(img.shape[0], size=img.shape[0], replace=False)
 for i in random_no:
     img_final.append(img[i, :, :, :])
     age_final.append(age[i])
     gdr_final.append(gender[i])
-
-img_final = np.asarray(img_final)
-age_final = np.asarray(age_final)
-gdr_final = np.asarray(gdr_final)
-
-# Split images dataset
-k = int(len(img_final) / 6)  # Decides split count
-
-img_test = img_final[:k, :, :, :]
-age_test = age_final[:k]
-gdr_test = gdr_final[:k]
-
-img_valid = img_final[k: 2 * k, :, :, :]
-age_valid = age_final[k: 2 * k]
-gdr_valid = gdr_final[k: 2 * k]
-
-img_train = img_final[2 * k:, :, :, :]
-gdr_train = gdr_final[2 * k:]
-age_train = age_final[2 * k:]
-
-print("img_train shape:" + str(img_train.shape))
-print("age_train shape:" + str(age_train.shape))
-print("gdr_train shape:" + str(gdr_train.shape))
-print("img_valid shape:" + str(img_valid.shape))
-print("age_valid shape:" + str(age_valid.shape))
-print("gdr_valid shape:" + str(gdr_valid.shape))
-print("img_test shape:" + str(img_test.shape))
-print("age_test shape:" + str(age_test.shape))
-print("gdr_test shape:" + str(gdr_test.shape))
+"""
+print("img_train:", len(img_train))
+print("age_train:", len(age_train))
+print("gdr_train:", len(gdr_train))
+print("img_valid:", len(img_valid))
+print("age_valid:", len(age_valid))
+print("gdr_valid:", len(gdr_valid))
+print("img_test:", len(img_test))
+print("age_test:", len(age_test))
+print("gdr_test:", len(gdr_test))
 
 # First we need to create a model structure
 # input layer
-image_input = Input(shape=img_train.shape[1:], name="image_input")
+image_input = Input(shape=(224, 224, 3), name="image_input")
 
 if CNN == "IV3":
     # Inception V3 layer with pre-trained weights from ImageNet
@@ -196,7 +201,7 @@ history = model.fit(
 )
 
 # Path to save model
-PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup")
+PATHE_SAVE_MODEL = os.path.join(__location__, "model_backup")
 
 # Save weights after every epoch
 if not os.path.exists(PATHE_SAVE_MODEL):

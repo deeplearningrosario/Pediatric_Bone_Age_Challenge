@@ -197,6 +197,8 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
     emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
     sys.stdout.write(line + emptyBlock)
     sys.stdout.flush()
+    if progress == 1:
+        print("")
 
 
 def getColorsHands(img):
@@ -273,7 +275,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
             "img",
             data=X_train,
             dtype=np.float32,
-            # compression="gzip", compression_opts=5
+            compression="gzip", compression_opts=5
         )
         f.create_dataset("age", data=y_age)
         f.create_dataset("gender", data=x_gender)
@@ -282,7 +284,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
-    print("\nDivide the data set...")
+    print("Divide the data set...")
     img = np.asarray(X_train)
     gender = np.asarray(x_gender)
     age = np.asarray(y_age)
