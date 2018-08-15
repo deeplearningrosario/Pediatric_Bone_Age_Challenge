@@ -239,8 +239,8 @@ def processImage(img_path):
 def loadDataSet(files=[]):
     global img_file
     X_train = []
+    x_gender = []
     y_age = []
-    y_gender = []
 
     total_file = len(files)
     for i in range(total_file):
@@ -254,27 +254,43 @@ def loadDataSet(files=[]):
         img_path = os.path.join(train_dir, img_file)
         if os.path.exists(img_path):
             X_train.append(processImage(img_path))
-            y_gender.append(gender)
+            x_gender.append(gender)
             y_age.append(bone_age)
 
     updateProgress(1, total_file, total_file, img_file)
 
-    return X_train, y_age, y_gender
+    return X_train, x_gender, y_age
+
+
+# Write hdf5 file
+def writeFile(gender, dataset, X_train, x_gender, y_age):
+    print("\nSaving", gender, dataset, "data...")
+    with h5py.File(
+        os.path.join(train_dir, "packaging-dataset", gender + dataset + ".hdf5"), "w"
+    ) as f:
+        f.create_dataset(
+            "img", data=X_train, dtype=np.float  # compression="gzip", compression_opts=5
+        )
+        f.create_dataset("age", data=y_age)
+        f.create_dataset("gender", data=x_gender)
+        f.close()
 
 
 # Save dataset
-def saveDataSet(gender, X_train, y_age, y_gender):
-    print("\nSaving data...")
-    with h5py.File(
-        os.path.join(train_dir, "packaging-dataset", "dataset.hdf5"), "w"
-    ) as f:
-        f.create_dataset(
-            "img", data=X_train, dtype=np.float, compression="gzip", compression_opts=5
-        )
-        f.create_dataset("age", data=y_age)
-        f.create_dataset("gender", data=y_gender)
-        f.flush()
-        f.close()
+def saveDataSet(gender, X_train, x_gender, y_age):
+    # Split images dataset
+    k = int(len(X_train) / 6)
+    writeFile(gender, "testing", X_train[:k, :, :, :], x_gender[:k], y_age[:k])
+    writeFile(
+        gender,
+        "validation",
+        X_train[k: 2 * k, :, :, :],
+        x_gender[k: 2 * k],
+        y_age[k: 2 * k],
+    )
+    writeFile(
+        gender, "training", X_train[2 * k:, :, :, :], x_gender[2 * k:], y_age[2 * k:]
+    )
 
 
 # list all the image files and randomly unravel them,
@@ -325,11 +341,10 @@ if __name__ == "__main__":
     famale, male = getFiles()
 
     print("Processing female images...")
-    (X_train, y_age, y_gender) = loadDataSet(famale)
-    print(len(famale), len(X_train))
-    # saveDataSet(famale,X_train, y_age, y_gender)
+    (X_train, x_gender, y_age) = loadDataSet(famale)
+    saveDataSet("famale", X_train, x_gender, y_age)
 
     print("Processing male images...")
-    (X_train, y_age, y_gender) = loadDataSet(male)
+    (X_train, x_gender, y_age) = loadDataSet(male)
     print(len(male), len(X_train))
-    # saveDataSet(male,X_train, y_age, y_gender)
+    saveDataSet("male", X_train, x_gender, y_age)
