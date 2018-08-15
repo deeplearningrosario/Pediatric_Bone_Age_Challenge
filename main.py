@@ -36,7 +36,7 @@ OPTIMIZER = Adam(lr=0.001)
 CNN = "RN50"
 
 
-def readFile(gender, dataset, X_img, x_gender, y_age):
+def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
     with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "r+") as f:
@@ -44,49 +44,42 @@ def readFile(gender, dataset, X_img, x_gender, y_age):
         f_gender = f["gender"][()]
         f_age = f["age"][()]
         f.close()
-    for img in f_img:
-        X_img.append(img)
-    for gdr in f_gender:
-        x_gender.append(x_gender)
-    for age in f_age:
-        y_age.append(age)
+    if X_img is None:
+        X_img = f_img
+    else:
+        X_img = np.concatenate((X_img, f_img), axis=0)
+
+    if x_gender is None:
+        x_gender = f_gender
+    else:
+        x_gender = np.concatenate((x_gender, f_gender), axis=0)
+
+    if y_age is None:
+        y_age = f_age
+    else:
+        y_age = np.concatenate((y_age, f_age), axis=0)
 
     return X_img, x_gender, y_age
 
 
 # Load data
 print("...loading training data")
-img_train = []
-gdr_train = []
-age_train = []
+genderType = "famale"
+img_train, gdr_train, age_train = readFile(genderType, "training")
+img_valid, gdr_valid, age_valid = readFile(genderType, "validation")
+img_test, gdr_test, age_test = readFile(genderType, "testing")
 
-img_valid = []
-gdr_valid = []
-age_valid = []
+genderType = "male"
+img_train, gdr_train, age_train = readFile(
+    genderType, "training", img_train, gdr_train, age_train
+)
+img_valid, gdr_valid, age_valid = readFile(
+    genderType, "validation", img_valid, gdr_valid, age_valid
+)
+img_test, gdr_test, age_test = readFile(
+    genderType, "testing", img_test, gdr_test, age_test
+)
 
-img_test = []
-gdr_test = []
-age_test = []
-
-for genderType in ["famale", "male"]:
-    img_train, gdr_train, age_train = readFile(
-        genderType, "training", img_train, gdr_train, age_train
-    )
-    img_valid, gdr_valid, age_valid = readFile(
-        genderType, "validation", img_valid, gdr_valid, age_valid
-    )
-    img_test, gdr_test, age_test = readFile(
-        genderType, "testing", img_test, gdr_test, age_test
-    )
-print("img_train:", len(img_train))
-print("age_train:", len(age_train))
-print("gdr_train:", len(gdr_train))
-print("img_valid:", len(img_valid))
-print("age_valid:", len(age_valid))
-print("gdr_valid:", len(gdr_valid))
-print("img_test:", len(img_test))
-print("age_test:", len(age_test))
-print("gdr_test:", len(gdr_test))
 """
 img_final = []
 age_final = []
@@ -98,6 +91,17 @@ for i in random_no:
     age_final.append(age[i])
     gdr_final.append(gender[i])
 """
+
+print("img_train shape:", img_train.shape)
+print("gdr_train shape:", gdr_train.shape)
+print("age_train shape:", age_train.shape)
+print("img_valid shape:", img_valid.shape)
+print("gdr_valid shape:", gdr_valid.shape)
+print("age_valid shape:", age_valid.shape)
+print("img_test shape:", img_test.shape)
+print("gdr_test shape:", gdr_test.shape)
+print("age_test shape:", age_test.shape)
+
 # First we need to create a model structure
 # input layer
 image_input = Input(shape=(224, 224, 3), name="image_input")

@@ -277,8 +277,8 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
             dtype=np.float32,
             compression="gzip", compression_opts=5
         )
-        f.create_dataset("age", data=y_age)
-        f.create_dataset("gender", data=x_gender)
+        f.create_dataset("age", data=y_age, dtype=np.int)
+        f.create_dataset("gender", data=x_gender, dtype=np.int)
         f.close()
 
 
@@ -286,8 +286,8 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
     img = np.asarray(X_train)
-    gender = np.asarray(x_gender)
-    age = np.asarray(y_age)
+    gender = np.asarray(x_gender, dtype=np.int)
+    age = np.asarray(y_age, dtype=np.int)
     # Split images dataset
     k = int(len(X_train) / 6)
     writeFile(
