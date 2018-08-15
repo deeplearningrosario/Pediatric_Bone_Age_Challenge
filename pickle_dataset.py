@@ -8,13 +8,12 @@ import pandas as pd
 import h5py
 import sys
 
-# TODO Directory of dataset to use
-TRAIN_DIR = "dataset_sample"
-# TRAIN_DIR = "boneage-training-dataset"
+# Directory of dataset to use
+# TRAIN_DIR = "dataset_sample"
+TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-# TODO
-CUT_DATASET = 1000
+CUT_DATASET = -1
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23

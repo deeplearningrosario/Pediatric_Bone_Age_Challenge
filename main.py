@@ -21,8 +21,8 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 3
-BATCH_SIZE = 35
+EPOCHS = 30
+BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
@@ -203,7 +203,7 @@ history = model.fit(
 )
 
 # Path to save model
-PATHE_SAVE_MODEL = os.path.join(__location__, "model_backup")
+PATHE_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
 
 # Save weights after every epoch
 if not os.path.exists(PATHE_SAVE_MODEL):
