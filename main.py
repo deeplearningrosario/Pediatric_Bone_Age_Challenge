@@ -140,7 +140,7 @@ x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
 x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
-# x = Dense(240, activation="relu")(x)
+x = Dense(240, activation="relu")(x)
 # x = Dropout(0.1)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
