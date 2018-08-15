@@ -9,7 +9,7 @@ from six.moves import cPickle
 import argparse
 import h5py
 import keras
-# import numpy as np
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 
@@ -78,7 +78,15 @@ for genderType in ["famale", "male"]:
     img_test, gdr_test, age_test = readFile(
         genderType, "testing", img_test, gdr_test, age_test
     )
-
+print("img_train:", len(img_train))
+print("age_train:", len(age_train))
+print("gdr_train:", len(gdr_train))
+print("img_valid:", len(img_valid))
+print("age_valid:", len(age_valid))
+print("gdr_valid:", len(gdr_valid))
+print("img_test:", len(img_test))
+print("age_test:", len(age_test))
+print("gdr_test:", len(gdr_test))
 """
 img_final = []
 age_final = []
@@ -90,16 +98,6 @@ for i in random_no:
     age_final.append(age[i])
     gdr_final.append(gender[i])
 """
-print("img_train:", len(img_train))
-print("age_train:", len(age_train))
-print("gdr_train:", len(gdr_train))
-print("img_valid:", len(img_valid))
-print("age_valid:", len(age_valid))
-print("gdr_valid:", len(gdr_valid))
-print("img_test:", len(img_test))
-print("age_test:", len(age_test))
-print("gdr_test:", len(gdr_test))
-
 # First we need to create a model structure
 # input layer
 image_input = Input(shape=(224, 224, 3), name="image_input")
@@ -157,7 +155,7 @@ if args["load_weights"] != None:
     print("Loading weights from", args["load_weights"])
     model.load_weights(args["load_weights"])
 
-model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
+model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
 
 # Save weights after every epoch
 if not os.path.exists(os.path.join(__location__, "weights")):

@@ -290,7 +290,9 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     age = np.asarray(y_age)
     # Split images dataset
     k = int(len(X_train) / 6)
-    writeFile(genderType, "testing", img[:k, :, :, :], gender[:k], age[:k])
+    writeFile(
+        genderType, "testing", img[:k, :, :, :], gender[:k], age[:k]
+    )
     writeFile(
         genderType,
         "validation",
