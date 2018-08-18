@@ -65,7 +65,6 @@ def saveDataSet(X_train, y_train):
 
 def getHistogram(img):
     hist, _ = np.histogram(img, 256, [0, 256])
-
     cdf = hist.cumsum()
     return cdf * hist.max() / cdf.max()
 
@@ -93,37 +92,6 @@ def loadDataSet(path, files=[], hands_valid=1):
     return X_train, y_train
 
 
-# Auto adjust levels colors
-# We order the colors of the image with their frequency and
-# obtain the accumulated one, then we obtain the colors that
-# accumulate 2.5% and 99.4% of the frequency.
-def histogramsLevelFix(img, min_color, max_color):
-    # This function is only prepared for images in scale of gripes
-
-    # To improve the preform we created a color palette with the new values
-    colors_palette = []
-    # Auxiliary calculation, avoid doing calculations within the 'for'
-    dif_color = 255 / (max_color - min_color)
-    for color in range(256):
-        if color <= min_color:
-            colors_palette.append(0)
-        elif color >= max_color:
-            colors_palette.append(255)
-        else:
-            colors_palette.append(int(round((color - min_color) * dif_color)))
-
-    # We paint the image with the new color palette
-    height, width = img.shape
-    for y in range(0, height):
-        for x in range(0, width):
-            color = img[y, x]
-            img[y, x] = colors_palette[color]
-
-    writeImage("histograms_level", np.hstack([img]), True)  # show the images ===========
-
-    return img
-
-
 # list all the image files and randomly unravel them,
 # in each case you take the first N from the unordered list
 def getFiles(path_input):
@@ -148,7 +116,8 @@ def openDataSet():
     with h5py.File("histogram-hand-dataset.hdf5", "r+") as f:
         hist = f['hist'][()]
         valid = f['valid'][()]
-        print(len(hist[0]), len(valid))
+        Console.log("Dataset", len(hist[0]), len(valid))
+        # print(hist[0], valid)
         # f.flush()
         f.close()
 
@@ -214,7 +183,7 @@ if __name__ == "__main__":
 
     TRAIN_DIR = "datase_not_hands"
     files = getFiles(TRAIN_DIR)
-    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=1)
+    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=0)
 
     X_train = X_train + X2_train
     y_train = y_train + y2_train
