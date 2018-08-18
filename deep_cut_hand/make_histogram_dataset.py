@@ -11,17 +11,12 @@ import pandas as pd
 import platform
 import sys
 
-# Directory of dataset to use
-TRAIN_DIR = "dataset_sample"
-# TRAIN_DIR = "boneage-training-dataset"
-
 # Use N images of dataset, If it is -1 using all dataset
 CUT_DATASET = 1000
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-train_dir = os.path.join(__location__, "..", TRAIN_DIR)
 img_file = ""
 
 
@@ -72,31 +67,28 @@ def getHistogram(img):
     hist, _ = np.histogram(img, 256, [0, 256])
 
     cdf = hist.cumsum()
-    cdf_normalized = cdf * hist.max() / cdf.max()
-
-    return cdf_normalized
+    return cdf * hist.max() / cdf.max()
 
 
-def loadDataSet(files=[]):
+def loadDataSet(path, files=[], hands_valid=1):
     global img_file
     X_train = []
     y_train = []
 
     total_file = len(files)
     for i in range(total_file):
-        (img_file, lower, upper) = files[i]
+        img_file = files[i]
         # Update the progress bar
         progress = float(i / total_file), (i + 1)
         updateProgress(progress[0], progress[1], total_file, img_file)
 
         # Get image's path
-        img_path = os.path.join(train_dir, img_file)
+        img_path = os.path.join(path, img_file)
         # Read a image
         img = cv2.imread(img_path, 0)
-        img = histogramsLevelFix(img, lower, upper)
 
         X_train.append(getHistogram(img))
-        y_train.append(1)
+        y_train.append(hands_valid)
 
     return X_train, y_train
 
@@ -134,34 +126,20 @@ def histogramsLevelFix(img, min_color, max_color):
 
 # list all the image files and randomly unravel them,
 # in each case you take the first N from the unordered list
-def getFiles():
-    rta = []
-    # Read csv
-    df = pd.read_csv(os.path.join(train_dir, "histogram-dataset.csv"))
+def getFiles(path_input):
+    Console.info("Reading on", path_input)
+    path = os.path.join(__location__, path_input)
 
+    rta = []
     # file names on train_dir
-    files = os.listdir(train_dir)
+    files = os.listdir(path)
     # filter image files
     files = [f for f in files if fnmatch.fnmatch(f, "*.png")]
-    # Sort randomly
-    np.random.shuffle(files)
 
     for file_name in files:
         # Cut list of file
         if CUT_DATASET <= 0 or len(rta) < CUT_DATASET:
-            # print(file_name)
-            # Get row with id equil image's name
-            csv_row = df[df.id == int(file_name[:-4])]
-            # Get lower color
-            lower = csv_row.lower.tolist()
-            # Get upper color
-            upper = csv_row.upper.tolist()
-            if (lower and upper) and (
-                not (lower[0] != lower[0] and upper[0] != upper[0])
-            ):
-                rta.append((file_name, lower[0], upper[0]))
-            else:
-                Console.log("Not data for", file_name)
+            rta.append(file_name)
 
     return rta
 
@@ -179,12 +157,13 @@ def openDataSet():
 output = multiprocessing.Queue()
 
 
-def mpStart(files, output):
-    output.put(loadDataSet(files))
+def mpStart(path, files, hands_valid, output, progress_num):
+    output.put(loadDataSet(path, files, hands_valid))
 
 
-if __name__ == "__main__":
-    files = getFiles()
+def progressFiles(path_input, files, hands_valid):
+    path = os.path.join(__location__, path_input)
+
     total_file = len(files)
     Console.info("Image total:", total_file)
 
@@ -199,7 +178,9 @@ if __name__ == "__main__":
                 lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
                 lot_img = files[(x - 1) * lot_size:]
-            processes.append(Process(target=mpStart, args=(lot_img, output)))
+            processes.append(
+                Process(target=mpStart, args=(path, lot_img, hands_valid, output, x))
+            )
 
         if len(processes) > 0:
             Console.info("Get histogram of the images...")
@@ -220,9 +201,25 @@ if __name__ == "__main__":
                 y_train = y_train + mp_y_train
             updateProgress(1, total_file, total_file, img_file)
 
-            saveDataSet(X_train, y_train)
+            return X_train, y_train
     else:
         Console.info("No podemos dividir la cargan en distintos procesadores")
         exit(0)
 
+
+if __name__ == "__main__":
+    TRAIN_DIR = "histograms_level"
+    files = getFiles(TRAIN_DIR)
+    (X_train, y_train) = progressFiles(TRAIN_DIR, files, hands_valid=1)
+
+    TRAIN_DIR = "datase_not_hands"
+    files = getFiles(TRAIN_DIR)
+    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=1)
+
+    X_train = X_train + X2_train
+    y_train = y_train + y2_train
+
+    # Sort randomly
+
+    saveDataSet(X_train, y_train)
     openDataSet()
