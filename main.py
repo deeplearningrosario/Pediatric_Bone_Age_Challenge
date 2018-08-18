@@ -7,9 +7,10 @@ from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
 import argparse
+import h5py
 import keras
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
 # construct the argument parse and parse the arguments
@@ -21,7 +22,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 # network and training
 EPOCHS = 30
-BATCH_SIZE = 35
+BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
@@ -34,66 +35,80 @@ OPTIMIZER = Adam(lr=0.001)
 # CNN = 'IV3'
 CNN = "RN50"
 
+
+def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
+    print("Reading", gender, dataset, "data...")
+    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "r+") as f:
+        f_img = f["img"][()]
+        f_gender = f["gender"][()]
+        f_age = f["age"][()]
+        f.close()
+    if X_img is None:
+        X_img = f_img
+    else:
+        X_img = np.concatenate((X_img, f_img), axis=0)
+
+    if x_gender is None:
+        x_gender = f_gender
+    else:
+        x_gender = np.concatenate((x_gender, f_gender), axis=0)
+
+    if y_age is None:
+        y_age = f_age
+    else:
+        y_age = np.concatenate((y_age, f_age), axis=0)
+
+    return X_img, x_gender, y_age
+
+
 # Load data
 print("...loading training data")
-f = open((os.path.join(__location__, "data.pkl")), "rb")
-img = cPickle.load(f)
-f.close()
+genderType = "famale"
+img_train, gdr_train, age_train = readFile(genderType, "training")
+img_valid, gdr_valid, age_valid = readFile(genderType, "validation")
+img_test, gdr_test, age_test = readFile(genderType, "testing")
 
-f = open((os.path.join(__location__, "data_age.pkl")), "rb")
-age = cPickle.load(f)
-f.close()
+genderType = "male"
+img_train, gdr_train, age_train = readFile(
+    genderType, "training", img_train, gdr_train, age_train
+)
+img_valid, gdr_valid, age_valid = readFile(
+    genderType, "validation", img_valid, gdr_valid, age_valid
+)
+img_test, gdr_test, age_test = readFile(
+    genderType, "testing", img_test, gdr_test, age_test
+)
 
-f = open((os.path.join(__location__, "data_gender.pkl")), "rb")
-gender = cPickle.load(f)
-f.close()
 
-img = np.asarray(img, dtype=np.float32)
-age = np.asarray(age)
-gender = np.asarray(gender)
+def randomDataSet(X_img, x_gender, y_age):
+    random_id = np.random.choice(
+        X_img.shape[0],
+        size=X_img.shape[0],
+        replace=False
+    )
+    X_img = X_img[random_id]
+    x_gender = x_gender[random_id]
+    y_age = y_age[random_id]
+    return X_img, x_gender, y_age
 
-# this is to normalize x since RGB scale is [0,255]
-img /= 255.
 
-img_final = []
-age_final = []
-gdr_final = []
+print("Random order of the train dataset...")
+img_train, gdr_train, age_train = randomDataSet(img_train, gdr_train, age_train)
+print("Random order of the valid dataset...")
+img_valid, gdr_valid, age_valid = randomDataSet(img_valid, gdr_valid, age_valid)
+print("Random order of the test dataset...")
+img_test, gdr_test, age_test = randomDataSet(img_test, gdr_test, age_test)
 
-# Shuffle images and split into train, validation and test sets
-random_no = np.random.choice(img.shape[0], size=img.shape[0], replace=False)
-for i in random_no:
-    img_final.append(img[i, :, :, :])
-    age_final.append(age[i])
-    gdr_final.append(gender[i])
-
-img_final = np.asarray(img_final)
-age_final = np.asarray(age_final)
-gdr_final = np.asarray(gdr_final)
-
-# Split images dataset
-k = int(len(img_final) / 6)  # Decides split count
-
-img_test = img_final[:k, :, :, :]
-age_test = age_final[:k]
-gdr_test = gdr_final[:k]
-
-img_valid = img_final[k: 2 * k, :, :, :]
-age_valid = age_final[k: 2 * k]
-gdr_valid = gdr_final[k: 2 * k]
-
-img_train = img_final[2 * k:, :, :, :]
-gdr_train = gdr_final[2 * k:]
-age_train = age_final[2 * k:]
-
-print("img_train shape:" + str(img_train.shape))
-print("age_train shape:" + str(age_train.shape))
-print("gdr_train shape:" + str(gdr_train.shape))
-print("img_valid shape:" + str(img_valid.shape))
-print("age_valid shape:" + str(age_valid.shape))
-print("gdr_valid shape:" + str(gdr_valid.shape))
-print("img_test shape:" + str(img_test.shape))
-print("age_test shape:" + str(age_test.shape))
-print("gdr_test shape:" + str(gdr_test.shape))
+print("img_train shape:", img_train.shape)
+print("gdr_train shape:", gdr_train.shape)
+print("age_train shape:", age_train.shape)
+print("img_valid shape:", img_valid.shape)
+print("gdr_valid shape:", gdr_valid.shape)
+print("age_valid shape:", age_valid.shape)
+print("img_test shape:", img_test.shape)
+print("gdr_test shape:", gdr_test.shape)
+print("age_test shape:", age_test.shape)
 
 # First we need to create a model structure
 # input layer
@@ -133,7 +148,7 @@ x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
 x = Dense(1000, activation="relu")(x)
 x = Dropout(0.2)(x)
-# x = Dense(240, activation="relu")(x)
+x = Dense(240, activation="relu")(x)
 # x = Dropout(0.1)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
@@ -152,7 +167,7 @@ if args["load_weights"] != None:
     print("Loading weights from", args["load_weights"])
     model.load_weights(args["load_weights"])
 
-model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE", "accuracy"])
+model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
 
 # Save weights after every epoch
 if not os.path.exists(os.path.join(__location__, "weights")):
@@ -196,7 +211,7 @@ history = model.fit(
 )
 
 # Path to save model
-PATHE_SAVE_MODEL = os.path.join(__location__, "model-backup")
+PATHE_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
 
 # Save weights after every epoch
 if not os.path.exists(PATHE_SAVE_MODEL):
@@ -216,7 +231,7 @@ score = model.evaluate(
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
-print("Test accuracy:", score[2])
+#print("Test accuracy:", score[2])
 
 # Save all data in history
 with open(os.path.join(PATHE_SAVE_MODEL, "history.pkl"), "wb") as f:
@@ -239,14 +254,14 @@ plt.legend(["train", "test"], loc="upper left")
 plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_loss.png"))
 plt.close()
 
-plt.plot(history.history["acc"], label="acc")
-plt.plot(history.history["val_acc"], label="val_acc")
-plt.title("Training Accuracy")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.legend(["train", "test"], loc="upper left")
-plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
-plt.close()
+#plt.plot(history.history["acc"], label="acc")
+#plt.plot(history.history["val_acc"], label="val_acc")
+#plt.title("Training Accuracy")
+# plt.xlabel("Epoch")
+# plt.ylabel("Accuracy")
+#plt.legend(["train", "test"], loc="upper left")
+#plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
+# plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
 plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
@@ -258,13 +273,13 @@ plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_mean.png"))
 plt.close()
 
 # summarize history for accuracy
-plt.plot(history.history["acc"], label="train_acc")
-plt.plot(history.history["val_acc"], label="val_acc")
-plt.title("model accuracy")
-plt.ylabel("Accuracy")
-plt.xlabel("Epoch")
-plt.legend(["train", "test"], loc="upper left")
-plt.show()
+#plt.plot(history.history["acc"], label="train_acc")
+#plt.plot(history.history["val_acc"], label="val_acc")
+#plt.title("model accuracy")
+# plt.ylabel("Accuracy")
+# plt.xlabel("Epoch")
+#plt.legend(["train", "test"], loc="upper left")
+# plt.show()
 
 # summarize history for loss
 plt.plot(history.history["loss"], label="train_loss")

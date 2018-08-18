@@ -24,8 +24,8 @@ TRAIN_DIR = "dataset_sample"
 CUT_DATASET = 1000
 
 # network and training
-EPOCHS = 1000
-BATCH_SIZE = 24
+EPOCHS = 1500
+BATCH_SIZE = 17
 
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001)
@@ -43,7 +43,7 @@ SORT_RANDOMLY = True
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
 ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensorBoard")
-ap.add_argument("-cp", "--checkpoint", default="True", help="Active checkpoint")
+ap.add_argument("-cp", "--checkpoint", default="False", help="Active checkpoint")
 ap.add_argument(
     "-rl", "--reduce_learning", default="False", help="Active reduce learning rate"
 )

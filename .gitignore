@@ -2,6 +2,7 @@
 /boneage-training-dataset/**/*
 
 # File created for pickle_dataset.py script
+/packaging-dataset/**/*
 /**/*.pkl
 
 # Ignore weight and model
