@@ -3,7 +3,7 @@
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
-from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization
+from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from utilities import Console
@@ -211,21 +211,27 @@ def makerModel():
     # First we need to create a model structure
     hist_input = Input(shape=(256,), name="hist_input")
 
-    x_lower = Dense(256, activation="sigmoid")(hist_input)
-    x_lower = Dense(256, activation="relu")(x_lower)
-    # x_lower = BatchNormalization(mode=0, axis=1)(x_lower)
-    # x_lower = Dense(200, activation="relu")(x_lower)
-    x_lower = Dense(128, activation="relu")(x_lower)
-    # x_lower = Dense(32, activation="relu")(x_lower)
-    # x_lower = Dense(16, activation="relu")(x_lower)
+    x1_lower = Dense(256, activation="sigmoid")(hist_input)
+    x1_lower = Dense(256, activation="relu")(x1_lower)
+    x1_lower = Dense(64, activation="relu")(x1_lower)
 
-    x_upper = Dense(256, activation="sigmoid")(hist_input)
-    x_upper = Dense(256, activation="relu")(x_upper)
-    # x_upper = BatchNormalization(mode=0, axis=1)(x_upper)
-    # x_upper = Dense(200, activation="relu")(x_upper)
+    x2_lower = Dense(256, activation="sigmoid")(hist_input)
+    x2_lower = Dense(256, activation="relu")(x2_lower)
+    x2_lower = Dense(64, activation="relu")(x2_lower)
+
+    x1_upper = Dense(256, activation="sigmoid")(hist_input)
+    x1_upper = Dense(256, activation="relu")(x1_upper)
+    x1_upper = Dense(64, activation="relu")(x1_upper)
+
+    x2_upper = Dense(256, activation="sigmoid")(hist_input)
+    x2_upper = Dense(256, activation="relu")(x2_upper)
+    x2_upper = Dense(64, activation="relu")(x2_upper)
+
+    x_lower = concatenate([x1_lower, x2_lower])
+    x_lower = Dense(128, activation="relu")(x_lower)
+
+    x_upper = concatenate([x1_upper, x2_upper])
     x_upper = Dense(128, activation="relu")(x_upper)
-    # x_upper = Dense(32, activation="relu")(x_upper)
-    # x_upper = Dense(2, activation="relu")(x_upper)
 
     # Prediction for the upper and lower value
     lower_output = Dense(1, name="lower")(x_lower)
