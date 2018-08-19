@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     TRAIN_DIR = "datase_not_hands"
     files = getFiles(TRAIN_DIR)
-    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=-1)
+    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=0)
 
     X_train = X_train + X2_train
     y_train = y_train + y2_train

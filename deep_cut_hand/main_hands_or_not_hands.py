@@ -3,9 +3,10 @@
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
-from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
-from keras.models import Model
+from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate, Activation
+from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+from keras.wrappers.scikit_learn import KerasClassifier
 from utilities import Console
 import h5py
 import argparse
@@ -14,8 +15,8 @@ import numpy as np
 import os
 
 # network and training
-EPOCHS = 300
-BATCH_SIZE = 22
+EPOCHS = 100
+BATCH_SIZE = 17
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
@@ -109,19 +110,21 @@ def loadCallBack():
 
 
 def makerModel():
+    model = Sequential()
     # First we need to create a model structure
-    hist_input = Input(shape=(256,), name="hist_input")
+    model.add(Dense(
+        256,
+        input_dim=256,
+        name="hist",
+        activation='relu'
+    ))
+    model.add(Dense(256, activation='sigmoid'))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(12, activation='relu'))
+    model.add(Dense(1, name="hands", activation='sigmoid'))
 
-    x = Dense(256, activation="sigmoid")(hist_input)
-    x = Dense(256, activation="relu")(x)
-    x = Dense(64, activation="relu")(x)
-
-    # Prediction for the upper and lower value
-    hands = Dense(1, activation="softmax", name="hands")(x)
-
-    model = Model(inputs=[hist_input], outputs=[hands])
-
-    model.compile(loss="mean_squared_error", metrics=["MAE", "accuracy"], optimizer=OPT)
+    # Compile model
+    model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer=OPT)
 
     if __name__ == "__main__":
         Console.info("Model summary")
@@ -151,12 +154,12 @@ def trainModel(model, X_train, y_train):
 
     Console.info("Training network...")
     history = model.fit(
-        [hist_train],
-        [hand_train],
+        hist_train,
+        hand_train,
         batch_size=BATCH_SIZE,
         epochs=EPOCHS,
         verbose=2,
-        validation_data=([hist_valid], [hand_valid]),
+        validation_data=(hist_valid, hand_valid),
         callbacks=loadCallBack(),
     )
 
@@ -183,8 +186,7 @@ def trainModel(model, X_train, y_train):
     )
 
     Console.log("Test loss:", score[0])
-    Console.log("Test MAE:", score[1])
-    Console.log("Test Acc:", score[2])
+    Console.log("Test Acc:", score[1])
 
     # list all data in history
     Console.info("Save model history graphics...")
@@ -211,8 +213,7 @@ if __name__ == "__main__":
             [X_train], [y_train], batch_size=BATCH_SIZE, verbose=1
         )
         Console.log("Test loss:", score[0])
-        Console.log("Test MAE:", score[1])
-        Console.log("Test Acc:", score[2])
+        Console.log("Test Acc:", score[1])
 
     if args["predict"] != None and args["predict"] != "False":
         if args["predict"] != "True":
@@ -226,5 +227,7 @@ if __name__ == "__main__":
             # make a prediction
             ynew = model.predict(Xnew)
 
-            for y in ynew:
-                Console.log("y", y)
+            for i in range(len(ynew)):
+                predict = 1 if ynew[i] > 0.5 else 0
+                if(y_train[i] != predict):
+                    Console.error("ID:", i, "Original", y_train[i], "Predict", ynew[i])
