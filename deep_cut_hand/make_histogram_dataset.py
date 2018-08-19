@@ -7,7 +7,6 @@ import h5py
 import multiprocessing
 import numpy as np
 import os
-import pandas as pd
 import platform
 import sys
 
