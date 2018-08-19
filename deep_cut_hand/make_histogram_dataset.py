@@ -57,7 +57,7 @@ def writeImage(path, image, force=False):
 def saveDataSet(X_train, y_train):
     Console.info("Save dataset")
     with h5py.File("histogram-hand-dataset.hdf5", "w") as f:
-        f.create_dataset("hist", data=X_train,)
+        f.create_dataset("hist", data=X_train)
         f.create_dataset("valid", data=y_train)
         f.flush()
         f.close()
@@ -114,8 +114,8 @@ def getFiles(path_input):
 
 def openDataSet():
     with h5py.File("histogram-hand-dataset.hdf5", "r+") as f:
-        hist = f['hist'][()]
-        valid = f['valid'][()]
+        hist = f["hist"][()]
+        valid = f["valid"][()]
         Console.log("Dataset", len(hist[0]), len(valid))
         # print(hist[0], valid)
         # f.flush()
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     TRAIN_DIR = "datase_not_hands"
     files = getFiles(TRAIN_DIR)
-    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=0)
+    (X2_train, y2_train) = progressFiles(TRAIN_DIR, files, hands_valid=-1)
 
     X_train = X_train + X2_train
     y_train = y_train + y2_train
@@ -192,11 +192,7 @@ if __name__ == "__main__":
     y_train = np.asarray(y_train)
 
     # Sort randomly
-    random_id = np.random.choice(
-        X_train.shape[0],
-        size=y_train.shape[0],
-        replace=False
-    )
+    random_id = np.random.choice(X_train.shape[0], size=y_train.shape[0], replace=False)
     X_train = X_train[random_id]
     y_train = y_train[random_id]
 
