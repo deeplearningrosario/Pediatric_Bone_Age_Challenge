@@ -3,10 +3,17 @@
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
-from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate, Activation
+from keras.layers import (
+    Flatten,
+    Dense,
+    Input,
+    Dropout,
+    BatchNormalization,
+    concatenate,
+    Activation,
+)
 from keras.models import Model, Sequential
-from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
-from keras.wrappers.scikit_learn import KerasClassifier
+from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from utilities import Console
 import h5py
 import argparse
@@ -16,11 +23,12 @@ import os
 
 # network and training
 EPOCHS = 100
-BATCH_SIZE = 17
+BATCH_SIZE = 7
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
-OPT = RMSprop()
+# OPT = RMSprop()
+OPT = SGD(lr=0.01, clipvalue=0.5)
 # OPT = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPT = Adagrad(lr=0.05)
 
@@ -30,7 +38,7 @@ ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
 ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensorBoard")
 ap.add_argument("-cp", "--checkpoint", default="False", help="Active checkpoint")
 ap.add_argument(
-    "-rl", "--reduce_learning", default="False", help="Active reduce learning rate"
+    "-rl", "--reduce_learning", default="True", help="Active reduce learning rate"
 )
 
 ap.add_argument("-t", "--train", default="True", help="Run train model")
@@ -112,16 +120,11 @@ def loadCallBack():
 def makerModel():
     model = Sequential()
     # First we need to create a model structure
-    model.add(Dense(
-        256,
-        input_dim=256,
-        name="hist",
-        activation='relu'
-    ))
-    model.add(Dense(256, activation='sigmoid'))
-    model.add(Dense(128, activation='relu'))
-    model.add(Dense(12, activation='relu'))
-    model.add(Dense(1, name="hands", activation='sigmoid'))
+    model.add(Dense(256, input_dim=256, name="hist", activation="relu"))
+    model.add(Dense(256, activation="sigmoid"))
+    model.add(Dense(128, activation="relu"))
+    model.add(Dense(12, activation="relu"))
+    model.add(Dense(1, name="hands", activation="sigmoid"))
 
     # Compile model
     model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer=OPT)
@@ -173,7 +176,9 @@ def trainModel(model, X_train, y_train):
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open(os.path.join(PATHE_SAVE_MODEL, "model_hands_not_hands.yaml"), "w") as yaml_file:
+    with open(
+        os.path.join(PATHE_SAVE_MODEL, "model_hands_not_hands.yaml"), "w"
+    ) as yaml_file:
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
     model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model_hands_not_hands.h5"))
@@ -181,9 +186,7 @@ def trainModel(model, X_train, y_train):
 
     # evaluate the network
     Console.info("Evaluating network...")
-    score = model.evaluate(
-        [hist_test], [hand_test], batch_size=BATCH_SIZE, verbose=1
-    )
+    score = model.evaluate([hist_test], [hand_test], batch_size=BATCH_SIZE, verbose=1)
 
     Console.log("Test loss:", score[0])
     Console.log("Test Acc:", score[1])
@@ -209,9 +212,7 @@ if __name__ == "__main__":
 
     if args["evaluate"] == "True":
         Console.info("Evaluating model...")
-        score = model.evaluate(
-            [X_train], [y_train], batch_size=BATCH_SIZE, verbose=1
-        )
+        score = model.evaluate([X_train], [y_train], batch_size=BATCH_SIZE, verbose=1)
         Console.log("Test loss:", score[0])
         Console.log("Test Acc:", score[1])
 
@@ -227,7 +228,10 @@ if __name__ == "__main__":
             # make a prediction
             ynew = model.predict(Xnew)
 
+            error_count = 0
             for i in range(len(ynew)):
                 predict = 1 if ynew[i] > 0.5 else 0
-                if(y_train[i] != predict):
-                    Console.error("ID:", i, "Original", y_train[i], "Predict", ynew[i])
+                if y_train[i] != predict:
+                    error_count = error_count + 1
+                    Console.error("ID:", i, "Original", y_train[i], "Predict", predict)
+            Console.info("Error", error_count)
