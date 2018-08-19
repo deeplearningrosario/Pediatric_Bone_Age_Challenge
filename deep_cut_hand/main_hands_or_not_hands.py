@@ -3,16 +3,8 @@
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False
 # ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
-from keras.layers import (
-    Flatten,
-    Dense,
-    Input,
-    Dropout,
-    BatchNormalization,
-    concatenate,
-    Activation,
-)
-from keras.models import Model, Sequential
+from keras.layers import Dense, Dropout
+from keras.models import Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from utilities import Console
 import h5py
@@ -23,7 +15,7 @@ import os
 
 # network and training
 EPOCHS = 100
-BATCH_SIZE = 7
+BATCH_SIZE = 17
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
@@ -122,7 +114,7 @@ def makerModel():
     # First we need to create a model structure
     model.add(Dense(256, input_dim=256, name="hist", activation="relu"))
     model.add(Dense(256, activation="sigmoid"))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dense(32, activation="relu"))
     model.add(Dense(12, activation="relu"))
     model.add(Dense(1, name="hands", activation="sigmoid"))
 
@@ -233,5 +225,5 @@ if __name__ == "__main__":
                 predict = 1 if ynew[i] > 0.5 else 0
                 if y_train[i] != predict:
                     error_count = error_count + 1
-                    Console.error("ID:", i, "Original", y_train[i], "Predict", predict)
+                    Console.error("ID:", i, "Original", y_train[i], "Predict", ynew[i][0])
             Console.info("Error", error_count)
