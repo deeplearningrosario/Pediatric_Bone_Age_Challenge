@@ -37,9 +37,8 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 train_dir = os.path.join(__location__, TRAIN_DIR)
 img_file = ""
 
+
 # Show the images
-
-
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
