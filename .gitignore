@@ -11,7 +11,7 @@
 /deep_cut_hand/weights/**/*
 /deep_cut_hand/dataset_hands/**/*.png
 /deep_cut_hand/deep_fight/**/*
-/model-backup/**/*
+/model_backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png

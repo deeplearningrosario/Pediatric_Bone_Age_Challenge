@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
             error_count = 0
             for i in range(len(ynew)):
-                predict = 1 if ynew[i] > 0.5 else 0
+                predict = 1 if ynew[i][0] > 0.5 else 0
                 if y_train[i] != predict:
                     error_count = error_count + 1
                     Console.error(
