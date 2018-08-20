@@ -15,7 +15,7 @@ import os
 
 # network and training
 EPOCHS = 150
-BATCH_SIZE = 17
+BATCH_SIZE = 22
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
