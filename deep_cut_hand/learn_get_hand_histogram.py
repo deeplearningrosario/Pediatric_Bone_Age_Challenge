@@ -1,11 +1,12 @@
 #!/usr/bin/python3
-# ./main_histogram.py -lw ./model/model_histogram.h5
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+# ./learn_histogram.py -lw ./model/model_histogram.h5
+# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False
+# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
-from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization
+from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+from utilities import Console, updateProgress, getHistogram
 import argparse
 import cv2
 import fnmatch
@@ -13,8 +14,6 @@ import keras
 import numpy as np
 import os
 import pandas as pd
-import platform
-import sys
 
 # Directory of dataset to use
 TRAIN_DIR = "dataset_sample"
@@ -73,15 +72,6 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 def writeImage(path, image, force=False):
     if SAVE_IMAGE_FOR_DEBUGGER or force:
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
-
-
-def getHistogram(img):
-    hist, _ = np.histogram(img, 256, [0, 256])
-
-    cdf = hist.cumsum()
-    cdf_normalized = cdf * hist.max() / cdf.max()
-
-    return cdf_normalized
 
 
 def loadDataSet(files=[]):
@@ -148,19 +138,6 @@ def getFiles():
     return rta
 
 
-# Create the directories to save the images
-# def checkPath():
-#    if SAVE_IMAGE_FOR_DEBUGGER:
-#        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-#            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-#                Console.info("Create folder", folder)
-#                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
-#    if SAVE_RENDERS:
-#        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-#            Console.info("Create folder render")
-#            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
-
-
 # Make Keras callback
 def loadCallBack():
     cb = []
@@ -211,21 +188,27 @@ def makerModel():
     # First we need to create a model structure
     hist_input = Input(shape=(256,), name="hist_input")
 
-    x_lower = Dense(256, activation="sigmoid")(hist_input)
-    x_lower = Dense(256, activation="relu")(x_lower)
-    # x_lower = BatchNormalization(mode=0, axis=1)(x_lower)
-    # x_lower = Dense(200, activation="relu")(x_lower)
-    x_lower = Dense(128, activation="relu")(x_lower)
-    # x_lower = Dense(32, activation="relu")(x_lower)
-    # x_lower = Dense(16, activation="relu")(x_lower)
+    x1_lower = Dense(256, activation="sigmoid")(hist_input)
+    x1_lower = Dense(256, activation="relu")(x1_lower)
+    x1_lower = Dense(64, activation="relu")(x1_lower)
 
-    x_upper = Dense(256, activation="sigmoid")(hist_input)
-    x_upper = Dense(256, activation="relu")(x_upper)
-    # x_upper = BatchNormalization(mode=0, axis=1)(x_upper)
-    # x_upper = Dense(200, activation="relu")(x_upper)
+    x2_lower = Dense(256, activation="sigmoid")(hist_input)
+    x2_lower = Dense(256, activation="relu")(x2_lower)
+    x2_lower = Dense(64, activation="relu")(x2_lower)
+
+    x1_upper = Dense(256, activation="sigmoid")(hist_input)
+    x1_upper = Dense(256, activation="relu")(x1_upper)
+    x1_upper = Dense(64, activation="relu")(x1_upper)
+
+    x2_upper = Dense(256, activation="sigmoid")(hist_input)
+    x2_upper = Dense(256, activation="relu")(x2_upper)
+    x2_upper = Dense(64, activation="relu")(x2_upper)
+
+    x_lower = concatenate([x1_lower, x2_lower])
+    x_lower = Dense(128, activation="relu")(x_lower)
+
+    x_upper = concatenate([x1_upper, x2_upper])
     x_upper = Dense(128, activation="relu")(x_upper)
-    # x_upper = Dense(32, activation="relu")(x_upper)
-    # x_upper = Dense(2, activation="relu")(x_upper)
 
     # Prediction for the upper and lower value
     lower_output = Dense(1, name="lower")(x_lower)
@@ -317,75 +300,12 @@ def trainModel(model, X_train, y_lower, y_upper):
     print(history.history.keys())
 
 
-# Show a progress bar
-def updateProgress(progress, tick="", total="", status="Loading..."):
-    lineLength = 80
-    barLength = 23
-    if isinstance(progress, int):
-        progress = float(progress)
-    if progress < 0:
-        progress = 0
-        status = "Waiting...\r"
-    if progress >= 1:
-        progress = 1
-        status = "Completed loading data\r\n"
-    block = int(round(barLength * progress))
-    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
-        tick,
-        total,
-        str(("#" * block)) + str("." * (barLength - block)),
-        round(progress * 100, 1),
-        status,
-    )
-    emptyBlock = lineLength - len(line)
-    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
-    sys.stdout.write(line + emptyBlock)
-    sys.stdout.flush()
-    if progress == 1:
-        print()
-
-
-class Console(object):
-    NC = "\033[0m"
-    Black = "\033[0;30m"
-    DarkGray = "\033[1;30m"
-    Red = "\033[0;31m"
-    LightRed = "\033[1;31m"
-    Green = "\033[0;32m"
-    LightGreen = "\033[1;32m"
-    BrownOrange = "\033[0;33m"
-    Yellow = "\033[1;33m"
-    Blue = "\033[0;34m"
-    LightBlue = "\033[1;34m"
-    Purple = "\033[0;35m"
-    LightPurple = "\033[1;35m"
-    Cyan = "\033[0;36m"
-    LightCyan = "\033[1;36m"
-    LightGray = "\033[0;37m"
-
-    def error(*args):
-        if platform.system() == "Linux":
-            print("[" + Console.Red + "ERROR" + Console.NC + "]", *args)
-        else:
-            print("[ERROR]", *args)
-
-    def log(*args):
-        print(*args)
-
-    def info(*args):
-        if platform.system() == "Linux":
-            print("[" + Console.Cyan + "INFO" + Console.NC + "]", *args)
-        else:
-            print("[INFO]", *args)
-
 
 # Como vamos a usar multi procesos uno por core.
 # Los procesos hijos cargan el mismo código.
 # Este if permite que solo se ejecute lo que sigue si es llamado
 # como proceso raíz.
 if __name__ == "__main__":
-    # Check if exixt folder
-    # checkPath()
 
     if args["predict"] == None or args["predict"] == "True":
         files = getFiles()
@@ -418,6 +338,7 @@ if __name__ == "__main__":
             # make a prediction
             ynew = model.predict(Xnew)
 
+            error_count = 0
             for i in range(len(files)):
                 (name, x_lower, x_upper) = files[i]
                 lower = int(ynew[0][i])
@@ -429,6 +350,7 @@ if __name__ == "__main__":
                 e_upper = e_upper > E_TOLERANCE or e_upper < -E_TOLERANCE
 
                 if e_lower or e_upper:
+                    error_count = error_count + 1
                     lower = Console.Red + str(lower) + Console.NC if e_lower else lower
                     upper = Console.Red + str(upper) + Console.NC if e_upper else upper
                     # show the inputs and predicted outputs
@@ -437,3 +359,4 @@ if __name__ == "__main__":
                     )
                 else:
                     Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
+            Console.info("Error", error_count)
