@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-# ./main_histogram.py -lw ./model/model_histogram.h5
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5
+# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5 --train False
+# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
