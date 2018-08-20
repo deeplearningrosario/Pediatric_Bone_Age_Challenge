@@ -15,7 +15,7 @@ import os
 
 # network and training
 EPOCHS = 150
-BATCH_SIZE = 22
+BATCH_SIZE = 7
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
@@ -114,6 +114,8 @@ def makerModel():
     # First we need to create a model structure
     model.add(Dense(256, input_dim=256, name="hist", activation="sigmoid"))
     model.add(Dense(128, activation="relu"))
+    model.add(Dense(128, activation="relu"))
+    model.add(Dense(12, activation="relu"))
     model.add(Dense(1, name="hands", activation="sigmoid"))
 
     # Compile model
