@@ -1,4 +1,5 @@
 import platform
+import sys
 
 
 class Console(object):
@@ -33,3 +34,31 @@ class Console(object):
             print("[" + Console.Cyan + "INFO" + Console.NC + "]", *args)
         else:
             print("[INFO]", *args)
+
+
+# Show a progress bar
+def updateProgress(progress, tick="", total="", status="Loading..."):
+    lineLength = 80
+    barLength = 23
+    if isinstance(progress, int):
+        progress = float(progress)
+    if progress < 0:
+        progress = 0
+        status = "Waiting...\r"
+    if progress >= 1:
+        progress = 1
+        status = ""
+    block = int(round(barLength * progress))
+    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+        tick,
+        total,
+        str(("#" * block)) + str("." * (barLength - block)),
+        round(progress * 100, 1),
+        status,
+    )
+    emptyBlock = lineLength - len(line)
+    emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
+    sys.stdout.write(line + emptyBlock)
+    sys.stdout.flush()
+    if progress == 1:
+        print()

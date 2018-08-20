@@ -6,8 +6,8 @@
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
-from utilities import Console
-import h5py
+from utilities import Console, updateProgress
+from get_hands_dataset import openDataSet
 import argparse
 import keras
 import numpy as np
@@ -47,20 +47,6 @@ SAVE_RENDERS = False
 # Create intermediate images in separate folders for debugger.
 # mask, cut_hand, delete_object, render
 SAVE_IMAGE_FOR_DEBUGGER = False
-
-
-# list all the image files and randomly unravel them,
-# in each case you take the first N from the unordered list
-def getDatasetFile():
-    dataset_file = os.path.join(__location__, "histogram-hand-dataset.hdf5")
-
-    with h5py.File(dataset_file, "r+") as f:
-        X_train = f["hist"][()]
-        y_train = f["valid"][()]
-        Console.log("Dataset file count", len(y_train))
-        f.close()
-
-    return X_train, y_train
 
 
 # Make Keras callback
@@ -194,7 +180,8 @@ def trainModel(model, X_train, y_train):
 # como proceso raíz.
 if __name__ == "__main__":
     if args["predict"] == None or args["predict"] == "True":
-        (X_train, y_train) = getDatasetFile()
+        (X_train, y_train) = openDataSet()
+        Console.log("Dataset file count", len(y_train))
 
     # Create model
     model = makerModel()
