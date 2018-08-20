@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-# ./main_histogram.py -lw ./model/model_histogram.h5
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False
-# ./main_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+# ./learn_histogram.py -lw ./model/model_histogram.h5
+# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False
+# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
@@ -362,6 +362,7 @@ if __name__ == "__main__":
             # make a prediction
             ynew = model.predict(Xnew)
 
+            error_count = 0
             for i in range(len(files)):
                 (name, x_lower, x_upper) = files[i]
                 lower = int(ynew[0][i])
@@ -373,6 +374,7 @@ if __name__ == "__main__":
                 e_upper = e_upper > E_TOLERANCE or e_upper < -E_TOLERANCE
 
                 if e_lower or e_upper:
+                    error_count = error_count + 1
                     lower = Console.Red + str(lower) + Console.NC if e_lower else lower
                     upper = Console.Red + str(upper) + Console.NC if e_upper else upper
                     # show the inputs and predicted outputs
@@ -381,3 +383,4 @@ if __name__ == "__main__":
                     )
                 else:
                     Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
+            Console.info("Error", error_count)
