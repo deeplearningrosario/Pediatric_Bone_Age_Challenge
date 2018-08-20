@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5
-# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5 --train False
-# ./learn_to_recognize_hands.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5
+# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False
+# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False --evaluate True --predict True
 
-from keras.layers import Dense, Dropout
-from keras.models import Sequential
+from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
+from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from utilities import Console, updateProgress
 from get_hands_dataset import openDataSet
@@ -96,14 +96,23 @@ def loadCallBack():
     return cb
 
 
+# We need to create a model structure
 def makerModel():
-    model = Sequential()
-    # First we need to create a model structure
-    model.add(Dense(256, input_dim=256, name="hist", activation="sigmoid"))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dense(12, activation="relu"))
-    model.add(Dense(1, name="hands", activation="sigmoid"))
+    hist_input = Input(shape=(256,), name="hist_input")
+    x1 = Dense(256, activation="sigmoid")(hist_input)
+    x1 = Dense(128, activation="relu")(x1)
+    x1 = Dense(128, activation="relu")(x1)
+    x1 = Dense(12, activation="relu")(x1)
+
+    x2 = Dense(256, activation="sigmoid")(hist_input)
+    x2 = Dense(128, activation="relu")(x2)
+    x2 = Dense(128, activation="relu")(x2)
+    x2 = Dense(12, activation="relu")(x2)
+
+    x = concatenate([x1, x2])
+    hand_valid = Dense(1, name="hand_valid", activation="sigmoid")(x)
+
+    model = Model(inputs=[hist_input], outputs=[hand_valid])
 
     # Compile model
     model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer=OPT)
