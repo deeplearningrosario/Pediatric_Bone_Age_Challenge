@@ -14,7 +14,7 @@ import numpy as np
 import os
 
 # network and training
-EPOCHS = 100
+EPOCHS = 150
 BATCH_SIZE = 17
 
 # https://keras.io/optimizers
@@ -112,10 +112,8 @@ def loadCallBack():
 def makerModel():
     model = Sequential()
     # First we need to create a model structure
-    model.add(Dense(256, input_dim=256, name="hist", activation="relu"))
-    model.add(Dense(256, activation="sigmoid"))
-    model.add(Dense(32, activation="relu"))
-    model.add(Dense(12, activation="relu"))
+    model.add(Dense(256, input_dim=256, name="hist", activation="sigmoid"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dense(1, name="hands", activation="sigmoid"))
 
     # Compile model
