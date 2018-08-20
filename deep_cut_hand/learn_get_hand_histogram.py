@@ -6,7 +6,7 @@
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
-from utilities import Console, updateProgress
+from utilities import Console, updateProgress, getHistogram
 import argparse
 import cv2
 import fnmatch
@@ -74,15 +74,6 @@ def writeImage(path, image, force=False):
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
 
 
-def getHistogram(img):
-    hist, _ = np.histogram(img, 256, [0, 256])
-
-    cdf = hist.cumsum()
-    cdf_normalized = cdf * hist.max() / cdf.max()
-
-    return cdf_normalized
-
-
 def loadDataSet(files=[]):
     Console.info("Get histogram of the images...")
     global img_file
@@ -145,19 +136,6 @@ def getFiles():
                 Console.log("Not data for", file_name)
 
     return rta
-
-
-# Create the directories to save the images
-# def checkPath():
-#    if SAVE_IMAGE_FOR_DEBUGGER:
-#        for folder in ["histograms_level_fix", "cut_hand", "render", "mask"]:
-#            if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
-#                Console.info("Create folder", folder)
-#                os.makedirs(os.path.join(__location__, TRAIN_DIR, folder))
-#    if SAVE_RENDERS:
-#        if not os.path.exists(os.path.join(__location__, TRAIN_DIR, "render")):
-#            Console.info("Create folder render")
-#            os.makedirs(os.path.join(__location__, TRAIN_DIR, "render"))
 
 
 # Make Keras callback
@@ -328,8 +306,6 @@ def trainModel(model, X_train, y_lower, y_upper):
 # Este if permite que solo se ejecute lo que sigue si es llamado
 # como proceso raíz.
 if __name__ == "__main__":
-    # Check if exixt folder
-    # checkPath()
 
     if args["predict"] == None or args["predict"] == "True":
         files = getFiles()
