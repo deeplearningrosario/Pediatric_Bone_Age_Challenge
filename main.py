@@ -211,18 +211,18 @@ history = model.fit(
 )
 
 # Path to save model
-PATHE_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
+PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
 
 # Save weights after every epoch
-if not os.path.exists(PATHE_SAVE_MODEL):
-    os.makedirs(PATHE_SAVE_MODEL)
+if not os.path.exists(PATH_SAVE_MODEL):
+    os.makedirs(PATH_SAVE_MODEL)
 
 # serialize model to YAML
 model_yaml = model.to_yaml()
-with open(os.path.join(PATHE_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
+with open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
     yaml_file.write(model_yaml)
 # serialize weights to HDF5
-model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model.h5"))
+model.save_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
 print("Saved model to disk")
 
 score = model.evaluate(
@@ -234,7 +234,7 @@ print("Test MAE:", score[1])
 #print("Test accuracy:", score[2])
 
 # Save all data in history
-with open(os.path.join(PATHE_SAVE_MODEL, "history.pkl"), "wb") as f:
+with open(os.path.join(PATH_SAVE_MODEL, "history.pkl"), "wb") as f:
     cPickle.dump(history.history, f)
 f.close()
 
@@ -251,7 +251,7 @@ plt.title("Training Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(["train", "test"], loc="upper left")
-plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_loss.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
 plt.close()
 
 #plt.plot(history.history["acc"], label="acc")
@@ -260,7 +260,7 @@ plt.close()
 # plt.xlabel("Epoch")
 # plt.ylabel("Accuracy")
 #plt.legend(["train", "test"], loc="upper left")
-#plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_accuracy.png"))
+#plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_accuracy.png"))
 # plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
@@ -269,7 +269,7 @@ plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
 plt.legend(["train", "test"], loc="upper left")
-plt.savefig(os.path.join(PATHE_SAVE_MODEL, "history_mean.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
 plt.close()
 
 # summarize history for accuracy
