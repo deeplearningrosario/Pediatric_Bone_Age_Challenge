@@ -359,4 +359,4 @@ if __name__ == "__main__":
                     )
                 else:
                     Console.log("File %s, Lower: %s, Upper: %s" % (name, lower, upper))
-            Console.info("Error", error_count)
+            Console.wran("Img with error", error_count)

@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from utilities import Console, updateProgress
 from get_hands_dataset import openDataSet
+import math
 import argparse
 import keras
 import numpy as np
@@ -212,5 +213,10 @@ if __name__ == "__main__":
                 predict = 1 if ynew[i] > 0.5 else 0
                 if y_train[i] != predict:
                     error_count = error_count + 1
-                    Console.error("ID:", i, "Original", y_train[i], "Predict", ynew[i][0])
-            Console.info("Error", error_count)
+                    Console.error(
+                        "ID:", i,
+                        "Original", y_train[i],
+                        "Predict", predict,
+                        "-", str(math.trunc(ynew[i][0]*100)) + "%"
+                    )
+            Console.wran("Img with error", error_count)
