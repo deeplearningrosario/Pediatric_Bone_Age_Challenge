@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from multiprocessing import Process
-from utilities import Console, updateProgress
+from utilities import Console, updateProgress, getHistogram
 from makeHandsFromCSV import makeHandsHuman
 import cv2
 import fnmatch
@@ -32,12 +32,6 @@ def saveDataSet(X_train, y_train):
         f.create_dataset("valid", data=y_train)
         f.flush()
         f.close()
-
-
-def getHistogram(img):
-    hist, _ = np.histogram(img, 256, [0, 256])
-    cdf = hist.cumsum()
-    return cdf * hist.max() / cdf.max()
 
 
 def loadDataSet(path, files=[], hands_valid=1):

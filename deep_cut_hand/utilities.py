@@ -67,11 +67,8 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
 
 def getHistogram(img):
     hist, _ = np.histogram(img, 256, [0, 256])
-
     cdf = hist.cumsum()
-    cdf_normalized = cdf * hist.max() / cdf.max()
-
-    return cdf_normalized
+    return cdf * hist.max() / cdf.max()
 
 
 # Auto adjust levels colors
