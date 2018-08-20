@@ -27,6 +27,12 @@ class Console(object):
         else:
             print("[ERROR]", *args)
 
+    def wran(*args):
+        if platform.system() == "Linux":
+            print("[" + Console.Yellow + "WRAN" + Console.NC + "]", *args)
+        else:
+            print("[WRAN]", *args)
+
     def log(*args):
         print(*args)
 

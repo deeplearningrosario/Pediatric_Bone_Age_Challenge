@@ -95,7 +95,7 @@ def processeImg(files, y_lower_upper):
             for x in result:
                 X_values = X_values + x
             updateProgress(1, total_file, total_file, "")
-            Console.info("Image processed:", len(X_values))
+            Console.log("Image processed:", len(X_values))
 
     else:
         Console.info("We can not divide the load into different processors")
@@ -185,7 +185,7 @@ def getHistogramFormFiles(files=[]):
             for x in result:
                 X_values = X_values + x
             updateProgress(1, total_file, total_file, "")
-            Console.info("Image processed:", len(X_values))
+            Console.log("Image processed:", len(X_values))
 
     else:
         Console.info("We can not divide the load into different processors")
@@ -196,6 +196,10 @@ def getHistogramFormFiles(files=[]):
 
 
 if __name__ == "__main__":
+    for folder in ["hand", "not_hand"]:
+        if not os.path.exists(os.path.join(__location__, "deep_fight", folder)):
+            os.makedirs(os.path.join(__location__, "deep_fight", folder))
+
     model_get_hand = loadModel("model_histogram")
     model_valid_hand = loadModel("model_hands_not_hands")
 
@@ -204,7 +208,7 @@ if __name__ == "__main__":
     # Get hist for hand
     X_hist_hands = getHistogramFormFiles(files)
 
-    Console.info("Rum model_get_hand")
+    Console.info("Run model_get_hand")
     files = []
     X_to_predict = []
     for img_file, hist in X_hist_hands:
@@ -217,7 +221,7 @@ if __name__ == "__main__":
     Console.info("Fix image colors")
     X_img = processeImg(files, y_lower_upper)
 
-    Console.info("Rum model_valid_hand")
+    Console.info("Run model_valid_hand")
     files = []
     X_to_predict = []
     for img_file, img, hist in X_img:
@@ -227,10 +231,17 @@ if __name__ == "__main__":
     # make a prediction
     y_valid_hand = model_valid_hand.predict(X_to_predict)
 
-    for i in range(len(files)):
-        file_name, img = files[i]
-        hand_valid = 1 if y_valid_hand[i][0] > 0.5 else 0
-        print(file_name, hand_valid)
+    Console.info("Saveing image..")
+    total_file = len(files)
+    for i in range(total_file):
+        img_file, img = files[i]
+        progress = float(i / total_file), (i + 1)
+        updateProgress(progress[0], progress[1], total_file, img_file)
+        if y_valid_hand[i][0] > 0.5:
+            path = os.path.join(__location__, "deep_fight", "hand", img_file)
+        else:
+            path = os.path.join(__location__, "deep_fight", "not_hand", img_file)
+        cv2.imwrite(path, img)
+    updateProgress(1, total_file, total_file, img_file)
 
 # para creae las iagenes en capetas separadas
-# Depues evaluar los resultados
