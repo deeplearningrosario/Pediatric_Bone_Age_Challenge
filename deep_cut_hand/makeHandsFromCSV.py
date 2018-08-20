@@ -3,7 +3,6 @@ from multiprocessing import Process
 from utilities import Console, updateProgress
 import cv2
 import fnmatch
-import h5py
 import multiprocessing
 import numpy as np
 import os
@@ -25,6 +24,8 @@ train_dir = os.path.join(__location__, "..", TRAIN_DIR)
 
 # Show the images
 def writeImage(path, image):
+    if not os.path.exists(os.path.join(__location__, "dataset_hands")):
+        os.makedirs(os.path.join(__location__, "dataset_hands"))
     cv2.imwrite(os.path.join(__location__, "dataset_hands", img_file), image)
 
 
