@@ -9,6 +9,8 @@
 /**/*.h5
 /weights/**/*
 /deep_cut_hand/weights/**/*
+/deep_cut_hand/dataset_hands/**/*
+./deep_cut_hand/deep_fight/**/*
 /model-backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
