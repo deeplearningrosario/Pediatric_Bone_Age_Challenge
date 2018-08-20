@@ -236,14 +236,14 @@ if __name__ == "__main__":
     for i in range(total_file):
         img_file, img = files[i]
         progress = float(i / total_file), (i + 1)
-        updateProgress(progress[0], progress[1], total_file, img_file)
+        # updateProgress(progress[0], progress[1], total_file, img_file)
         if y_valid_hand[i][0] > 0.5:
             path = os.path.join(__location__, "deep_fight", "hand", img_file)
         else:
             path = os.path.join(__location__, "deep_fight", "not_hand", img_file)
         cv2.imwrite(path, img)
-        if y_valid_hand[i][0] < 0.6 or y_valid_hand[i][0] > 0.4:
+        if y_valid_hand[i][0] < 0.6 and y_valid_hand[i][0] > 0.4:
             Console.wran("Image:", img_file, "hand valid:", y_valid_hand[i][0])
-    updateProgress(1, total_file, total_file, img_file)
+    # updateProgress(1, total_file, total_file, img_file)
 
 # para creae las iagenes en capetas separadas
