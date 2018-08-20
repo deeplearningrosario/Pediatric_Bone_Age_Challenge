@@ -24,9 +24,9 @@ train_dir = os.path.join(__location__, "..", TRAIN_DIR)
 
 # Show the images
 def writeImage(path, image):
-    if not os.path.exists(os.path.join(__location__, "dataset_hands")):
-        os.makedirs(os.path.join(__location__, "dataset_hands"))
-    cv2.imwrite(os.path.join(__location__, "dataset_hands", img_file), image)
+    if not os.path.exists(os.path.join(__location__, "dataset_hands", "hands")):
+        os.makedirs(os.path.join(__location__, "dataset_hands", "hands"))
+    cv2.imwrite(os.path.join(__location__, "dataset_hands", "hands", img_file), image)
 
 
 def getHistogram(img):
@@ -78,8 +78,6 @@ def histogramsLevelFix(img, min_color, max_color):
         for x in range(0, width):
             color = img[y, x]
             img[y, x] = colors_palette[color]
-
-    writeImage("histograms_level", np.hstack([img]), True)  # show the images ===========
 
     return img
 
@@ -156,6 +154,7 @@ def makeHandsHuman():
             for p in processes:
                 p.join()
 
+            updateProgress(1, total_file, total_file, "")
     else:
         Console.info("No podemos dividir la cargan en distintos procesadores")
         exit(0)

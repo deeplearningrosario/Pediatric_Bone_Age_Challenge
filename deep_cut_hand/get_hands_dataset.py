@@ -12,9 +12,8 @@ import platform
 
 # Use N images of dataset, If it is -1 using all dataset
 CUT_DATASET = 1000
-
-
-MAKE_HANDS_FROM_HUMAN = False
+# Get lower and upper for csv and make hands img
+MAKE_HANDS_FROM_HUMAN = True
 
 # For this problem the validation and test data provided by the concerned authority did not have labels,
 # so the training data was split into train, test and validation sets
@@ -67,7 +66,9 @@ def loadDataSet(path, files=[], hands_valid=1):
 # in each case you take the first N from the unordered list
 def getFiles(path_input):
     Console.info("Reading on", path_input)
-    path = os.path.join(__location__, path_input)
+    path = os.path.join(__location__)
+    for p in path_input:
+        path = os.path.join(path, p)
 
     rta = []
     # file names on train_dir
@@ -105,8 +106,10 @@ def mpStart(path, files, hands_valid, output, progress_num):
     output.put(loadDataSet(path, files, hands_valid))
 
 
-def progressFiles(*path_input, files, hands_valid):
-    path = os.path.join(__location__, path_input)
+def progressFiles(path_input, files, hands_valid):
+    path = os.path.join(__location__)
+    for p in path_input:
+        path = os.path.join(path, p)
 
     total_file = len(files)
     Console.info("Image total:", total_file)
@@ -155,7 +158,7 @@ if __name__ == "__main__":
     if MAKE_HANDS_FROM_HUMAN:
         makeHandsHuman()
 
-    TRAIN_DIR = ["dataset_handsr", "hands"]
+    TRAIN_DIR = ["dataset_hands", "hands"]
     files = getFiles(TRAIN_DIR)
     (X_train, y_train) = progressFiles(TRAIN_DIR, files, hands_valid=1)
 
