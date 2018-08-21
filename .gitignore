@@ -1,5 +1,7 @@
 /boneage-test-dataset/**/*
 /boneage-training-dataset/**/*
+/deep_cut_hand/dataset_hands/**/*.png
+/deep_cut_hand/deep_fight/**/*
 
 # File created for pickle_dataset.py script
 /packaging-dataset/**/*
@@ -9,9 +11,9 @@
 /**/*.h5
 /weights/**/*
 /deep_cut_hand/weights/**/*
-/deep_cut_hand/dataset_hands/**/*.png
-/deep_cut_hand/deep_fight/**/*
+/deep_cut_hand/dataset_hands/histogram-hand-dataset.hdf5
 /model_backup/**/*
+/model-backup/**/*
 
 # Ignore images. Each person should use as many as it wants from the original dataset
 /**/*.png
