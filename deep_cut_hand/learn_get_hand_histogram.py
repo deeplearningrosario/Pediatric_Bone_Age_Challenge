@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5
-# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False
-# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
-
+"""
+./learn_get_hand_histogram.py -lw ./model/model_histogram.h5
+./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False
+./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+"""
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
@@ -298,7 +299,6 @@ def trainModel(model, X_train, y_lower, y_upper):
     # list all data in history
     Console.info("Save model history graphics...")
     print(history.history.keys())
-
 
 
 # Como vamos a usar multi procesos uno por core.

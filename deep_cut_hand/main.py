@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 from keras.models import model_from_yaml
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from multiprocessing import Process
@@ -75,9 +74,7 @@ def processeImg(files, y_lower_upper):
                 lote = x_files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
                 lote = x_files[(x - 1) * lot_size:]
-            processes.append(
-                Process(target=mpProcessImg, args=(lote, output))
-            )
+            processes.append(Process(target=mpProcessImg, args=(lote, output)))
 
         if len(processes) > 0:
             Console.info("Fix colors of the images...")
@@ -165,9 +162,7 @@ def getHistogramFormFiles(files=[]):
                 lote = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
                 lote = files[(x - 1) * lot_size:]
-            processes.append(
-                Process(target=mpGetHistogramFormFiles, args=(lote, output))
-            )
+            processes.append(Process(target=mpGetHistogramFormFiles, args=(lote, output)))
 
         if len(processes) > 0:
             Console.info("Get histogram of the images...")

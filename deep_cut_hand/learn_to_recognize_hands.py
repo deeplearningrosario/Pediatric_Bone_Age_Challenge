@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5
-# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False
-# ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False --evaluate True --predict True
-
+"""
+./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5
+./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False
+./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False --evaluate True --predict True
+"""
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
@@ -20,8 +21,8 @@ BATCH_SIZE = 7
 
 # https://keras.io/optimizers
 # OPT = Adam(lr=0.001)
-# OPT = RMSprop()
-OPT = SGD(lr=0.01, clipvalue=0.5)
+OPT = RMSprop()
+# OPT = SGD(lr=0.01, clipvalue=0.5)
 # OPT = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPT = Adagrad(lr=0.05)
 
@@ -223,9 +224,13 @@ if __name__ == "__main__":
                 if y_train[i] != predict:
                     error_count = error_count + 1
                     Console.error(
-                        "ID:", i,
-                        "Original", y_train[i],
-                        "Predict", predict,
-                        "-", str(math.trunc(ynew[i][0]*100)) + "%"
+                        "ID:",
+                        i,
+                        "Original",
+                        y_train[i],
+                        "Predict",
+                        predict,
+                        "-",
+                        str(math.trunc(ynew[i][0]))
                     )
             Console.wran("Img with error", error_count)
