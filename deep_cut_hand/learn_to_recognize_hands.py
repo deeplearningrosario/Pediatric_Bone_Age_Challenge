@@ -231,6 +231,6 @@ if __name__ == "__main__":
                         "Predict",
                         predict,
                         "-",
-                        str(math.trunc(ynew[i][0]))
+                        str(math.trunc(ynew[i][0] * 100) / 100),
                     )
             Console.wran("Img with error", error_count)
