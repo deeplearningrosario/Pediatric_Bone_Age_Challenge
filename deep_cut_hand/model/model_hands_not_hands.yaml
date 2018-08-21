@@ -50,7 +50,7 @@ config:
         class_name: VarianceScaling
         config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
       kernel_regularizer: null
-      name: dense_5
+      name: dense_4
       trainable: true
       units: 256
       use_bias: true
@@ -59,7 +59,31 @@ config:
         - 0
         - 0
         - {}
-    name: dense_5
+    name: dense_4
+  - class_name: Dense
+    config:
+      activation: sigmoid
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: VarianceScaling
+        config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
+      kernel_regularizer: null
+      name: dense_7
+      trainable: true
+      units: 256
+      use_bias: true
+    inbound_nodes:
+    - - - hist_input
+        - 0
+        - 0
+        - {}
+    name: dense_7
   - class_name: Dense
     config:
       activation: relu
@@ -98,16 +122,40 @@ config:
         class_name: VarianceScaling
         config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
       kernel_regularizer: null
-      name: dense_6
+      name: dense_5
       trainable: true
       units: 128
       use_bias: true
     inbound_nodes:
-    - - - dense_5
+    - - - dense_4
         - 0
         - 0
         - {}
-    name: dense_6
+    name: dense_5
+  - class_name: Dense
+    config:
+      activation: relu
+      activity_regularizer: null
+      bias_constraint: null
+      bias_initializer:
+        class_name: Zeros
+        config: {}
+      bias_regularizer: null
+      kernel_constraint: null
+      kernel_initializer:
+        class_name: VarianceScaling
+        config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
+      kernel_regularizer: null
+      name: dense_8
+      trainable: true
+      units: 128
+      use_bias: true
+    inbound_nodes:
+    - - - dense_7
+        - 0
+        - 0
+        - {}
+    name: dense_8
   - class_name: Dense
     config:
       activation: relu
@@ -124,7 +172,7 @@ config:
       kernel_regularizer: null
       name: dense_3
       trainable: true
-      units: 128
+      units: 12
       use_bias: true
     inbound_nodes:
     - - - dense_2
@@ -146,16 +194,16 @@ config:
         class_name: VarianceScaling
         config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
       kernel_regularizer: null
-      name: dense_7
+      name: dense_6
       trainable: true
-      units: 128
+      units: 12
       use_bias: true
     inbound_nodes:
-    - - - dense_6
+    - - - dense_5
         - 0
         - 0
         - {}
-    name: dense_7
+    name: dense_6
   - class_name: Dense
     config:
       activation: relu
@@ -170,48 +218,28 @@ config:
         class_name: VarianceScaling
         config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
       kernel_regularizer: null
-      name: dense_4
+      name: dense_9
       trainable: true
       units: 12
       use_bias: true
+    inbound_nodes:
+    - - - dense_8
+        - 0
+        - 0
+        - {}
+    name: dense_9
+  - class_name: Concatenate
+    config: {axis: -1, name: concatenate_1, trainable: true}
     inbound_nodes:
     - - - dense_3
         - 0
         - 0
-        - {}
-    name: dense_4
-  - class_name: Dense
-    config:
-      activation: relu
-      activity_regularizer: null
-      bias_constraint: null
-      bias_initializer:
-        class_name: Zeros
-        config: {}
-      bias_regularizer: null
-      kernel_constraint: null
-      kernel_initializer:
-        class_name: VarianceScaling
-        config: {distribution: uniform, mode: fan_avg, scale: 1.0, seed: null}
-      kernel_regularizer: null
-      name: dense_8
-      trainable: true
-      units: 12
-      use_bias: true
-    inbound_nodes:
-    - - - dense_7
-        - 0
-        - 0
-        - {}
-    name: dense_8
-  - class_name: Concatenate
-    config: {axis: -1, name: concatenate_1, trainable: true}
-    inbound_nodes:
-    - - - dense_4
-        - 0
-        - 0
         - &id001 {}
-      - - dense_8
+      - - dense_6
+        - 0
+        - 0
+        - *id001
+      - - dense_9
         - 0
         - 0
         - *id001

@@ -102,15 +102,18 @@ def makerModel():
     hist_input = Input(shape=(256,), name="hist_input")
     x1 = Dense(256, activation="sigmoid")(hist_input)
     x1 = Dense(128, activation="relu")(x1)
-    x1 = Dense(128, activation="relu")(x1)
     x1 = Dense(12, activation="relu")(x1)
 
     x2 = Dense(256, activation="sigmoid")(hist_input)
     x2 = Dense(128, activation="relu")(x2)
-    x2 = Dense(128, activation="relu")(x2)
     x2 = Dense(12, activation="relu")(x2)
 
-    x = concatenate([x1, x2])
+    x3 = Dense(256, activation="sigmoid")(hist_input)
+    x3 = Dense(128, activation="relu")(x3)
+    x3 = Dense(12, activation="relu")(x3)
+
+    x = concatenate([x1, x2, x3])
+
     hand_valid = Dense(1, name="hand_valid", activation="sigmoid")(x)
 
     model = Model(inputs=[hist_input], outputs=[hand_valid])
