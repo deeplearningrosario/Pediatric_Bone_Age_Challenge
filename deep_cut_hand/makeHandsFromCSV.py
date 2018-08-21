@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 from multiprocessing import Process
 from utilities import Console, updateProgress, histogramsLevelFix
 import cv2
@@ -129,3 +128,7 @@ def makeHandsHuman():
     else:
         Console.info("No podemos dividir la cargan en distintos procesadores")
         exit(0)
+
+
+if __name__ == "__main__":
+    makeHandsHuman()

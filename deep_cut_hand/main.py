@@ -245,5 +245,3 @@ if __name__ == "__main__":
         if y_valid_hand[i][0] < 0.6 or y_valid_hand[i][0] > 0.4:
             Console.wran("Image:", img_file, "hand valid:", y_valid_hand[i][0])
     updateProgress(1, total_file, total_file, img_file)
-
-# para creae las iagenes en capetas separadas

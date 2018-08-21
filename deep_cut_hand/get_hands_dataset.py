@@ -163,13 +163,10 @@ if __name__ == "__main__":
     X_train = X_train + X2_train
     y_train = y_train + y2_train
 
-    X_train = np.asarray(X_train)
-    y_train = np.asarray(y_train)
-
     # Sort randomly
-    random_id = np.random.choice(X_train.shape[0], size=y_train.shape[0], replace=False)
-    X_train = X_train[random_id]
-    y_train = y_train[random_id]
+    random_id = np.random.choice(len(X_train), size=len(y_train), replace=False)
+    X_train = np.asarray(X_train)[random_id]
+    y_train = np.asarray(y_train)[random_id]
 
     saveDataSet(X_train, y_train)
 

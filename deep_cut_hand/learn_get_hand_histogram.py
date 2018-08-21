@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-# ./learn_histogram.py -lw ./model/model_histogram.h5
-# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False
-# ./learn_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
+# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5
+# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False
+# ./learn_get_hand_histogram.py -lw ./model/model_histogram.h5 --train False --evaluate True --predict True
 
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
