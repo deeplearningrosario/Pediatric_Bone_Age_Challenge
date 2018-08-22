@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 """
 ./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5
-./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False
-./learn_to_recognize_hands.py -lw ./model/model_hands_not_hands.h5 --train False --evaluate True --predict True
+--train True
+--evaluate True
+--predict True
 """
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model, Sequential
