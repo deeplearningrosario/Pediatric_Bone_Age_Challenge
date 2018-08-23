@@ -29,7 +29,7 @@ EPOCHS = 1500
 BATCH_SIZE = 17
 
 # https://keras.io/optimizers
-OPTIMIZER = Adam(lr=0.001)
+OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)

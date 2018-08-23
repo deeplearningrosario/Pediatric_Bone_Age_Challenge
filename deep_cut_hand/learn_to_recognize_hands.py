@@ -21,8 +21,8 @@ EPOCHS = 150
 BATCH_SIZE = 7
 
 # https://keras.io/optimizers
-# OPT = Adam(lr=0.001)
-OPT = RMSprop()
+OPT = Adam(lr=0.001, amsgrad=True)
+# OPT = RMSprop()
 # OPT = SGD(lr=0.01, clipvalue=0.5)
 # OPT = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPT = Adagrad(lr=0.05)
