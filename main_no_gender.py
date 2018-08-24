@@ -25,11 +25,11 @@ GENDER_TYPE = "famale"
 # GENDER_TYPE = "male"
 
 # network and training
-EPOCHS = 30
+EPOCHS = 1
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
-OPTIMIZER = Adam(lr=0.001)
+OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
@@ -153,6 +153,16 @@ tbCallBack = keras.callbacks.TensorBoard(
 )
 print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
 
+# Path to save model
+PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
+
+# Save weights after every epoch
+if not os.path.exists(PATH_SAVE_MODEL):
+    os.makedirs(PATH_SAVE_MODEL)
+
+csv_logger = keras.callbacks.CSVLogger(os.path.join(__location__, "model_backup", "training.csv"))
+
+
 history = model.fit(
     [img_train],
     [age_train],
@@ -160,16 +170,11 @@ history = model.fit(
     epochs=EPOCHS,
     verbose=VERBOSE,
     validation_data=([img_valid], [age_valid]),
-    callbacks=[tbCallBack, checkpoint, reduceLROnPlat],
+    callbacks=[tbCallBack, checkpoint, reduceLROnPlat, csv_logger],
     #     callbacks=[tbCallBack, checkpoint],
 )
 
-# Path to save model
-PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 
-# Save weights after every epoch
-if not os.path.exists(PATH_SAVE_MODEL):
-    os.makedirs(PATH_SAVE_MODEL)
 
 # serialize model to YAML
 model_yaml = model.to_yaml()
