@@ -5,32 +5,34 @@
 --evaluate True
 --predict True
 """
+from get_hands_dataset import openDataSet
+from keras.callbacks import LearningRateScheduler
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model, Sequential
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, SGD
 from utilities import Console, updateProgress
-from get_hands_dataset import openDataSet
-import math
 import argparse
 import keras
+import math
 import numpy as np
 import os
 
 # network and training
 EPOCHS = 150
-BATCH_SIZE = 7
+BATCH_SIZE = 5
 
 # https://keras.io/optimizers
 OPT = Adam(lr=0.001, amsgrad=True)
 # OPT = RMSprop()
-# OPT = SGD(lr=0.01, clipvalue=0.5)
+# OPT = SGD(lr=0.01, decay=0.01 / EPOCHS, momentum=0.9, nesterov=True)
 # OPT = Adadelta(lr=0.01, rho=0.95, epsilon=None, decay=0.0)
 # OPT = Adagrad(lr=0.05)
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
-ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensorBoard")
+ap.add_argument("-sd", "--stepDecay", default="False", help="Active step decay")
+ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensor board")
 ap.add_argument("-cp", "--checkpoint", default="False", help="Active checkpoint")
 ap.add_argument(
     "-rl", "--reduce_learning", default="True", help="Active reduce learning rate"
@@ -55,6 +57,19 @@ SAVE_IMAGE_FOR_DEBUGGER = False
 # Make Keras callback
 def loadCallBack():
     cb = []
+
+    if args["stepDecay"] == "True":
+        def stepDecay(epoch):
+            # initialize the base initial learning rate, drop factor, and epochs to drop every
+            initAlpha = 0.01
+            # factor = 0.25
+            factor = 0.5
+            dropEvery = 5
+            # compute learning rate for the current epoch
+            alpha = initAlpha * (factor ** np.floor((1 + epoch) / dropEvery))
+            # return the learning rate
+            return float(alpha)
+        cb.append(LearningRateScheduler(stepDecay))
 
     # TensorBoard
     # how to use: $ tensorboard --logdir path_to_current_dir/Graph
