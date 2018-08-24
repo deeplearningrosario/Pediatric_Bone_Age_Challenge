@@ -25,7 +25,7 @@ GENDER_TYPE = "famale"
 # GENDER_TYPE = "male"
 
 # network and training
-EPOCHS = 1
+EPOCHS = 30
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -160,7 +160,7 @@ PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 if not os.path.exists(PATH_SAVE_MODEL):
     os.makedirs(PATH_SAVE_MODEL)
 
-csv_logger = keras.callbacks.CSVLogger(os.path.join(__location__, "model_backup", "training.csv"))
+csv_logger = keras.callbacks.CSVLogger(os.path.join(__location__, "model_backup", GENDER_TYPE, "training.csv"))
 
 
 history = model.fit(
