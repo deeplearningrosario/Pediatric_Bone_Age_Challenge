@@ -207,7 +207,7 @@ PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
 if not os.path.exists(PATH_SAVE_MODEL):
     os.makedirs(PATH_SAVE_MODEL)
 
-csv_logger = keras.callbacks.CSVLogger(os.path.join(__location__, "model_backup", "famale_and_male", "training.csv"))
+csv_logger = keras.callbacks.CSVLogger(os.path.join(PATH_SAVE_MODEL, "training.csv"))
 
 history = model.fit(
     [img_train, gdr_train],

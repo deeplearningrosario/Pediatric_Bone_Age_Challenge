@@ -160,8 +160,7 @@ PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 if not os.path.exists(PATH_SAVE_MODEL):
     os.makedirs(PATH_SAVE_MODEL)
 
-csv_logger = keras.callbacks.CSVLogger(os.path.join(__location__, "model_backup", GENDER_TYPE, "training.csv"))
-
+csv_logger = keras.callbacks.CSVLogger(os.path.join(PATH_SAVE_MODEL, "training.csv"))
 
 history = model.fit(
     [img_train],
@@ -173,7 +172,6 @@ history = model.fit(
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat, csv_logger],
     #     callbacks=[tbCallBack, checkpoint],
 )
-
 
 
 # serialize model to YAML
