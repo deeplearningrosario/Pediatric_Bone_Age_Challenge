@@ -170,7 +170,6 @@ history = model.fit(
     verbose=VERBOSE,
     validation_data=([img_valid], [age_valid]),
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat, csv_logger],
-    #     callbacks=[tbCallBack, checkpoint],
 )
 
 

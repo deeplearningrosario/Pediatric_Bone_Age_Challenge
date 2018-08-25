@@ -4,6 +4,7 @@
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
+from keras.utils import plot_model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from six.moves import cPickle
 import argparse
@@ -218,13 +219,6 @@ history = model.fit(
     validation_data=([img_valid, gdr_valid], [age_valid]),
     callbacks=[tbCallBack, checkpoint, reduceLROnPlat, csv_logger],
 )
-
-# Path to save model
-PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
-
-# Save weights after every epoch
-if not os.path.exists(PATH_SAVE_MODEL):
-    os.makedirs(PATH_SAVE_MODEL)
 
 # serialize model to YAML
 model_yaml = model.to_yaml()
