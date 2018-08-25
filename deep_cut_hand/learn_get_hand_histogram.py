@@ -290,7 +290,11 @@ def trainModel(model, X_train, y_lower, y_upper):
     # serialize weights to HDF5
     model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model_histogram.h5"))
     # save image of build model
-    plot_model(model, to_file="model_histogram.png", show_shapes=True)
+    plot_model(
+        model,
+        to_file=os.path.join(PATHE_SAVE_MODEL, "model_histogram.png"),
+        show_shapes=True
+    )
     print("OK")
 
     # evaluate the network
