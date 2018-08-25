@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-./learn_get_hand_histogram.py lw ./model/model_histogram.h5
+./learn_get_hand_histogram.py -w ./model/model_histogram.h5
 --train True
 --evaluate True
 --predict True
