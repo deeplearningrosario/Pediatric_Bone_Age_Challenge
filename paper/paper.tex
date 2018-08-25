@@ -1,4 +1,3 @@
-
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
@@ -9,6 +8,9 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 
+\usepackage[hyphenbreaks]{breakurl}
+\usepackage[hyphens]{url}
+
 % spanish symbols for narrative
 \usepackage[utf8]{inputenc} 
 % language
@@ -18,6 +20,10 @@
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}} 
 
+%\renewcommand\topfraction{.9}
+%\renewcommand\textfraction{0.35}
+%\renewcommand\floatpagefraction{0.8}
+
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
     \pgfplotsset{
@@ -26,14 +32,11 @@
         compat=1.7,
     }
     % load the data table ...
-    \pgfplotstableread[col sep=comma]{femaleAgeDistribution.csv}{\femaleAgeDistribution}
+    \pgfplotstableread[col sep=comma]{misc/dtFemaleAgeDistribution.csv}{\femaleAgeDistribution}
         % and store the number of columns in `\NoOfCols'
         % (minus 1 because counting in `\foreach' starts with zero
         \pgfplotstablegetcolsof{\femaleAgeDistribution}
         \pgfmathtruncatemacro{\NoOfCols}{\pgfplotsretval-1}
-
-
-
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -53,23 +56,42 @@ mail@frro.utn.edu.ar} %should be hyperlink
 
 \maketitle
 
-\renewcommand{\abstractname}{Abstract} %Ajustes por traducción a español
-\begin{abstract}
-This document is a model and instructions for \LaTeX.
-This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL: Do Not Use Symbols, Special Characters, Footnotes, 
-or Math in Paper Title or Abstract.
-\end{abstract}
+%\renewcommand{\abstractname}{Abstract} %Ajustes por traducción a español
+%\begin{abstract}
+%
+%This document is a model and instructions for \LaTeX.
+%This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL: Do Not Use Symbols, Special Characters, Footnotes, or Math in Paper Title or Abstract.
+%\end{abstract}
 
-\renewcommand{\IEEEkeywordsname}{Palabras Clave} %Ajustes por traducción a español
-\begin{IEEEkeywords}
-aprendizaje profundo, red neuronal convolucional, rsna, procesamiento de imagenes
-\end{IEEEkeywords}
+%\renewcommand{\IEEEkeywordsname}{Palabras Clave} %Ajustes por traducción a español
+%\begin{IEEEkeywords}
+%aprendizaje profundo, red neuronal convolucional, rsna, procesamiento de imagenes
+%\end{IEEEkeywords}
 
+\section*{Abstract}
 
+\textit
+{
+La evaluación de la edad ósea esquelética es una práctica clínica comúnmente utilizada para investigar la madurez del sistema esquelético de un niño. Esta práctica puede ayudar a los médicos a diagnosticar afecciones que retrasan o aceleran el crecimiento y desarrollo físico. Recientemente, el advenimiento y la proliferación de redes neuronales convolucionales (RNC) ha mostrado ser prometedor en una variedad de aplicaciones de imágenes médicas. En este documento proponemos y probamos varios enfoques de aprendizaje profundo para evaluar la madurez ósea de forma automática comparando dos enfoques: por un lado, una RNC general que estima madurez ósea sobre radiografías de género masculino y femenino; por el otro, dos RNC especializadas cada una en su género respectivo. \textbf{Los resultados mostraron que la utilización de un/dos modelo/s general/especializado resulta más precisa para la estimación de madurez ósea.} Esta es una de las primeras evaluaciones automatizadas de la edad ósea esquelética probada en un conjunto de datos públicos donde se evalúa la utilización de una RNC general y dos RNC específicas para el género de la persona, para los cuales el código fuente está disponible, representando así una base exhaustiva para futuras investigaciones en el campo.
+}
 
 \section{Introducción}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits. 
+
+Durante el desarrollo del organismo de una persona, los huesos del esqueleto cambian de tamaño y forma, los cuales responden a una determinada edad ósea. Diferencia entre la edad ósea estimada de un niño y su edad cronológica podría indicar trastornos del crecimiento y anomalías endocrinas \cite{AproachToSkeletalMaturation}. Los médicos utilizan la evaluación de la edad ósea para estimar la madurez del sistema esquelético de un niño. Los métodos de evaluación de la edad ósea generalmente comienzan con tomar una sola imagen de rayos X de la mano izquierda desde la muñeca hasta las puntas de los dedos, ver Figura~\ref{fig:mano}. Los huesos en la imagen de rayos X se comparan con radiografías en un atlas estandarizado de desarrollo óseo. Tal atlas de edad ósea se basa en un gran número de radiografías recogidas de niños del mismo sexo y edad.
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[scale=0.7]{misc/imgHuesosMano.png}
+  \caption{Huesos de una mano y muñeca humana adaptada de \cite{AtlasMedicina}}
+  \label{fig:mano}
+\end{figure}
+
+En las últimas décadas, el procedimiento de evaluación de la edad ósea se realizó de forma manual utilizando los métodos de Greulich y Pyle (GP) \cite{GP} o de Tanner-Whitehouse (TW) \cite{TW3}. El procedimiento GP determina la edad ósea al comparar la radiografía del paciente con un atlas de edades representativas. La técnica TW se basa en un sistema de puntuación que examina 20 huesos específicos. En ambos casos, el procedimiento de evaluación ósea requiere un tiempo considerable; a su vez, la precisión en la estimación depende de la experiencia del radiólogo y tiende a ser subjetiva. 
+
+Desde 1992, preocupaciones sobre la variabilidad interobservador en la estimación manual de la edad ósea \cite{GP_variability} han llevado al establecimiento de varios métodos automáticos computarizados para la estimación de la misma. Los recientes avances en el aprendizaje profundo y sus aplicaciones a la visión por computadora permitieron a muchos investigadores mejorar drásticamente los resultados obtenidos con los sistemas de procesamiento de imágenes particularmente relacionados con el análisis de imágenes médicas \cite{DeepLearningInBiology}. A diferencia de las técnicas tradicionales de aprendizaje automático, las técnicas de aprendizaje profundo permiten que un algoritmo se programe a sí mismo aprendiendo de las imágenes dadas a un gran conjunto de datos de ejemplos etiquetados, eliminando así la necesidad de especificar reglas \cite{DeepLearning}. Los enfoques basados en aprendizaje profundo están ganando más atención porque en varios casos se demostró que logran e incluso superan el rendimiento a nivel humano, lo que hace que el procesamiento de imágenes de extremo a extremo sea automatizado y suficientemente rápido. En el campo de las imágenes médicas, las redes neuronales convolucionales (RNC) se han utilizado con éxito para el cribado de retinopatía diabética \cite{DeepLearningInDiabetics}, diagnóstico de enfermedades cardíacas \cite{DeepLearningInHeartDiseases}, detección de cáncer de pulmón \cite{DeepLearningLungCancer} y otras aplicaciones \cite{DeepLearningInBiology}. En el caso de la evaluación de la edad ósea, el mismo es un procedimiento que realizado manualmente requiere alrededor de 30 minutos de tiempo del médico por cada paciente. Cuando se realiza el mismo procedimiento utilizando un software basado en los métodos clásicos de visión por computadora, toma de 1 a 5 minutos, pero aún requiere una considerable supervisión y experiencia médica. Los métodos basados en aprendizaje profundo permiten evitar la ingeniería de características al aprender automáticamente la jerarquía de características discriminatorias directamente de un conjunto de ejemplos etiquetados. Usando un enfoque de aprendizaje profundo, el procesamiento de una imagen generalmente toma menos de 1 segundo, mientras que la precisión de estos métodos en muchos casos excede la de los métodos convencionales. Soluciones de redes neuronales profundas para la evaluación de la edad ósea de radiografías de mano han sido sugeridas \cite{DeepLearningAssesingSkeletalMaturity1,DeepLearningAssesingSkeletalMaturity2,DeepLearningAssesingSkeletalMaturity3}. Sin embargo, ninguno de estos ha evaluado en profundidad la conveniencia de separar el conjunto de datos de acuerdo al género de la radiografía y generar una RNC por cada género para investigar la precisión resultante de los mismos. 
+
+En este trabajo se investiga si una RNC especializada en un determinado género podría ser más precisa en estimar la edad de una persona de acuerdo a la radiografía de su mano en lugar de una que utilice radiografías de ambos géneros. Nuestra contribución consiste en explorar el comportamiento de una RNC de acuerdo al conjunto de datos que es ingresado en la misma. Validamos la precisión de estas redes neuronales utilizando los datos de el desafío pediátrico de edad ósea 2017 organizado por la Sociedad Radiológica de América del Norte (RSNA) \cite{RSNAChallenge}. Este conjunto de datos ahora está disponible de manera gratuita y puede ser accedido en \cite{RSNADataSet}.
+
 
 \section{Metodología y Objetivos}
 
@@ -127,6 +149,7 @@ Please do not revise any of the current designations.
         },
         % as basis for the `nodes near coords' use the raw y values
         point meta=rawy,
+        ymin=1,
     ]
         % add the data rows for each column 
         \foreach \i in {1,...,\NoOfCols} {
@@ -227,7 +250,7 @@ surrounding equation.
 \item There is no period after the ``et'' in the Latin abbreviation ``et al.''.
 \item The abbreviation ``i.e.'' means ``that is'', and the abbreviation ``e.g.'' means ``for example''.
 \end{itemize}
-An excellent style manual for science writers is \cite{b7}.
+
 
 \subsection{Trabajo Futuro}
 \textbf{The class file is designed for, but not limited to, six authors.} A 
@@ -240,14 +263,85 @@ example, do not differentiate among departments of the same organization).
 
 
 \begin{thebibliography}{00}
-\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
+\bibitem{AproachToSkeletalMaturation} 
+Zerin JM, Hernandez RJ. 
+\textit{Approach to skeletal maturation}. 
+Hand Clin 1991; 7:53–62
+
+\bibitem{GP} 
+Greulich, W.W., Pyle, S.I.
+\textit{Radiographic atlas of skeletal development of the hand and wrist}. 
+The American Journal of the Medical Sciences 238(3), 393, 1959
+
+\bibitem{TW3} 
+Tanner JM, Healy MJ, Goldstein H, Cameron N.
+\textit{Assessment of skeletal maturity and prediction of adult height (TW3 method), 3rd ed}. 
+London, UK: Saunders Company, 2001
+
+\bibitem{GP_variability} 
+Berst MJ, Dolan L, Bogdanowicz MM, Stevens MA, Chow S, Brandser EA.
+\textit{Effect of knowledge of chronologic age on the variability of pediatric bone age determined using the Greulich and Pyle standards}. 
+AJR 2001; 176:507–510
+
+\bibitem{DeepLearningInBiology} 
+Ching, T., Himmelstein, D.S., Beaulieu-Jones, B.K., Kalinin, A.A., Do, B.T., Way, G.P., Ferrero, E., Agapow, P.M., Xie, W., Rosen, G.L., et al.
+\textit{Opportunities and obstacles for deep learning in biology and medicine}.
+bioRxiv p. 142760 (2017)
+
+\bibitem{DeepLearning} 
+LeCun Y, Bengio Y, Hinton G.
+\textit{Deep learning}.
+Nature 2015; 521:436–444
+
+\bibitem{DeepLearningInDiabetics}
+Rakhlin, A.
+\textit{Diabetic retinopathy detection through integration of deep learning classification framework}.
+bioRxiv p. 225508 (2017)
+
+\bibitem{DeepLearningInHeartDiseases}
+Korshunova, I.
+\textit{Diagnosing heart diseases with deep neural networks}.
+\\\texttt{\url{https://irakorshunova.github.io/2016/03/15/heart.html}} (2016), online; accedido 29 de Julio de 2017
+
+
+\bibitem{DeepLearningLungCancer}
+Daniel Hammack and Julian de Wit.
+\textit{2017 Data Science Bowl, Predicting Lung Cancer: 2nd place solution write-up}.
+\\\texttt{\url{http://blog.kaggle.com/2017/06/29/2017-data-science-bowl-predicting-lung-cancer-2nd-place-solution-write-up-daniel-hammack-and-julian-de-wit/}} (2017), online; accedido 29 de Julio de 2017
+
+\bibitem{DeepLearningAssesingSkeletalMaturity1}
+Larson, D.B., Chen, M.C., Lungren, M.P., Halabi, S.S., Stence, N.V., Langlotz, C.P.
+\textit{Performance of a deep-learning neural network model in assessing skeletal maturity on pediatric hand radiographs}.
+Radiology p. 170236 (2017)
+
+\bibitem{DeepLearningAssesingSkeletalMaturity2}
+Lee, H., Tajmir, S., Lee, J., Zissen, M., Yeshiwas, B.A., Alkasab, T.K., Choy, G., Do, S.
+\textit{Fully automated deep learning system for bone age assessment}.
+Journal of Digital Imaging pp. 1–15 (2017)
+
+\bibitem{DeepLearningAssesingSkeletalMaturity3}
+Spampinato, C., Palazzo, S., Giordano, D., Aldinucci, M., Leonardi, R.
+\textit{Deep learning for automated skeletal bone age assessment in X-ray images}.
+Medical image analysis 36, 41–51 (2017)
+
+\bibitem{RSNAChallenge}
+\textit{RSNA Pediatric Bone Age Challenge}.
+\\\texttt{\url{http://rsnachallenges.cloudapp.net/competitions/4}} (2017), online; accedido 29 de julio de 2017
+
+\bibitem{RSNADataSet}
+Stanford University Artificial Intelligence in Medicine \& Imaging
+\textit{Bone age images used in the 2017 RSNA bone age challenge competition}.
+\\\texttt{\url{https://aimi.stanford.edu/available-labeled-medical-datasets}} 
+(2017), online; accedido 29 de julio de 2017
+
+
+\bibitem{AtlasMedicina}
+Gilroy, A.M., MacPherson B.R., Ross L.M., Schünke M., Schulte E., Schumacher U., Voll M., Wesker K.
+\textit{Prometheus. Atlas de Anatomía}.
+pp 298, 2008
 \end{thebibliography}
+
+
 
 
 \end{document}
