@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-./learn_get_hand_histogram.py -lw ./model/model_histogram.h5
+./learn_get_hand_histogram.py lw ./model/model_histogram.h5
 --train True
 --evaluate True
 --predict True
@@ -8,6 +8,7 @@
 from keras.layers import Flatten, Dense, Input, Dropout, BatchNormalization, concatenate
 from keras.models import Model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+from keras.utils import plot_model, print_summary
 from utilities import Console, updateProgress, getHistogram
 import argparse
 import cv2
@@ -42,7 +43,7 @@ SORT_RANDOMLY = True
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+ap.add_argument("-w", "--weights", help="Path to the file weights")
 ap.add_argument("-tb", "--tensorBoard", default="False", help="Active tensorBoard")
 ap.add_argument("-cp", "--checkpoint", default="False", help="Active checkpoint")
 ap.add_argument(
@@ -169,8 +170,10 @@ def loadCallBack():
             os.makedirs(os.path.join(__location__, "weights"))
         checkpoint = keras.callbacks.ModelCheckpoint(
             filepath="weights/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+            monitor='val_loss',
+            verbose=1,
             save_weights_only=True,
-            period=1,
+            period=1
         )
         Console.info("Save weights after every epoch")
         cb.append(checkpoint)
@@ -225,9 +228,10 @@ def makerModel():
         print(model.summary())
 
     # Load weight
-    if args["load_weights"] != None:
-        Console.info("Loading weights from", args["load_weights"])
-        model.load_weights(args["load_weights"])
+    load_weights = args["weights"]
+    if load_weights != None:
+        Console.info("Loading weights from", load_weights)
+        model.load_weights(load_weights)
 
     return model
 
@@ -285,6 +289,8 @@ def trainModel(model, X_train, y_lower, y_upper):
         yaml_file.write(model_yaml)
     # serialize weights to HDF5
     model.save_weights(os.path.join(PATHE_SAVE_MODEL, "model_histogram.h5"))
+    # save image of build model
+    plot_model(model, to_file="model_histogram.png", show_shapes=True)
     print("OK")
 
     # evaluate the network
