@@ -11,7 +11,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 BATCH_SIZE = 35
 # https://keras.io/optimizers
-OPTIMIZER = Adam(lr=0.001)
+OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
@@ -71,13 +71,10 @@ if GENDER_TYPE == "famale_and_male" or GENDER_TYPE == "male":
         genderType, "testing", img_test, gdr_test, age_test
     )
 
-print("img_train shape:", img_train.shape)
-print("img_valid shape:", img_valid.shape)
-print("img_test shape:", img_test.shape)
-
-img_final = np.concatenate(img_train, img_valid, img_test)
-gdr_final = np.concatenate(gdr_train, gdr_valid, gdr_test)
-age_final = np.concatenate(age_train, age_valid, age_test)
+print("Joining train, valid and test dataset.",)
+img_final = np.concatenate((img_train, img_valid, img_test), axis=0)
+gdr_final = np.concatenate((gdr_train, gdr_valid, gdr_test), axis=0)
+age_final = np.concatenate((age_train, age_valid, age_test), axis=0)
 
 # load YAML and create model
 yaml_file = open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "r")
