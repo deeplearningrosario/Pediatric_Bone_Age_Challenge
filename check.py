@@ -22,6 +22,8 @@ GENDER_TYPE = "female_and_male"
 # GENDER_TYPE = "female"
 # GENDER_TYPE = "male"
 
+ONLY_TEST_IMAGE = True
+
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 
@@ -72,10 +74,15 @@ if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "male":
         genderType, "testing", img_test, gdr_test, age_test
     )
 
-print("Joining train, valid and test dataset.",)
-img_final = np.concatenate((img_train, img_valid, img_test), axis=0)
-gdr_final = np.concatenate((gdr_train, gdr_valid, gdr_test), axis=0)
-age_final = np.concatenate((age_train, age_valid, age_test), axis=0)
+print("Joining train, valid and test dataset.")
+if ONLY_TEST_IMAGE:
+    img_final = img_test
+    gdr_final = gdr_test
+    age_final = age_test
+else:
+    img_final = np.concatenate((img_train, img_valid, img_test), axis=0)
+    gdr_final = np.concatenate((gdr_train, gdr_valid, gdr_test), axis=0)
+    age_final = np.concatenate((age_train, age_valid, age_test), axis=0)
 
 # load YAML and create model
 yaml_file = open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "r")
@@ -110,9 +117,7 @@ print("Predict")
 ynew = model.predict(input_values)
 
 for i in range(len(ynew)):
-    print(
-        "ID:", i, "Original:", age_final[i], "Predict:",  ynew[i][0]
-    )
+    print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
 
 # summarize history for mean
 plt.plot(age_final, label="Real")
