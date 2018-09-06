@@ -4,6 +4,7 @@
 from keras.models import model_from_yaml
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 
@@ -17,8 +18,8 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 # Choose gender to use
-GENDER_TYPE = "famale_and_male"
-# GENDER_TYPE = "famale"
+GENDER_TYPE = "female_and_male"
+# GENDER_TYPE = "female"
 # GENDER_TYPE = "male"
 
 # Path to save model
@@ -53,13 +54,13 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 # Load data
 print("...loading training data")
-if GENDER_TYPE == "famale_and_male" or GENDER_TYPE == "famale":
-    genderType = "famale"
+if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "female":
+    genderType = "female"
     img_train, gdr_train, age_train = readFile(genderType, "training")
     img_valid, gdr_valid, age_valid = readFile(genderType, "validation")
     img_test, gdr_test, age_test = readFile(genderType, "testing")
 
-if GENDER_TYPE == "famale_and_male" or GENDER_TYPE == "male":
+if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "male":
     genderType = "male"
     img_train, gdr_train, age_train = readFile(
         genderType, "training", img_train, gdr_train, age_train
@@ -103,3 +104,22 @@ score = model.evaluate(input_values, age_final, batch_size=BATCH_SIZE, verbose=1
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
+
+print("Predict")
+# make a prediction
+ynew = model.predict(input_values)
+
+for i in range(len(ynew)):
+    print(
+        "ID:", i, "Original:", age_final[i], "Predict:",  ynew[i][0]
+    )
+
+# summarize history for mean
+plt.plot(age_final, label="Real")
+plt.plot(ynew, label="Predict")
+plt.title("Age")
+plt.xlabel("Index")
+plt.ylabel("Age")
+plt.legend(["Real", "Predict"], loc="upper left")
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
+plt.show()
