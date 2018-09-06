@@ -21,6 +21,7 @@ The order of execution would be
 Install on Linux
 ```bash
 sudo pip install keras
+sudo apt-get install python3-matplotlib
 
 python3 -mpip install opencv-python --user
 
