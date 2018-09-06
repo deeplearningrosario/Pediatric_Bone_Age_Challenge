@@ -21,11 +21,11 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # Choose gender to use
-GENDER_TYPE = "famale"
-# GENDER_TYPE = "male"
+# GENDER_TYPE = "female"
+GENDER_TYPE = "male"
 
 # network and training
-EPOCHS = 30
+EPOCHS = 200
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers

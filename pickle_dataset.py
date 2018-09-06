@@ -306,14 +306,14 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
 # in each case you take the first N from the unordered list
 def getFiles():
     print("Read csv on", TRAIN_DIR)
-    famale = []
+    female = []
     male = []
     # Read csv
     df = pd.read_csv(os.path.join(train_dir, "boneage-training-dataset.csv"))
 
     for index, row in df.iterrows():
         # Cut list of file
-        if CUT_DATASET <= 0 or (len(famale) + len(male)) < CUT_DATASET:
+        if CUT_DATASET <= 0 or (len(female) + len(male)) < CUT_DATASET:
             # Get bone age
             bone_age = row.boneage
             if bone_age > REMOVE_AGE:
@@ -321,9 +321,9 @@ def getFiles():
                 if row.male:
                     male.append((row.id, bone_age, 1))
                 else:
-                    famale.append((row.id, bone_age, 0))
+                    female.append((row.id, bone_age, 0))
 
-    return famale, male
+    return female, male
 
 
 # Create the directories to save the images
@@ -347,11 +347,11 @@ def checkPath():
 if __name__ == "__main__":
     checkPath()
 
-    famale, male = getFiles()
+    female, male = getFiles()
 
     print("Processing female images...")
-    (X_train, x_gender, y_age) = loadDataSet(famale)
-    saveDataSet("famale", X_train, x_gender, y_age)
+    (X_train, x_gender, y_age) = loadDataSet(female)
+    saveDataSet("female", X_train, x_gender, y_age)
 
     print("Processing male images...")
     (X_train, x_gender, y_age) = loadDataSet(male)

@@ -22,7 +22,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 30
+EPOCHS = 100
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -65,7 +65,7 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 # Load data
 print("...loading training data")
-genderType = "famale"
+genderType = "female"
 img_train, gdr_train, age_train = readFile(genderType, "training")
 img_valid, gdr_valid, age_valid = readFile(genderType, "validation")
 img_test, gdr_test, age_test = readFile(genderType, "testing")
@@ -146,9 +146,9 @@ x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1000, activation="relu")(x)
-x = Dropout(0.2)(x)
+x = Dropout(0.45)(x)
 x = Dense(1000, activation="relu")(x)
-x = Dropout(0.2)(x)
+x = Dropout(0.45)(x)
 x = Dense(240, activation="relu")(x)
 # x = Dropout(0.1)(x)
 
@@ -202,7 +202,7 @@ tbCallBack = keras.callbacks.TensorBoard(
 print("tensorboard --logdir", LOG_DIR_TENSORBOARD)
 
 # Path to save model
-PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "famale_and_male")
+PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "female_and_male")
 
 # Save weights after every epoch
 if not os.path.exists(PATH_SAVE_MODEL):
