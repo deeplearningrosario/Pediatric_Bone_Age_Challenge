@@ -11,9 +11,9 @@ import platform
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
-def mpStart(files, output):
+def mpStart(arg):
     print("Processing female images...")
-    (X_train, x_gender, y_age) = loadDataSet(female)
+    (X_train, x_gender, y_age) = loadDataSet(arg)
     saveDataSet("female", X_train, x_gender, y_age)
 
 
