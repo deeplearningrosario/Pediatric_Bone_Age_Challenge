@@ -11,10 +11,10 @@ import platform
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
-def mpStart(arg):
+def mpStart(gender,arg):
     print("Processing female images...")
     (X_train, x_gender, y_age) = loadDataSet(arg)
-    saveDataSet("female", X_train, x_gender, y_age)
+    saveDataSet(gender, X_train, x_gender, y_age)
 
 
 if __name__ == "__main__":
@@ -26,8 +26,8 @@ if __name__ == "__main__":
     num_processes = multiprocessing.cpu_count()
     if platform.system() == "Linux" and num_processes > 1:
         processes = []
-        processes.append(Process(target=mpStart, args=(female)))
-        processes.append(Process(target=mpStart, args=(male)))
+        processes.append(Process(target=mpStart, args=("female",female)))
+        processes.append(Process(target=mpStart, args=("male",male)))
 
         if len(processes) > 0:
             print("Loading data set...")
