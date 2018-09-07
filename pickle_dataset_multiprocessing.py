@@ -12,7 +12,6 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 
 def mpStart(gender,arg):
-    print("Processing female images...")
     (X_train, x_gender, y_age) = loadDataSet(arg)
     saveDataSet(gender, X_train, x_gender, y_age)
 
@@ -21,6 +20,7 @@ if __name__ == "__main__":
     # Create the directories to save the images
     checkPath()
 
+    print("Loading data set...")
     female, male = getFiles()
 
     num_processes = multiprocessing.cpu_count()
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         processes.append(Process(target=mpStart, args=("male",male)))
 
         if len(processes) > 0:
-            print("Loading data set...")
+            print("Processing images...")
             for p in processes:
                 p.start()
             for p in processes:
