@@ -40,7 +40,9 @@ CNN = "RN50"
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "r+") as f:
+    with h5py.File(
+        os.path.join(__location__, "packaging-dataset", file_name), "r+"
+    ) as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
         f_age = f["age"][()]
@@ -83,11 +85,7 @@ img_test, gdr_test, age_test = readFile(
 
 
 def randomDataSet(X_img, x_gender, y_age):
-    random_id = np.random.choice(
-        X_img.shape[0],
-        size=X_img.shape[0],
-        replace=False
-    )
+    random_id = np.random.choice(X_img.shape[0], size=X_img.shape[0], replace=False)
     X_img = X_img[random_id]
     x_gender = x_gender[random_id]
     y_age = y_age[random_id]
@@ -234,7 +232,7 @@ score = model.evaluate(
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
-#print("Test accuracy:", score[2])
+# print("Test accuracy:", score[2])
 
 # Save all data in history
 with open(os.path.join(PATH_SAVE_MODEL, "history.pkl"), "wb") as f:
@@ -257,13 +255,13 @@ plt.legend(["train", "test"], loc="upper left")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
 plt.close()
 
-#plt.plot(history.history["acc"], label="acc")
-#plt.plot(history.history["val_acc"], label="val_acc")
-#plt.title("Training Accuracy")
+# plt.plot(history.history["acc"], label="acc")
+# plt.plot(history.history["val_acc"], label="val_acc")
+# plt.title("Training Accuracy")
 # plt.xlabel("Epoch")
 # plt.ylabel("Accuracy")
-#plt.legend(["train", "test"], loc="upper left")
-#plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_accuracy.png"))
+# plt.legend(["train", "test"], loc="upper left")
+# plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_accuracy.png"))
 # plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
@@ -276,12 +274,12 @@ plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
 plt.close()
 
 # summarize history for accuracy
-#plt.plot(history.history["acc"], label="train_acc")
-#plt.plot(history.history["val_acc"], label="val_acc")
-#plt.title("model accuracy")
+# plt.plot(history.history["acc"], label="train_acc")
+# plt.plot(history.history["val_acc"], label="val_acc")
+# plt.title("model accuracy")
 # plt.ylabel("Accuracy")
 # plt.xlabel("Epoch")
-#plt.legend(["train", "test"], loc="upper left")
+# plt.legend(["train", "test"], loc="upper left")
 # plt.show()
 
 # summarize history for loss
