@@ -1,4 +1,4 @@
-# Deep Learning For Computer Vision
+# Pediatric Bone Age Challenge
 This is a first approach to Deep Learning by an investigation group from Rosario, Santa Fe, Argentina.
 We used another team's [solution](https://github.com/thevishalagarwal/BoneAgeEstimation) to submerge ourselves. However, we've since modified it to suit our needs and to apply any improvements we saw fit.
 
