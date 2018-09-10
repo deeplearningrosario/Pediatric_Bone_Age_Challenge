@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{subcaption}
 
 \usepackage[hyphenbreaks]{breakurl}
 \usepackage[hyphens]{url}
@@ -19,7 +20,7 @@
 %changing from roman number to integers
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}} 
-
+\renewcommand{\thetable}{\arabic{table}}
 %\renewcommand\topfraction{.9}
 %\renewcommand\textfraction{0.35}
 %\renewcommand\floatpagefraction{0.8}
@@ -33,6 +34,12 @@
     }
     % load the data table ...
     \pgfplotstableread[col sep=comma]{misc/dtFemaleAgeDistribution.csv}{\femaleAgeDistribution}
+        % and store the number of columns in `\NoOfCols'
+        % (minus 1 because counting in `\foreach' starts with zero
+        \pgfplotstablegetcolsof{\femaleAgeDistribution}
+        \pgfmathtruncatemacro{\NoOfCols}{\pgfplotsretval-1}
+    % load the data table ...
+    \pgfplotstableread[col sep=comma]{misc/dtMaleAgeDistribution.csv}{\maleAgeDistribution}
         % and store the number of columns in `\NoOfCols'
         % (minus 1 because counting in `\foreach' starts with zero
         \pgfplotstablegetcolsof{\femaleAgeDistribution}
@@ -54,17 +61,17 @@
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
-\title{Título\\
+\title{Automatización de evaluación de madurez ósea a través de técnicas de aprendizaje profundo\\
 }
 
-\author{\IEEEauthorblockN{Autores}
-\IEEEauthorblockA{
-\textit{Grupo de Investigación de Aprendizaje Profundo} \\
-\textit{Departamento Ingeniería en Sistemas de Información}\\
-\textit{Universidad Tecnológica Nacional}\\
-\textit{Facultad Regional Rosario}\\
-mail@frro.utn.edu.ar} %should be hyperlink
-}
+%\author{\IEEEauthorblockN{Autores}
+%\IEEEauthorblockA{
+%\textit{Grupo de Investigación de Aprendizaje Profundo} \\
+%\textit{Departamento Ingeniería en Sistemas de Información}\\
+%\textit{Universidad Tecnológica Nacional}\\
+%\textit{Facultad Regional Rosario}\\
+%mail@frro.utn.edu.ar} %should be hyperlink
+%}
 
 \maketitle
 
@@ -84,7 +91,7 @@ mail@frro.utn.edu.ar} %should be hyperlink
 
 \textit
 {
-La evaluación de la edad ósea esquelética es una práctica clínica comúnmente utilizada para investigar la madurez del sistema esquelético de un niño. Esta práctica puede ayudar a los médicos a diagnosticar afecciones que retrasan o aceleran el crecimiento y desarrollo físico. Recientemente, el advenimiento y la proliferación de redes neuronales convolucionales (RNC) ha mostrado ser prometedor en una variedad de aplicaciones de imágenes médicas. En este documento proponemos y probamos varios enfoques de aprendizaje profundo para evaluar la madurez ósea de forma automática comparando dos enfoques: por un lado, una RNC general que estima madurez ósea sobre radiografías de género masculino y femenino; por el otro, dos RNC especializadas cada una en su género respectivo. \textbf{Los resultados mostraron que la utilización de un/dos modelo/s general/especializado resulta más precisa para la estimación de madurez ósea.} Esta es una de las primeras evaluaciones automatizadas de la edad ósea esquelética probada en un conjunto de datos públicos donde se evalúa la utilización de una RNC general y dos RNC específicas para el género de la persona, para los cuales el código fuente está disponible, representando así una base exhaustiva para futuras investigaciones en el campo.
+La evaluación de la edad ósea esquelética es una práctica clínica comúnmente utilizada para investigar la madurez del sistema esquelético de un niño. Esta práctica puede ayudar a los médicos a diagnosticar afecciones que retrasan o aceleran el crecimiento y desarrollo físico. Recientemente, el advenimiento y la proliferación de redes neuronales convolucionales (RNC) ha mostrado ser prometedor en una variedad de aplicaciones de imágenes médicas. En este documento proponemos y probamos varios enfoques de aprendizaje profundo para evaluar la madurez ósea de forma automática comparando dos enfoques: por un lado, una RNC general que estima madurez ósea sobre radiografías de género masculino y femenino; por el otro, dos RNC especializadas cada una en su género respectivo. Los resultados mostraron que la utilización de un modelo general ofrece resultados más precisos para la estimación de madurez ósea; sin embargo, los modelos especializados ofrecer resultados similares. Esta es una de las primeras evaluaciones automatizadas de la edad ósea esquelética probada en un conjunto de datos públicos donde se evalúa la utilización de una RNC general y dos RNC específicas para el género de la persona, para los cuales el código fuente está disponible, representando así una base exhaustiva para futuras investigaciones en el campo.
 }
 
 \section{Introducción}
@@ -106,88 +113,174 @@ En este trabajo se investiga si una RNC especializada en un determinado género 
 
 \section{Metodología y Objetivos}
 
+Se realizó la comparación de dos alternativas: por un lado, un modelo general entrenado con radiografías de ambos géneros; y por otro, dos modelos entrenados cada uno con radiografías de un solo género, resultando así la obtención de un modelo específico para cada sexo: uno especializado en radiografías femeninas y otro en radiografías masculinas. El objetivo planteado es analizar cuál de las dos alternativas obtiene mayor precisión: dos modelos especializados en un género cada uno, donde se reduce el conjunto de datos a la mitad o un solo modelo general entrenado con radiografías de ambos géneros. La precisión de los modelos será definida en base al cálculo del MAE (Mean Absolute Error, Error Medio Absoluto) el cual es calculado como $\dfrac{1}{n}\sum\limits_{t=1}^{n}|e_t|$, siendo $|e_t|$ el valor absoluto de la diferencia entre cada estimación y la edad en meses etiquetada en cada observación y $n$ la cantidad de observaciones tomadas.
+
 \subsection{Conjunto de datos}
 
-The IEEEtran class file is used to format your paper and style the text. All margins, 
-column widths, line spaces, and text fonts are prescribed; please do not 
-alter them. You may note peculiarities. For example, the head margin
-measures proportionately more than is customary. This measurement 
-and others are deliberate, using specifications that anticipate your paper 
-as one part of the entire proceedings, and not as an independent document. 
-Please do not revise any of the current designations.
+El conjunto de datos utilizado ha sido extraído del desafío pediátrico de edad ósea 2017 organizado por la Sociedad Radiológica de América del Norte (RSNA) \cite{RSNAChallenge}. El mismo se encuentra conformado por más de 12 mil radiografías pediátricas de muñeca y mano etiquetadas por su género respectivo. Además, el conjunto posee una etiqueta de edad en meses estimada del paciente por un radiólogo. Al realizar la conversión de meses a años, las radiografías del conjunto de datos varían entre 0 y 19 años.
+Radiografías de pacientes con una maduración esquelética estimada menor a dos años han sido excluidas del experimento por dos razones. En primer lugar, el conjunto de datos correspondiente a esos rangos de maduración es muy pequeño (38 casos para femenino y 53 casos para masculino). En segundo lugar, la estimación de maduración esquelética es mayormente utilizada para casos de pubertad retrasada, pubertad precoz o baja estatura. Estos estudios raramente son realizados en tales rangos etarios, donde además, se evita la exposición a rayos X.
+El número total de observaciones originalmente obtenidas fue de 6,833 para hombres y 5,778 para mujeres. Luego de excluir aquellas de edades entre 0 y 2, ha resultado en 6,780 para hombres y 5,740 para mujeres como se muestra en la Figura~\ref{fig:distribucionEdades}.
 
 % used PGFPlots v1.14
+\begin{figure}%[htp]
 
-\begin{tikzpicture}
-    \begin{semilogyaxis}[
-        % adjust the `width' a bit by keeping the default `height'
-        width=1.05*\axisdefaultwidth,
-        height=\axisdefaultheight,
-        % set appropriate `ymax' value so the `nodes near coords' fit to the plot
-        % (adjusting the `ymin' value is just to make it look a little bit better)
-        ymin=0,
-        ymax=2000,
-        % there should be no gap between the bars in one group
-        ybar=0pt,
-        % use data from the table for the xticklabels
-        xtick=data,
-        xticklabels from table={\femaleAgeDistribution}{Anio},
-        % adjust the size of the bars so they don't overlap
-        % (you can play with the numerator to change the gap between the groups)
-        bar width=0.6/\NoOfCols,
-        % enlarge the x limits so all of the bars are shown
-        % (play with the value to adjust the gap on the sides of the plot)
-        enlarge x limits={abs=0.6},
-        % and position the legend outside of the plot to not overlap with the data
-        %legend pos=outer north east,
-        % add `nodes near coords'
-        nodes near coords={
-            % because internally PGFPlots works with floating point numbers, we
-            % change them to fixed point numbers
-            \pgfkeys{
-                /pgf/fpu=true,
-                /pgf/fpu/output format=fixed,
-            }
-            % truncate value count to integer
-            \pgfmathparse{\pgfplotspointmeta}
-            \pgfmathprintnumber{\pgfmathresult}\,
-        },
-        % set the style of the `nodes near coords'
-        nodes near coords style={
-            font=\tiny,
-            rotate=90,
-            anchor=west,
-        },
-        % as basis for the `nodes near coords' use the raw y values
-        point meta=rawy,
-        ymin=1,
-    ]
-        % add the data rows for each column 
-        \foreach \i in {1,...,\NoOfCols} {
-            \addplot table [
-                x expr=\coordindex,
-                y index=\i,
-                col sep=comma,
-            ] {\femaleAgeDistribution};
-                % to automatically add the legend entries first extract the
-                % column name and store it in `\colname'
-                    \pgfplotstablegetcolumnnamebyindex{\i}\of{\femaleAgeDistribution}\to{\colname}
-                % now you can add the legend entry
-                % (because we are in a loop we have to use the "expanded" version)
-                \addlegendentryexpanded{\colname};
-        }
-    \end{semilogyaxis}
-\end{tikzpicture}
-
+  \centering
+  %\mbox{
+  
+  \begin{subfigure}{.5\textwidth}
+  \centering
+	\begin{tikzpicture}
+    	\begin{axis}[
+        	% adjust the `width' a bit by keeping the default `height'
+        	width=1.05*\axisdefaultwidth,
+        	height=\axisdefaultheight,
+        	% set appropriate `ymax' value so the `nodes near coords' fit to the plot
+        	% (adjusting the `ymin' value is just to make it look a little bit better)
+        	ymin=0,
+        	ymax=2000,
+        	% there should be no gap between the bars in one group
+        	ybar=0pt,
+        	% use data from the table for the xticklabels
+        	xtick=data,
+        	xlabel=Años,
+        	ylabel=Número de radiografías,
+        	xticklabels from table={\femaleAgeDistribution}{Anio},
+        	% adjust the size of the bars so they don't overlap
+        	% (you can play with the numerator to change the gap between the groups)
+        	bar width=0.6/\NoOfCols,
+        	% enlarge the x limits so all of the bars are shown
+        	% (play with the value to adjust the gap on the sides of the plot)
+        	enlarge x limits={abs=0.6},
+        	% and position the legend outside of the plot to not overlap with the data
+        	%legend pos=outer north east,
+        	% add `nodes near coords'
+        	nodes near coords={
+            	% because internally PGFPlots works with floating point numbers, we
+            	% change them to fixed point numbers
+            	\pgfkeys{
+                	/pgf/fpu=true,
+                	/pgf/fpu/output format=fixed,
+            	}
+            	% truncate value count to integer
+            	\pgfmathparse{\pgfplotspointmeta}
+            	\pgfmathprintnumber{\pgfmathresult}\,
+        	},
+        	% set the style of the `nodes near coords'
+        	nodes near coords style={
+            	font=\tiny,
+            	rotate=90,
+            	anchor=west,
+        	},
+        	% as basis for the `nodes near coords' use the raw y values
+        	point meta=rawy,
+        	ymin=1,
+    	]
+        	% add the data rows for each column 
+        	\foreach \i in {1,...,\NoOfCols} {
+            	\addplot table [
+                	x expr=\coordindex,
+                	y index=\i,
+                	col sep=comma,
+            	] {\femaleAgeDistribution};
+                	% to automatically add the legend entries first extract the
+                	% column name and store it in `\colname'
+                    	\pgfplotstablegetcolumnnamebyindex{\i}\of{\femaleAgeDistribution}\to{\colname}
+                	% now you can add the legend entry
+                	% (because we are in a loop we have to use the "expanded" version)
+                	%\addlegendentryexpanded{\colname};
+        	}
+    	\end{axis}
+    	
+	\end{tikzpicture}
+  \caption{Femenino}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+  \centering
+	\begin{tikzpicture}
+    	\begin{axis}[
+        	% adjust the `width' a bit by keeping the default `height'
+        	width=1.05*\axisdefaultwidth,
+        	height=\axisdefaultheight,
+        	% set appropriate `ymax' value so the `nodes near coords' fit to the plot
+        	% (adjusting the `ymin' value is just to make it look a little bit better)
+        	ymin=0,
+        	ymax=2000,
+        	% there should be no gap between the bars in one group
+        	ybar=0pt,
+        	% use data from the table for the xticklabels
+        	xtick=data,
+        	xlabel=Años,
+        	ylabel=Número de radiografías,
+        	xticklabels from table={\maleAgeDistribution}{Anio},
+        	% adjust the size of the bars so they don't overlap
+        	% (you can play with the numerator to change the gap between the groups)
+        	bar width=0.6/\NoOfCols,
+        	% enlarge the x limits so all of the bars are shown
+        	% (play with the value to adjust the gap on the sides of the plot)
+        	enlarge x limits={abs=0.6},
+        	% and position the legend outside of the plot to not overlap with the data
+        	%legend pos=outer north east,
+        	% add `nodes near coords'
+        	nodes near coords={
+            	% because internally PGFPlots works with floating point numbers, we
+            	% change them to fixed point numbers
+            	\pgfkeys{
+                	/pgf/fpu=true,
+                	/pgf/fpu/output format=fixed,
+            	}
+            	% truncate value count to integer
+            	\pgfmathparse{\pgfplotspointmeta}
+            	\pgfmathprintnumber{\pgfmathresult}\,
+        	},
+        	% set the style of the `nodes near coords'
+        	nodes near coords style={
+            	font=\tiny,
+            	rotate=90,
+            	anchor=west,
+        	},
+        	% as basis for the `nodes near coords' use the raw y values
+        	point meta=rawy,
+        	ymin=1,
+    	]
+        	% add the data rows for each column 
+        	\foreach \i in {1,...,\NoOfCols} {
+            	\addplot table [
+                	x expr=\coordindex,
+                	y index=\i,
+                	col sep=comma,
+            	] {\maleAgeDistribution};
+                	% to automatically add the legend entries first extract the
+                	% column name and store it in `\colname'
+                    	\pgfplotstablegetcolumnnamebyindex{\i}\of{\maleAgeDistribution}\to{\colname}
+                	% now you can add the legend entry
+                	% (because we are in a loop we have to use the "expanded" version)
+                	%\addlegendentryexpanded{\colname};
+        	}
+    	\end{axis}
+	\end{tikzpicture}
+	\caption{Masculino}
+  \end{subfigure}
+ % }
+  \caption{Distribuciones de edad ósea para radiografías de género masculino y femenino}
+  \label{fig:distribucionEdades}
+\end{figure}
 
 \subsection{Preprocesamiento}
-Define abbreviations and acronyms the first time they are used in the text, 
-even after they have been defined in the abstract. Abbreviations such as 
-IEEE, SI, MKS, CGS, ac, dc, and rms do not have to be defined. Do not use 
-abbreviations in the title or heads unless they are unavoidable.
+Un módulo de preprocesamiento ha sido desarrollado para obtener un conjunto de radiografías más homogéneo. El módulo se compone de tres etapas. En la primer etapa se realiza una nivelación de colores para resaltar en la radiografía el área ocupada por la mano. En la segunda etapa se detecta la mano y se recorta la imágen para que la misma ocupe la mayor cantidad de pixeles posible. En la tercer etapa se rota la radiografía para posicionar la mano verticalmente. El objetivo del módulo de preprocesamiento consiste en obtener radiografías donde la mano se posicione verticalmente y ocupe la mayor superficie posible sobre la imagen. Esto permite una mayor precisión en el modelo al homogeneizar el conjunto de datos.
 
-\subsection{Modelos}
+\subsection{Sistemas Propuestos}
+El experimento para la comparación de los sistemas propuestos ha sido implementado en Python. La utilización y parametrización de las redes neuronales que presentan los sistemas ha sido principalmente a través de la librería Keras\footnote{Librería Keras. \url{https://keras.io}}. El código completo desarrollado para este experimento se encuentra disponible para uso académico en \url{https://github.com/deeplearningrosario/Pediatric_Bone_Age_Challenge}.
 
+Con respecto a la definición de los sistemas a utilizar para el experimento, se definieron dos arquitectuas que se describen a continuación.
+
+Se definieron dos arquitecturas para los sistemas propuestos. Los mismos se presentan en la Figura~\ref{fig:sistemas}. Los sistemas se conforman de una etapa de convolución seguida por una etapa de capas totalmente conectadas. En la etapa de convolución se ha utilizado ResNet-50 \cite{ResNet} con pesos pre entrenados con Imagenet \cite{Imagenet}. Otras redes convolucionales han sido probadas, como InceptionV3\cite{InceptionV3} y Xception\cite{Xception}, sin embargo, ResNet-50 obtuvo mejores resultados. La etapa de capas totalmente conectadas es la encargada de realizar la regresión de la edad basándose en los patrones extraídos por la etapa de convolución. La diferencia entre las dos arquitecturas para los sistemas propuestos radica en que el sistema generalizado permite utilizar el género de la radiografía como parámetro. El mismo es concatenado con la extracción de patrones resultantes de ResNet-50 en la etapa convolucional.
+
+Tres sistemas han sido entrenados para el experimento. Un sistema generalizado entrenado con radiografías de género másculino y femenino (Generalizado), y dos sistemas especializados; uno entrenado solo con radiografías de género masculino (Especializado Masculinas) y otro entrenado solo con radiografías de género femenino (Especializado Femeninas). Los sistemas fueron entrenados con 200 épocas, tamaño de lote de 32 y ratio de aprendizaje de 0.001.
+
+\begin{figure}
+ 
+  \begin{subfigure}{.5\textwidth}
+  \centering
 \begin{center}
 \begin{adjustbox}{width=\columnwidth}
 	\begin{tikzpicture}[scale = 1]	
@@ -266,51 +359,56 @@ abbreviations in the title or heads unless they are unavoidable.
 		\draw[thick,-](13.975,3,1)--(13.975,1.5,1);
 		\draw[thick,-](13.975,1.5,1)--(13.725,1.5,1);
 		%FLECHA
-		\draw[thick,->](14.075,2.3,1)--(14.9,2.3,1);
+		%\draw[thick,->](14.075,2.3,1)--(14.9,2.3,1);
 		%DECIMO RECTANGULO 
-		\draw[thick,-](15,1.7,1)--(15,2.8,1);
-		\draw[thick,-](15,2.8,1)--(15.25,2.8,1);
-		\draw[thick,-](15.25,2.8,1)--(15.25,1.7,1);
-		\draw[thick,-](15.25,1.7,1)--(15,1.7,1);
+		%\draw[thick,-](15,1.7,1)--(15,2.8,1);
+		%\draw[thick,-](15,2.8,1)--(15.25,2.8,1);
+		%\draw[thick,-](15.25,2.8,1)--(15.25,1.7,1);
+		%\draw[thick,-](15.25,1.7,1)--(15,1.7,1);
 		%FLECHA HACERLA DOBLE
-		\node[inner sep=0pt] (russell) at (15.25,1.88)
+		\node[inner sep=0pt] (russell) at (13.975,1.88)
     {\includegraphics[scale=0.04]{misc/imgArrowOutline.png}};
 		%ONCEAVO RECTANGULO 
-		\draw[thick,-](16,1.9,1)--(16,2.6,1);
-		\draw[thick,-](16,2.6,1)--(18,2.6,1);
-		\draw[thick,-](18,2.6,1)--(18,1.9,1);
-		\draw[thick,-](18,1.9,1)--(16,1.9,1);
+		\draw[thick,-](15,1.9,1)--(15,2.6,1);
+		\draw[thick,-](15,2.6,1)--(17,2.6,1);
+		\draw[thick,-](17,2.6,1)--(17,1.9,1);
+		\draw[thick,-](17,1.9,1)--(15,1.9,1);
 		%TEXTOS
-		\node[scale=0.65] at (16.625,1.98) {Y};
-		\node[scale=0.65] at (16.625,1.7) {edad ósea estimada};
+		\node[scale=0.65] at (15.65,1.98) {Y};
+		\node[scale=0.65] at (15.65,1.7) {edad ósea estimada};
 		\node[scale=1] at (5.75,0.68) {\ding{115}};
 		\node[scale=0.75] at (5.7,0.35) {salida rn50 1000};
 		\node[scale=1] at (7.75,0.68) {\ding{115}};
 		\node[scale=0.75] at (7.8,0.35) {densa 1000 relu};
 		\node[scale=1] at (8.95,3.1) {\ding{116}};
-		\node[scale=0.75] at (8.95,3.4) {dropout 0,2};
+		\node[scale=0.75] at (8.95,3.4) {dropout 0.2};
 		\node[scale=1] at (10.1,0.68) {\ding{115}};
 		\node[scale=0.75] at (10.1,0.35) {densa 1000 relu};
 		\node[scale=1] at (11.22,3.1) {\ding{116}};
-		\node[scale=0.75] at (11.25,3.4) {dropout 0,2};
+		\node[scale=0.75] at (11.25,3.4) {dropout 0.2};
 		\node[scale=1] at (12.35,0.9) {\ding{115}};
 		\node[scale=0.75] at (12.4,0.6) {densa 240 relu};
 		\node[scale=1] at (13.457,2.8) {\ding{116}};
-		\node[scale=0.75] at (13.4,3.1) {dropout 0,1};
-		\node[scale=1] at (14.75,1.1) {\ding{115}};
-		\node[scale=0.75] at (14.9,0.8) {densa 1 regresión};
+		\node[scale=0.75] at (13.4,3.1) {densa 1 relu};
+		%\node[scale=1] at (14.75,1.1) {\ding{115}};
+		%\node[scale=0.75] at (14.9,0.8) {densa 1 regresión};
 		\node[scale=1] at (4.2,3.2) {ResNet-50};
 		\node[scale=1.4] at (3.5,4.5) {Convolución};
-		\node[scale=1.4] at (11,4.5) {Capas totalmente conectadas};
+		\node[scale=1.4] at (10,4.5) {Capas totalmente conectadas};
 		\node[inner sep=0pt] (russell) at (3.35,3.75)
     {\includegraphics[width=4.5cm,height=0.25cm]{misc/imgLlave.png}};
-		\node[inner sep=0pt] (russell) at (10.6,3.75)
-    {\includegraphics[width=10cm,height=0.25cm]{misc/imgLlave.png}};
+		\node[inner sep=0pt] (russell) at (10,3.75)
+    {\includegraphics[width=9cm,height=0.25cm]{misc/imgLlave.png}};
 	\end{tikzpicture}
 \end{adjustbox}
 \end{center}
-
-
+ \caption{Sistema propuesto especializado en género}
+  \end{subfigure}%
+\\
+\\
+\\
+\begin{subfigure}{.5\textwidth}
+  \centering
 \begin{center}
 \begin{adjustbox}{width=\columnwidth}
 	\begin{tikzpicture}[scale = 1]	
@@ -411,23 +509,23 @@ abbreviations in the title or heads unless they are unavoidable.
 		\draw[thick,-](14.25,3,1)--(14.25,1.5,1);
 		\draw[thick,-](14.25,1.5,1)--(14,1.5,1);
 		%FLECHA
-		\draw[thick,->](14.35,2.3,1)--(14.9,2.3,1);
+		%\draw[thick,->](14.35,2.3,1)--(14.9,2.3,1);
 		%DECIMO RECTANGULO 
-		\draw[thick,-](15,1.7,1)--(15,2.8,1);
-		\draw[thick,-](15,2.8,1)--(15.25,2.8,1);
-		\draw[thick,-](15.25,2.8,1)--(15.25,1.7,1);
-		\draw[thick,-](15.25,1.7,1)--(15,1.7,1);
+		%\draw[thick,-](15,1.7,1)--(15,2.8,1);
+		%\draw[thick,-](15,2.8,1)--(15.25,2.8,1);
+		%\draw[thick,-](15.25,2.8,1)--(15.25,1.7,1);
+		%\draw[thick,-](15.25,1.7,1)--(15,1.7,1);
 		%FLECHA HACERLA DOBLE
-		\node[inner sep=0pt] (russell) at (15.25,1.88)
+		\node[inner sep=0pt] (russell) at (14.27,1.88)
     {\includegraphics[scale=0.04]{misc/imgArrowOutline.png}};
 		%ONCEAVO RECTANGULO 
-		\draw[thick,-](16,1.9,1)--(16,2.6,1);
-		\draw[thick,-](16,2.6,1)--(18,2.6,1);
-		\draw[thick,-](18,2.6,1)--(18,1.9,1);
-		\draw[thick,-](18,1.9,1)--(16,1.9,1);
+		\draw[thick,-](15,1.9,1)--(15,2.6,1);
+		\draw[thick,-](15,2.6,1)--(17,2.6,1);
+		\draw[thick,-](17,2.6,1)--(17,1.9,1);
+		\draw[thick,-](17,1.9,1)--(15,1.9,1);
 		%TEXTOS
-		\node[scale=0.65] at (16.625,1.98) {Y};
-		\node[scale=0.65] at (16.625,1.7) {edad ósea estimada};
+		\node[scale=0.65] at (15.6,1.98) {Y};
+		\node[scale=0.65] at (15.6,1.7) {edad ósea estimada};
 		\node[scale=1.4] at (3.2,0.25) {Género};
 		\node[scale=1.4] at (3.2,-0.5) {M/F};
 		\node[scale=1] at (5.6,-0.85) {\ding{115}};
@@ -439,193 +537,157 @@ abbreviations in the title or heads unless they are unavoidable.
 		\node[scale=1] at (8.5,0.68) {\ding{115}};
 		\node[scale=0.75] at (8.5,0.35) {densa 1000 relu};
 		\node[scale=1] at (9.53,3.1) {\ding{116}};
-		\node[scale=0.75] at (9.53,3.4) {dropout 0,2};
+		\node[scale=0.75] at (9.53,3.4) {dropout 0.2};
 		\node[scale=1] at (10.6,0.68) {\ding{115}};
 		\node[scale=0.75] at (10.6,0.35) {densa 1000 relu};
 		\node[scale=1] at (11.63,3.1) {\ding{116}};
-		\node[scale=0.75] at (11.63,3.4) {dropout 0,2};
+		\node[scale=0.75] at (11.63,3.4) {dropout 0.2};
 		\node[scale=1] at (12.7,0.9) {\ding{115}};
 		\node[scale=0.75] at (12.7,0.6) {densa 240 relu};
 		\node[scale=1] at (13.73,2.8) {\ding{116}};
-		\node[scale=0.75] at (13.73,3.1) {dropout 0,1};
-		\node[scale=1] at (14.75,1.1) {\ding{115}};
-		\node[scale=0.75] at (14.9,0.8) {densa 1 regresión};
+		\node[scale=0.75] at (13.73,3.1) {densa 1 relu};
+		%\node[scale=1] at (14.75,1.1) {\ding{115}};
+		%\node[scale=0.75] at (14.9,0.8) {densa 1 regresión};
 		\node[scale=1] at (4.2,4.45) {ResNet-50};
 		\node[scale=1.4] at (3.5,5.75) {Convolución};
-		\node[scale=1.4] at (11,5.75) {Capas totalmente conectadas};
+		\node[scale=1.4] at (10,5.75) {Capas totalmente conectadas};
 		\node[inner sep=0pt] (russell) at (3.35,5)
     {\includegraphics[width=4.5cm,height=0.25cm]{misc/imgLlave.png}};
-		\node[inner sep=0pt] (russell) at (10.6,5)
-    {\includegraphics[width=10cm,height=0.25cm]{misc/imgLlave.png}};
+		\node[inner sep=0pt] (russell) at (10,5)
+    {\includegraphics[width=8.5cm,height=0.25cm]{misc/imgLlave.png}};
 	\end{tikzpicture}
 \end{adjustbox}
 \end{center}
-\begin{itemize}
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as ``3.5-inch disk drive''.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: ``Wb/m\textsuperscript{2}'' or ``webers per square meter'', not ``webers/m\textsuperscript{2}''. Spell out units when they appear in text: ``. . . a few henries'', not ``. . . a few H''.
-\item Use a zero before decimal points: ``0.25'', not ``.25''. Use ``cm\textsuperscript{3}'', not ``cc''.)
-\end{itemize}
+ \caption{Sistema propuesto generalizado para ambos géneros}
+  \end{subfigure}
+   \caption{Sistemas propuestos}
+   \label{fig:sistemas}
+\end{figure}
+
 
 \section{Resultados del experimento}
-Number equations consecutively. To make your 
-equations more compact, you may use the solidus (~/~), the exp function, or 
-appropriate exponents. Italicize Roman symbols for quantities and variables, 
-but not Greek symbols. Use a long dash rather than a hyphen for a minus 
-sign. Punctuate equations with commas or periods when they are part of a 
-sentence, as in:
-\begin{equation}
-a+b=\gamma\label{eq}
-\end{equation}
-
-Be sure that the 
-symbols in your equation have been defined before or immediately following 
-the equation. Use ``\eqref{eq}'', not ``Eq.~\eqref{eq}'' or ``equation \eqref{eq}'', except at 
-the beginning of a sentence: ``Equation \eqref{eq} is . . .''
+Para los experimentos realizados se ha calculado el MAE resultante en cada uno de los sistemas propuestos con un conjunto de datos de radiografías masculinas y/o femeninas según corresponda. Los resultados se muestran en el Cuadro~\ref{table:tablaResultados}. En cada fila se muestran los MAE en meses resultantes para cada sistema. La primer columna especifica el sistema utilizado. Segunda columna el MAE resultante para el conjunto de radiografías femeninas. Tercer columna el MAE resultante para el conjunto de radiografías masculinas.
+Puede observarse que el sistema generalizado obtiene mejores resultados para ambos conjuntos de datos. El sistema generalizado presenta mayor precisión con respecto al sistema especializado en radiografías femeninas en \textasciitilde{}1.066 meses. También presenta mayor presición con respecto al sistema especializado en radiografías masculinas en \textasciitilde{}0.571 meses.
+\begin{table}[]
+\centering
+\resizebox{.48\textwidth}{!}{%
+\begin{tabular}{l|>{\centering\arraybackslash}p{1in}>{\centering\arraybackslash}m{1in}ll}
+ 							&Femeninas	&Masculinas \\ \hline
+ Generalizado				&9.326	&9.120	\\ \hline
+ Especializado Femeninas	&10.392	&-  		\\ \hline
+ Especializado Masculinas	&-			&9.691 
+\end{tabular}
+}
+\caption{MAE en meses de los sistemas de acuerdo al género de radiografía utilizado}
+\label{table:tablaResultados}
+\end{table}
 
 \section{Conclusiones y Trabajo Futuro}
 
-Please use ``soft'' (e.g., \verb|\eqref{Eq}|) cross references instead
-of ``hard'' references (e.g., \verb|(1)|). That will make it possible
-to combine sections, add equations, or change the order of figures or
-citations without having to go through the file line by line.
-
-Please don't use the \verb|{eqnarray}| equation environment. Use
-\verb|{align}| or \verb|{IEEEeqnarray}| instead. The \verb|{eqnarray}|
-environment leaves unsightly spaces around relation symbols.
-
-Please note that the \verb|{subequations}| environment in {\LaTeX}
-will increment the main equation counter even when there are no
-equation numbers displayed. If you forget that, you might write an
-article in which the equation numbers skip from (17) to (20), causing
-the copy editors to wonder if you've discovered a new method of
-counting.
-
-{\BibTeX} does not work by magic. It doesn't get the bibliographic
-data from thin air but from .bib files. If you use {\BibTeX} to produce a
-bibliography you must send the .bib files. 
-
-{\LaTeX} can't read your mind. If you assign the same label to a
-subsubsection and a table, you might find that Table I has been cross
-referenced as Table IV-B3. 
-
-{\LaTeX} does not have precognitive abilities. If you put a
-\verb|\label| command before the command that updates the counter it's
-supposed to be using, the label will pick up the last counter to be
-cross referenced instead. In particular, a \verb|\label| command
-should not go before the caption of a figure or a table.
-
-Do not use \verb|\nonumber| inside the \verb|{array}| environment. It
-will not stop equation numbers inside \verb|{array}| (there won't be
-any anyway) and it might stop a wanted equation number in the
-surrounding equation.
+En esta sección se presentan conclusiones sobre la experimentación realizada y pasos a seguir para aumentar la precisión de los sistemas tratados.
 
 \subsection{Conclusiones}
-\begin{itemize}
-\item The word ``data'' is plural, not singular.
-\item The subscript for the permeability of vacuum $\mu_{0}$, and other common scientific constants, is zero with subscript formatting, not a lowercase letter ``o''.
-\item In American English, commas, semicolons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an ``inset'', not an ``insert''. The word alternatively is preferred to the word ``alternately'' (unless you really mean something that alternates).
-\item Do not use the word ``essentially'' to mean ``approximately'' or ``effectively''.
-\item In your paper title, if the words ``that uses'' can accurately replace the word ``using'', capitalize the ``u''; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones ``affect'' and ``effect'', ``complement'' and ``compliment'', ``discreet'' and ``discrete'', ``principal'' and ``principle''.
-\item Do not confuse ``imply'' and ``infer''.
-\item The prefix ``non'' is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the ``et'' in the Latin abbreviation ``et al.''.
-\item The abbreviation ``i.e.'' means ``that is'', and the abbreviation ``e.g.'' means ``for example''.
-\end{itemize}
+Nuestra motivación en esta experimentación fue evaluar los diferentes comportamientos que puede presentar una red neuronal de acuerdo a variaciones en el conjunto de datos de entrada como así también los parámetros utilizados en la misma. Se han presentado los resultados obtenidos sobre los sistemas propuestos. Se ha observado que un sistema que acepte ambos géneros ha obtenido mayor precisión. Sin embargo, la pequeña diferencia en precisión observada al compararlo con los sistemas especializados da lugar a pensar mejoras que podrían disminuir tal diferencia. Además, se han desarrollado arquitecturas para la extracción de patrones y estimación de edad de una radiografía de mano y muñeca pediátrica que podría ser de gran utilidad para aquellas personas interesadas en abordar problemáticas similares, como así también en el ámbito de la medicina a través de su implementación en instituciones de salud, como Hospitales o Sanatorios, para asistir en la labor de pediátras, endocrinólogos, radiólogos y/u otros especialistas. 
 
 
 \subsection{Trabajo Futuro}
-\textbf{The class file is designed for, but not limited to, six authors.} A 
-minimum of one author is required for all conference articles. Author names 
-should be listed starting from left to right and then moving down to the 
-next line. This is the author sequence that will be used in future citations 
-and by indexing services. Names should not be listed in columns nor group by 
-affiliation. Please keep your affiliations as succinct as possible (for 
-example, do not differentiate among departments of the same organization).
+En una segunda fase de experimentación el desafío se centra en aumentar la precisión de los sistemas. El módulo de preprocesamiento actual ha probado su utilidad aumentando la precisión de los modelos en 0,2 meses. En una segunda fase se reemplazará el módulo por una red neuronal que realice las mismas funciones con mayor precisión, lo que se estima que disminuirá el error de los modelos. Además, se continuará experimentando variaciones estructurales en el etapa de capas totalmente conectadas, como así también variaciones en la etapa convolucional. En cuanto al conjunto de datos, se aplicarán técnicas de aumento de datos (data augmentation) para incrementar la cantidad de radiografías con las que sería posible entrenar los sistemas.
 
 
 \begin{thebibliography}{00}
 \bibitem{AproachToSkeletalMaturation} 
-Zerin JM, Hernandez RJ. 
+Zerin, J. M., \& Hernandez, R. J. (1991). 
 \textit{Approach to skeletal maturation}. 
-Hand Clin 1991; 7:53–62
+Hand clinics, 7(1), 53-62.
 
 \bibitem{GP} 
-Greulich, W.W., Pyle, S.I.
+Greulich, W. W., Pyle, S. I., \& Todd, T. W. (1959).
 \textit{Radiographic atlas of skeletal development of the hand and wrist}. 
-The American Journal of the Medical Sciences 238(3), 393, 1959
+(Vol. 2, pp. 150-159). Stanford: Stanford university press.
 
 \bibitem{TW3} 
-Tanner JM, Healy MJ, Goldstein H, Cameron N.
-\textit{Assessment of skeletal maturity and prediction of adult height (TW3 method), 3rd ed}. 
-London, UK: Saunders Company, 2001
+Tanner, J. M., Healy, M. R. J., Goldstein, H., \& Cameron, N. (2001).
+\textit{Assessment of skeletal maturity and prediction of adult height (TW3 method)}. 
+WB Saunders, London, 243-254.
 
 \bibitem{GP_variability} 
-Berst MJ, Dolan L, Bogdanowicz MM, Stevens MA, Chow S, Brandser EA.
+Berst, M. J., Dolan, L., Bogdanowicz, M. M., Stevens, M. A., Chow, S., \& Brandser, E. A. (2001).
 \textit{Effect of knowledge of chronologic age on the variability of pediatric bone age determined using the Greulich and Pyle standards}. 
-AJR 2001; 176:507–510
+American Journal of Roentgenology, 176(2), 507-510.
 
 \bibitem{DeepLearningInBiology} 
-Ching, T., Himmelstein, D.S., Beaulieu-Jones, B.K., Kalinin, A.A., Do, B.T., Way, G.P., Ferrero, E., Agapow, P.M., Xie, W., Rosen, G.L., et al.
+Ching, T., Himmelstein, D. S., Beaulieu-Jones, B. K., Kalinin, A. A., Do, B. T., Way, G. P., ... \& Xie, W. (2018).
 \textit{Opportunities and obstacles for deep learning in biology and medicine}.
-bioRxiv p. 142760 (2017)
+Journal of The Royal Society Interface, 15(141), 20170387.
 
 \bibitem{DeepLearning} 
-LeCun Y, Bengio Y, Hinton G.
+LeCun, Y., Bengio, Y., \& Hinton, G. (2015).
 \textit{Deep learning}.
-Nature 2015; 521:436–444
+Nature, 521(7553), 436.
 
 \bibitem{DeepLearningInDiabetics}
-Rakhlin, A.
-\textit{Diabetic retinopathy detection through integration of deep learning classification framework}.
-bioRxiv p. 225508 (2017)
+Rakhlin, A. (2018).
+\textit{Diabetic Retinopathy detection through integration of Deep Learning classification framework}.
+bioRxiv, 225508.
 
 \bibitem{DeepLearningInHeartDiseases}
-Korshunova, I.
+Korshunova, I. (2017).
 \textit{Diagnosing heart diseases with deep neural networks}.
-\\\texttt{\url{https://irakorshunova.github.io/2016/03/15/heart.html}} (2016), online; accedido 29 de Julio de 2017
-
+\\\texttt{\url{https://irakorshunova.github.io/2016/03/15/heart.html}}, accedido 29 de Julio de 2017.
 
 \bibitem{DeepLearningLungCancer}
-Daniel Hammack and Julian de Wit.
+Daniel Hammack and Julian de Wit. (2017)
 \textit{2017 Data Science Bowl, Predicting Lung Cancer: 2nd place solution write-up}.
-\\\texttt{\url{http://blog.kaggle.com/2017/06/29/2017-data-science-bowl-predicting-lung-cancer-2nd-place-solution-write-up-daniel-hammack-and-julian-de-wit/}} (2017), online; accedido 29 de Julio de 2017
+\\\texttt{\url{http://blog.kaggle.com/2017/06/29/2017-data-science-bowl-predicting-lung-cancer-2nd-place-solution-write-up-daniel-hammack-and-julian-de-wit/}}, accedido 29 de Julio de 2017.
 
 \bibitem{DeepLearningAssesingSkeletalMaturity1}
-Larson, D.B., Chen, M.C., Lungren, M.P., Halabi, S.S., Stence, N.V., Langlotz, C.P.
+Larson, D. B., Chen, M. C., Lungren, M. P., Halabi, S. S., Stence, N. V., \& Langlotz, C. P. (2017).
 \textit{Performance of a deep-learning neural network model in assessing skeletal maturity on pediatric hand radiographs}.
-Radiology p. 170236 (2017)
+Radiology, 287(1), 313-322.
 
 \bibitem{DeepLearningAssesingSkeletalMaturity2}
-Lee, H., Tajmir, S., Lee, J., Zissen, M., Yeshiwas, B.A., Alkasab, T.K., Choy, G., Do, S.
+Lee, H., Tajmir, S., Lee, J., Zissen, M., Yeshiwas, B. A., Alkasab, T. K., ... \& Do, S. (2017).
 \textit{Fully automated deep learning system for bone age assessment}.
-Journal of Digital Imaging pp. 1–15 (2017)
+Journal of digital imaging, 30(4), 427-441.
 
 \bibitem{DeepLearningAssesingSkeletalMaturity3}
-Spampinato, C., Palazzo, S., Giordano, D., Aldinucci, M., Leonardi, R.
+Spampinato, C., Palazzo, S., Giordano, D., Aldinucci, M., \& Leonardi, R. (2017).
 \textit{Deep learning for automated skeletal bone age assessment in X-ray images}.
-Medical image analysis 36, 41–51 (2017)
+Medical image analysis, 36, 41-51.
 
 \bibitem{RSNAChallenge}
 \textit{RSNA Pediatric Bone Age Challenge}.
-\\\texttt{\url{http://rsnachallenges.cloudapp.net/competitions/4}} (2017), online; accedido 29 de julio de 2017
+\\\texttt{\url{http://rsnachallenges.cloudapp.net/competitions/4}}, accedido 29 de julio de 2017.
 
 \bibitem{RSNADataSet}
-Stanford University Artificial Intelligence in Medicine \& Imaging
+Stanford University Artificial Intelligence in Medicine \& Imaging (2017).
 \textit{Bone age images used in the 2017 RSNA bone age challenge competition}.
-\\\texttt{\url{https://aimi.stanford.edu/available-labeled-medical-datasets}} 
-(2017), online; accedido 29 de julio de 2017
-
+\\\texttt{\url{https://aimi.stanford.edu/available-labeled-medical-datasets}}, accedido 29 de julio de 2017.
 
 \bibitem{AtlasMedicina}
-Gilroy, A.M., MacPherson B.R., Ross L.M., Schünke M., Schulte E., Schumacher U., Voll M., Wesker K.
+Gilroy, A.M., MacPherson B.R., Ross L.M., Schünke M., Schulte E., Schumacher U., Voll M., \& Wesker K. (2008).
 \textit{Prometheus. Atlas de Anatomía}.
-pp 298, 2008
+pp 298.
+
+\bibitem{ResNet}
+He, K., Zhang, X., Ren, S., \& Sun, J. (2016). 
+\textit{Deep residual learning for image recognition}.
+In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 770-778).
+
+\bibitem{Imagenet}
+Deng, J., Dong, W., Socher, R., Li, L. J., Li, K., \& Fei-Fei, L. (2009, June). 
+\textit{Imagenet: A large-scale hierarchical image database}. In Computer Vision and Pattern Recognition, 2009. CVPR 2009. IEEE Conference on (pp. 248-255). Ieee.
+
+
+\bibitem{InceptionV3}
+Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., \& Wojna, Z. (2016). 
+\textit{Rethinking the inception architecture for computer vision}. In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 2818-2826).
+
+
+\bibitem{Xception}
+Chollet, F. (2017).
+\textit{Xception: Deep learning with depthwise separable convolutions}. arXiv preprint, 1610-02357.
 \end{thebibliography}
-
-
 
 
 \end{document}
