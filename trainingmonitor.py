@@ -7,13 +7,12 @@ import os
 
 
 class TrainingMonitor(BaseLogger):
-
-    def __init__(self, figPath, jsonPath=None, startAt=0):
+    def __init__(self, figPath, startAt=0):
         # store the output path for the figure, the path to the JSON
         # serialized file, and the starting epoch
         super(TrainingMonitor, self).__init__()
         self.figPath = figPath
-        self.jsonPath = jsonPath
+        self.jsonPath = os.path.sep.join([figPath, "female_and_male.json"])
         self.startAt = startAt
 
     def on_train_begin(self, logs={}):
@@ -29,7 +28,7 @@ class TrainingMonitor(BaseLogger):
                     # trim any entries that are past the starting
                     # epoch
                     for k in self.H.keys():
-                        self.H[k] = self.H[k][:self.startAt]
+                        self.H[k] = self.H[k][: self.startAt]
 
     def on_epoch_end(self, epoch, logs={}):
         # loop over the logs and update the loss, accuracy, etc.
@@ -49,16 +48,26 @@ class TrainingMonitor(BaseLogger):
         if len(self.H["loss"]) > 1:
             # plot the training loss and accuracy
             N = np.arange(0, len(self.H["loss"]))
+            # plot the training loss and accuracy
             plt.style.use("ggplot")
             plt.figure()
+
             plt.plot(N, self.H["loss"], label="train_loss")
             plt.plot(N, self.H["val_loss"], label="val_loss")
-            plt.plot(N, self.H["acc"], label="train_acc")
-            plt.plot(N, self.H["val_acc"], label="val_acc")
-            plt.title("Training Loss and Accuracy [Epoch {}]".format(len(self.H["loss"])))
+            plt.title("Training Loss [Epoch {}]".format(len(self.H["loss"])))
             plt.xlabel("Epoch #")
-            plt.ylabel("Loss/Accuracy")
-            plt.legend()
+            plt.ylabel("Loss")
+            plt.legend(loc="upper left")
             # save the figure
-            plt.savefig(self.figPath)
+            plt.savefig(os.path.sep.join([self.figPath, "history_loss.png"]))
+            plt.close()
+
+            plt.plot(N, self.H["mean_absolute_error"], label="train_mean")
+            plt.plot(N, self.H["val_mean_absolute_error"], label="val_mean")
+            plt.title("Training Absolute Error [Epoch {}]".format(len(self.H["loss"])))
+            plt.xlabel("Epoch #")
+            plt.ylabel("Absolute Error")
+            plt.legend(loc="upper left")
+            # save the figure
+            plt.savefig(os.path.sep.join([self.figPath, "history_mean.png"]))
             plt.close()
