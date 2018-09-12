@@ -22,7 +22,10 @@ GENDER_TYPE = "female_and_male"
 # GENDER_TYPE = "female"
 # GENDER_TYPE = "male"
 
+# Run evaluate method with only test data
 ONLY_TEST_IMAGE = True
+
+SHOW_PREDICT_TEST_DATA = False
 
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
@@ -118,26 +121,29 @@ print("Predict")
 # make a prediction
 ynew = model.predict(input_values)
 
-for i in range(len(ynew)):
-    print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
-
-# summarize history for mean
-# plt.plot(age_final, label="Real")
-# plt.plot(ynew, label="Predict")
-# plt.title("Age")
-# plt.xlabel("Index of image")
-# plt.ylabel("Age")
-# plt.legend(["Real", "Predict"], loc="upper left")
-# plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
-# plt.show()
+if SHOW_PREDICT_TEST_DATA:
+    for i in range(len(ynew)):
+        print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
 
 plt.style.use("ggplot")
+
+# summarize history for mean
 _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
-ax1.plot(ynew, "r.", label="predictions")
-ax1.plot(age_final, "b.", label="actual")
-ax1.set_title("Age")
-ax1.set_xlabel("Index of image")
-ax1.set_ylabel("Age")
+ax1.plot(age_final, ynew, "r.", label="predictions")
+ax1.plot(age_final, age_final, "b-", label="actual")
+ax1.set_title("Boone age for test data")
+ax1.set_xlabel("Actual Age (Months)")
+ax1.set_ylabel("Predicted Age (Months)")
 ax1.legend(["Real", "Predict"], loc="upper left")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_1.png"))
+plt.show()
+
+_, ax2 = plt.subplots(1, 1, figsize=(24, 24))
+ax2.plot(ynew, "r.", label="predictions")
+ax2.plot(age_final, "b.", label="actual")
+ax2.set_title("Boone age for test data")
+ax2.set_xlabel("Actual Age (Months)")
+ax2.set_ylabel("Predicted Age (Months)")
+ax2.legend(["Real", "Predict"], loc="upper left")
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_2.png"))
 plt.show()
