@@ -22,10 +22,8 @@ GENDER_TYPE = "female_and_male"
 # GENDER_TYPE = "female"
 # GENDER_TYPE = "male"
 
-# Run evaluate method with only test data
-ONLY_TEST_IMAGE = True
-
-SHOW_PREDICT_TEST_DATA = False
+# Run evaluate model with all data set
+EVALUATE_WITH_ALL_DATA_SET = False
 
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
@@ -44,14 +42,22 @@ def generate_graph(x_img, x_gdr, y_age, title):
     except:
         pass
 
+    print("Evaluate model for", title.lower())
+    score = model.evaluate(input_values, y_age, batch_size=BATCH_SIZE, verbose=1)
+    print("Test loss:", score[0])
+    print("Test MAE:", score[1])
+
+    print("Predicted", title.lower())
+
     # make a prediction
     y_new = model.predict(input_values)
 
-    if SHOW_PREDICT_TEST_DATA:
+    if SHOW_PREDICT_DATA:
         print("Predict for test data")
         for i in range(len(y_new)):
             print("ID:", i, "Original:", y_age[i], "Predict:", y_new[i][0])
 
+    print("\nGenerate graphics...")
     # summarize history for mean
     _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
     ax1.plot(y_age, y_new, "r.", label="predictions")
@@ -148,15 +154,11 @@ if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "male":
     )
 
 print("Joining train, valid and test dataset.")
-if ONLY_TEST_IMAGE:
-    img_final = img_test
-    gdr_final = gdr_test
-    age_final = age_test
-else:
-    img_final = np.concatenate((img_train, img_valid, img_test), axis=0)
-    gdr_final = np.concatenate((gdr_train, gdr_valid, gdr_test), axis=0)
-    age_final = np.concatenate((age_train, age_valid, age_test), axis=0)
+img_final = np.concatenate((img_train, img_valid, img_test), axis=0)
+gdr_final = np.concatenate((gdr_train, gdr_valid, gdr_test), axis=0)
+age_final = np.concatenate((age_train, age_valid, age_test), axis=0)
 
+print("Loading model from disk")
 # load YAML and create model
 yaml_file = open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "r")
 loaded_model_yaml = yaml_file.read()
@@ -164,33 +166,16 @@ yaml_file.close()
 model = model_from_yaml(loaded_model_yaml)
 # load weights into new model
 model.load_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
-print("Loaded model from disk")
 
 # printing a model summary to check what we constructed
 print(model.summary())
 
-# I think there is another way to do this
-input_values = img_final
-try:
-    if model.get_layer(name="gdr_input") is not None:
-        print("Model with gender")
-        input_values = [img_final, gdr_final]
-except:
-    pass
-
 # evaluate loaded model on test data
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
-print("Evaluate model...")
-score = model.evaluate(input_values, age_final, batch_size=BATCH_SIZE, verbose=1)
 
-print("Test loss:", score[0])
-print("Test MAE:", score[1])
+if EVALUATE_WITH_ALL_DATA_SET:
+    generate_graph(img_final, gdr_final, age_final, "Boone age for all data set")
 
-print("\nGenerate graphics...")
-
-print("Predicted age on test data")
-generate_graph(img_test, gdr_test, age_test, "Boone age for test data")
-print("Predicted age on train data")
-generate_graph(img_train, gdr_train, age_train, "Boone age for train data")
-print("Predicted age on valid data")
-generate_graph(img_valid, gdr_valid, age_valid, "Boone age for valid data")
+generate_graph(img_test, gdr_test, age_test, "Boone age for test data set")
+generate_graph(img_train, gdr_train, age_train, "Boone age for train data set")
+generate_graph(img_valid, gdr_valid, age_valid, "Boone age for valid data set")

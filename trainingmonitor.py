@@ -46,9 +46,8 @@ class TrainingMonitor(BaseLogger):
         # ensure at least two epochs have passed before plotting
         # (epoch starts at zero)
         if len(self.H["loss"]) > 1:
-            # plot the training loss and accuracy
             N = np.arange(0, len(self.H["loss"]))
-            # plot the training loss and accuracy
+            # plot the training loss
             plt.style.use("ggplot")
             plt.figure()
 
