@@ -31,7 +31,9 @@ PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "r+") as f:
+    with h5py.File(
+        os.path.join(__location__, "packaging-dataset", file_name), "r+"
+    ) as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
         f_age = f["age"][()]
@@ -120,11 +122,21 @@ for i in range(len(ynew)):
     print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
 
 # summarize history for mean
-plt.plot(age_final, label="Real")
-plt.plot(ynew, label="Predict")
-plt.title("Age")
-plt.xlabel("Index")
-plt.ylabel("Age")
-plt.legend(["Real", "Predict"], loc="upper left")
+# plt.plot(age_final, label="Real")
+# plt.plot(ynew, label="Predict")
+# plt.title("Age")
+# plt.xlabel("Index of image")
+# plt.ylabel("Age")
+# plt.legend(["Real", "Predict"], loc="upper left")
+# plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
+# plt.show()
+
+_, ax1 = plt.subplots(1, 1, figsize=(6, 6))
+ax1.plot(ynew, "ro", label="predictions")
+ax1.plot(age_final, "b.", label="actual")
+ax1.set_title("Age")
+ax1.set_xlabel("Index of image")
+ax1.set_ylabel("Age")
+ax1.legend(["Real", "Predict"], loc="upper left")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
 plt.show()
