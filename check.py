@@ -131,8 +131,9 @@ for i in range(len(ynew)):
 # plt.savefig(os.path.join(PATH_SAVE_MODEL, "predict_age.png"))
 # plt.show()
 
-_, ax1 = plt.subplots(1, 1, figsize=(6, 6))
-ax1.plot(ynew, "ro", label="predictions")
+plt.style.use("ggplot")
+_, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+ax1.plot(ynew, "r.", label="predictions")
 ax1.plot(age_final, "b.", label="actual")
 ax1.set_title("Age")
 ax1.set_xlabel("Index of image")
