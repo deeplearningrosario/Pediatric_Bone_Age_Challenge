@@ -112,25 +112,27 @@ except:
 
 # evaluate loaded model on test data
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
+print("Evaluate model...")
 score = model.evaluate(input_values, age_final, batch_size=BATCH_SIZE, verbose=1)
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
 
-print("Predict")
 # make a prediction
 ynew = model.predict(input_values)
 
 if SHOW_PREDICT_TEST_DATA:
+    print("Predict for test data")
     for i in range(len(ynew)):
         print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
 
+# https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot
 plt.style.use("ggplot")
 
 # summarize history for mean
 _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
 ax1.plot(age_final, ynew, "r.", label="predictions")
-ax1.plot(age_final, age_final, "b-", label="actual")
+ax1.plot(age_final, age_final, "b.", label="actual")
 ax1.set_title("Boone age for test data")
 ax1.set_xlabel("Actual Age (Months)")
 ax1.set_ylabel("Predicted Age (Months)")
@@ -146,4 +148,12 @@ ax2.set_xlabel("Actual Age (Months)")
 ax2.set_ylabel("Predicted Age (Months)")
 ax2.legend(["Real", "Predict"], loc="upper left")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_2.png"))
-plt.show()
+
+_, ax3 = plt.subplots(1, 1, figsize=(24, 24))
+ax3.plot(age_final, ynew, "r.", label="predictions")
+ax3.plot(age_final, age_final, "b-", label="actual")
+ax3.set_title("Boone age for test data")
+ax3.set_xlabel("Actual Age (Months)")
+ax3.set_ylabel("Predicted Age (Months)")
+ax3.legend(["Real", "Predict"], loc="upper left")
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_3.png"))
