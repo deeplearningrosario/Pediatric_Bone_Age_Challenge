@@ -3,7 +3,7 @@
 
 from trainingmonitor import TrainingMonitor
 from keras.applications import InceptionV3, ResNet50, Xception
-from keras.layers import Flatten, Dense, Input, Dropout
+from keras.layers import Flatten, Dense, Input, Dropout, regularizers
 from keras.models import Model
 from keras.utils import plot_model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
@@ -144,15 +144,25 @@ output_gdr_dense = gdr_dense(gdr_input)
 x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
-x = Dense(1256, activation="relu")(x)
+x = Dense(1000, activation="relu")(x)
 x = Dropout(0.35)(x)
 x = Dense(1000, activation="relu")(x)
 
 x1 = Dropout(0.35)(x)
-x1 = Dense(240, activation="relu")(x1)
+x1 = Dense(
+    240,
+    activation="relu",
+    kernel_regularizer=regularizers.l2(0.01),
+    activity_regularizer=regularizers.l1(0.01),
+)(x1)
 
 x2 = Dropout(0.35)(x)
-x2 = Dense(240, activation="relu")(x2)
+x2 = Dense(
+    240,
+    activation="relu",
+    kernel_regularizer=regularizers.l2(0.01),
+    activity_regularizer=regularizers.l1(0.01),
+)(x2)
 
 x = keras.layers.concatenate([x1, x2])
 # x = Dropout(0.2)(x)
@@ -268,7 +278,7 @@ print(history.history.keys())
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
-plt.figure(figsize=(24, 24))
+# plt.figure(figsize=(24, 24))
 
 plt.plot(history.history["loss"], label="loss")
 plt.plot(history.history["val_loss"], label="val_loss")
