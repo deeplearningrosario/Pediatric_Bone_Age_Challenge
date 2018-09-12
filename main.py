@@ -24,7 +24,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 # network and training
 EPOCHS = 50
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001, amsgrad=True)
@@ -150,13 +150,9 @@ x = Dense(1000, activation="relu")(x)
 
 x1 = Dropout(0.35)(x)
 x1 = Dense(240, activation="relu")(x1)
-x1 = Dropout(0.2)(x1)
-x1 = Dense(120, activation="relu")(x1)
 
 x2 = Dropout(0.35)(x)
 x2 = Dense(240, activation="relu")(x2)
-x2 = Dropout(0.2)(x2)
-x2 = Dense(120, activation="relu")(x2)
 
 x = keras.layers.concatenate([x1, x2])
 # x = Dropout(0.2)(x)
@@ -279,7 +275,7 @@ plt.plot(history.history["val_loss"], label="val_loss")
 plt.title("Training Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
 plt.close()
 
@@ -288,7 +284,7 @@ plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
 plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
 plt.close()
 
@@ -298,7 +294,7 @@ plt.plot(history.history["val_loss"], label="val_loss")
 plt.title("model loss")
 plt.ylabel("Loss")
 plt.xlabel("Epoch")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.show()
 
 # summarize history for mean
@@ -307,7 +303,7 @@ plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
 plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.show()
 
 # Reduce learning rate
@@ -315,5 +311,5 @@ plt.plot(history.history["lr"], label="Reduce learning rate")
 plt.title("Reduce learning rate")
 plt.xlabel("Epoch")
 plt.ylabel("Reduce learning rate")
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 plt.show()
