@@ -31,6 +31,74 @@ SHOW_PREDICT_TEST_DATA = False
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 
 
+def generate_graph(x_img, x_gdr, y_age, title):
+    # https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot
+    plt.style.use("ggplot")
+
+    # I think there is another way to do this
+    input_values = x_img
+    try:
+        if model.get_layer(name="gdr_input") is not None:
+            print("Model with gender")
+            input_values = [x_img, x_gdr]
+    except:
+        pass
+
+    # make a prediction
+    y_new = model.predict(input_values)
+
+    if SHOW_PREDICT_TEST_DATA:
+        print("Predict for test data")
+        for i in range(len(y_new)):
+            print("ID:", i, "Original:", y_age[i], "Predict:", y_new[i][0])
+
+    # summarize history for mean
+    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    ax1.plot(y_age, y_new, "r.", label="predictions")
+    ax1.plot(y_age, y_age, "b.", label="actual")
+    ax1.set_title(title)
+    ax1.set_xlabel("Actual Age (Months)")
+    ax1.set_ylabel("Predicted Age (Months)")
+    ax1.legend(["Real", "Predict"], loc="upper left")
+    plt.savefig(
+        os.path.join(
+            PATH_SAVE_MODEL,
+            "predicted_" + title.lower().replace(" ", "_") + "_graph_1.png",
+        )
+    )
+    plt.show()
+
+    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    ax1.plot(y_age, y_new, "r.", label="predictions")
+    ax1.plot(y_age, y_age, "b-", label="actual")
+    ax1.set_title(title)
+    ax1.set_xlabel("Actual Age (Months)")
+    ax1.set_ylabel("Predicted Age (Months)")
+    ax1.legend(["Real", "Predict"], loc="upper left")
+    plt.savefig(
+        os.path.join(
+            PATH_SAVE_MODEL,
+            "predicted_" + title.lower().replace(" ", "_") + "_graph_1b.png",
+        )
+    )
+    plt.close()
+
+    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    ax1.plot(y_new, "r.", label="predictions")
+    ax1.plot(y_age, "b.", label="actual")
+    ax1.set_title(title)
+    ax1.set_xlabel("Actual Age (Months)")
+    ax1.set_ylabel("Predicted Age (Months)")
+    ax1.legend(["Real", "Predict"], loc="upper left")
+    plt.savefig(
+        os.path.join(
+            PATH_SAVE_MODEL,
+            "predicted_" + title.lower().replace(" ", "_") + "_graph_2.png",
+        )
+    )
+    plt.close()
+
+
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
@@ -115,45 +183,14 @@ model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
 print("Evaluate model...")
 score = model.evaluate(input_values, age_final, batch_size=BATCH_SIZE, verbose=1)
 
-print("\nTest loss:", score[0])
+print("Test loss:", score[0])
 print("Test MAE:", score[1])
 
-# make a prediction
-ynew = model.predict(input_values)
+print("\nGenerate graphics...")
 
-if SHOW_PREDICT_TEST_DATA:
-    print("Predict for test data")
-    for i in range(len(ynew)):
-        print("ID:", i, "Original:", age_final[i], "Predict:", ynew[i][0])
-
-# https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot
-plt.style.use("ggplot")
-
-# summarize history for mean
-_, ax1 = plt.subplots(1, 1, figsize=(24, 24))
-ax1.plot(age_final, ynew, "r.", label="predictions")
-ax1.plot(age_final, age_final, "b.", label="actual")
-ax1.set_title("Boone age for test data")
-ax1.set_xlabel("Actual Age (Months)")
-ax1.set_ylabel("Predicted Age (Months)")
-ax1.legend(["Real", "Predict"], loc="upper left")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_1.png"))
-plt.show()
-
-_, ax2 = plt.subplots(1, 1, figsize=(24, 24))
-ax2.plot(ynew, "r.", label="predictions")
-ax2.plot(age_final, "b.", label="actual")
-ax2.set_title("Boone age for test data")
-ax2.set_xlabel("Actual Age (Months)")
-ax2.set_ylabel("Predicted Age (Months)")
-ax2.legend(["Real", "Predict"], loc="upper left")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_2.png"))
-
-_, ax3 = plt.subplots(1, 1, figsize=(24, 24))
-ax3.plot(age_final, ynew, "r.", label="predictions")
-ax3.plot(age_final, age_final, "b-", label="actual")
-ax3.set_title("Boone age for test data")
-ax3.set_xlabel("Actual Age (Months)")
-ax3.set_ylabel("Predicted Age (Months)")
-ax3.legend(["Real", "Predict"], loc="upper left")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "predicted_age_for_test_data_graph_3.png"))
+print("Predicted age on test data")
+generate_graph(img_test, gdr_test, age_test, "Boone age for test data")
+print("Predicted age on train data")
+generate_graph(img_train, gdr_train, age_train, "Boone age for train data")
+print("Predicted age on valid data")
+generate_graph(img_valid, gdr_valid, age_valid, "Boone age for valid data")
