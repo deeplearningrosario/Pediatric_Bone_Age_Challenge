@@ -28,6 +28,9 @@ EVALUATE_WITH_ALL_DATA_SET = False
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", GENDER_TYPE)
 
+# Show result on terminal
+SHOW_PREDICT_DATA = False
+
 
 def generate_graph(x_img, x_gdr, y_age, title):
     # https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot
@@ -164,11 +167,12 @@ yaml_file = open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "r")
 loaded_model_yaml = yaml_file.read()
 yaml_file.close()
 model = model_from_yaml(loaded_model_yaml)
-# load weights into new model
-model.load_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
 
 # printing a model summary to check what we constructed
 print(model.summary())
+
+# load weights into new model
+model.load_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
 
 # evaluate loaded model on test data
 model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
