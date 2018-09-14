@@ -49,8 +49,8 @@ class TrainingMonitor(BaseLogger):
             N = np.arange(0, len(self.H["loss"]))
             # plot the training loss
             plt.style.use("ggplot")
-            plt.figure()
 
+            plt.figure(figsize=(10, 10))
             plt.plot(N, self.H["loss"], label="train_loss")
             plt.plot(N, self.H["val_loss"], label="val_loss")
             plt.title("Training Loss [Epoch {}]".format(len(self.H["loss"])))
@@ -58,15 +58,28 @@ class TrainingMonitor(BaseLogger):
             plt.ylabel("Loss")
             plt.legend(loc="upper right")
             # save the figure
-            plt.savefig(os.path.sep.join([self.figPath, "history_loss.png"]))
+            plt.savefig(
+                os.path.sep.join([self.figPath, "history_loss.png"]),
+                bbox_inches="tight",
+            )
             plt.close()
 
+            plt.figure(figsize=(10, 10))
             plt.plot(N, self.H["mean_absolute_error"], label="train_mean")
             plt.plot(N, self.H["val_mean_absolute_error"], label="val_mean")
-            plt.title("Training Absolute Error [Epoch {}]".format(len(self.H["loss"])))
+            plt.title(
+                "Training Absolute Error [Epoch {}]\n Train: {} - Val: {}".format(
+                    len(self.H["loss"]),
+                    np.min(self.H["mean_absolute_error"]),
+                    np.min(self.H["val_mean_absolute_error"]),
+                )
+            )
             plt.xlabel("Epoch #")
             plt.ylabel("Absolute Error")
             plt.legend(loc="upper right")
             # save the figure
-            plt.savefig(os.path.sep.join([self.figPath, "history_mean.png"]))
+            plt.savefig(
+                os.path.sep.join([self.figPath, "history_mean.png"]),
+                bbox_inches="tight",
+            )
             plt.close()

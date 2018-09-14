@@ -61,7 +61,7 @@ def generate_graph(x_img, x_gdr, y_age, title):
 
     print("Generate graphics...")
     # summarize history for mean
-    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    _, ax1 = plt.subplots(1, 1, figsize=(10, 10))
     ax1.plot(y_age, y_new, "r.", label="predictions")
     ax1.plot(y_age, y_age, "b.", label="actual")
     ax1.set_title(title)
@@ -72,11 +72,12 @@ def generate_graph(x_img, x_gdr, y_age, title):
         os.path.join(
             PATH_SAVE_MODEL,
             "predicted_" + title.lower().replace(" ", "_") + "_graph_1.png",
-        )
+        ),
+        bbox_inches="tight",
     )
     plt.show()
 
-    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    _, ax1 = plt.subplots(1, 1, figsize=(10, 10))
     ax1.plot(y_age, y_new, "r.", label="predictions")
     ax1.plot(y_age, y_age, "b-", label="actual")
     ax1.set_title(title)
@@ -87,11 +88,12 @@ def generate_graph(x_img, x_gdr, y_age, title):
         os.path.join(
             PATH_SAVE_MODEL,
             "predicted_" + title.lower().replace(" ", "_") + "_graph_1b.png",
-        )
+        ),
+        bbox_inches="tight",
     )
     plt.close()
 
-    _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
+    _, ax1 = plt.subplots(1, 1, figsize=(10, 10))
     ax1.plot(y_new, "r.", label="predictions")
     ax1.plot(y_age, "b.", label="actual")
     ax1.set_title(title)
@@ -102,7 +104,8 @@ def generate_graph(x_img, x_gdr, y_age, title):
         os.path.join(
             PATH_SAVE_MODEL,
             "predicted_" + title.lower().replace(" ", "_") + "_graph_2.png",
-        )
+        ),
+        bbox_inches="tight",
     )
     plt.close()
 
