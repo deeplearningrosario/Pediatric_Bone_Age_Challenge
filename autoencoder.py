@@ -1,9 +1,9 @@
+from keras.datasets import mnist
+from keras import backend as K
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Model
-from keras import backend as K
-from keras.datasets import mnist
-import matplotlib.pyplot as plt
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 
@@ -39,7 +39,7 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     return X_img, x_gender, y_age
 
 
-######################################################################
+####################################################################
 (x_train, _), (x_test, _) = mnist.load_data()
 x_train = x_train.astype("float32") / 255.
 x_test = x_test.astype("float32") / 255.
@@ -49,45 +49,46 @@ x_train = np.reshape(
 x_test = np.reshape(
     x_test, (len(x_test), 28, 28, 1)
 )  # adapt this if using `channels_first` image data format
-######################################################################33
+####################################################################
+
 genderType = "male"
 genderType = "female"
 # x_test, _, _ = readFile(genderType, "testing")
 # x_train, _, _ = readFile(genderType, "validation")
-# input_img = Input(shape=x_train.shape[1:])
 
-input_img = Input(shape=(28, 28, 1))
 ########################### Auto encoder ############################
-x = Conv2D(16, (3, 3), activation="relu", padding="same", name="encoded_0")(input_img)
-x = MaxPooling2D((2, 2), padding="same", name="mp2D_0")(x)
-x = Conv2D(8, (3, 3), activation="relu", padding="same", name="encoded_1")(x)
-x = MaxPooling2D((2, 2), padding="same", name="mp2D_1")(x)
-x = Conv2D(8, (3, 3), activation="relu", padding="same", name="encoded_2")(x)
-encoded = MaxPooling2D((2, 2), padding="same", name="mp2D_2")(x)
+input_img = Input(shape=x_train.shape[1:])
+# input_img = Input(shape=(28, 28, 1))
 
-x = Conv2D(8, (3, 3), activation="relu", padding="same", name="decoded_3")(encoded)
+x = Conv2D(16, (3, 3), activation="relu", padding="same")(input_img)
+x = MaxPooling2D((2, 2), padding="same")(x)
+x = Conv2D(8, (3, 3), activation="relu", padding="same")(x)
+x = MaxPooling2D((2, 2), padding="same")(x)
+x = Conv2D(8, (3, 3), activation="relu", padding="same")(x)
+encoded = MaxPooling2D((2, 2), padding="same")(x)
+
 # at this point the representation is (4, 4, 8) i.e. 128-dimensional
-x = UpSampling2D((2, 2), name="usl2D_0")(x)
-x = Conv2D(8, (3, 3), activation="relu", name="decoded_2")(x)
-x = UpSampling2D((2, 2), name="usl2D_1")(x)
-x = Conv2D(16, (3, 3), activation="relu", name="decoded_1")(x)
-x = UpSampling2D((2, 2), name="usl2D_2")(x)
-decoded = Conv2D(1, (3, 3), activation="sigmoid", padding="same", name="decoded_0")(x)
+
+x = Conv2D(8, (3, 3), activation="relu", padding="same")(encoded)
+x = UpSampling2D((2, 2))(x)
+x = Conv2D(8, (3, 3), activation="relu", padding="same")(x)
+x = UpSampling2D((2, 2))(x)
+x = Conv2D(16, (3, 3), activation="relu")(x)
+x = UpSampling2D((2, 2))(x)
+decoded = Conv2D(1, (3, 3), activation="sigmoid", padding="same")(x)
 
 autoencoder = Model(input_img, decoded)
-autoencoder.compile(optimizer="adadelta", loss="binary_crossentropy")
 print(autoencoder.summary())
+autoencoder.compile(optimizer="adadelta", loss="binary_crossentropy")
 
 autoencoder.fit(
     x_train,
     x_train,
-    epochs=50,
+    epochs=150,
     batch_size=128,
     shuffle=True,
     validation_data=(x_test, x_test),
 )
-
-########################### Auto encoder ############################
 
 decoded_imgs = autoencoder.predict(x_test)
 
