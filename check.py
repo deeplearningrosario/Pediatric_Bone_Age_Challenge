@@ -10,7 +10,7 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-BATCH_SIZE = 35
+BATCH_SIZE = 36
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
@@ -49,6 +49,7 @@ def generate_graph(x_img, x_gdr, y_age, title):
     print("loss:", score[0])
     print("MAE:", score[1])
 
+    print("Generate graphics...")
     print("Predicted", title.lower())
 
     # make a prediction
@@ -59,7 +60,6 @@ def generate_graph(x_img, x_gdr, y_age, title):
         for i in range(len(y_new)):
             print("ID:", i, "Original:", y_age[i], "Predict:", y_new[i][0])
 
-    print("Generate graphics...")
     # summarize history for mean
     _, ax1 = plt.subplots(1, 1, figsize=(10, 10))
     ax1.plot(y_age, y_new, "r.", label="predictions")
