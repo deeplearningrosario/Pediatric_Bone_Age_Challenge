@@ -1,6 +1,5 @@
-from keras.datasets import mnist
-from keras import backend as K
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
+from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from keras.models import Model
 import h5py
 import matplotlib.pyplot as plt
@@ -9,8 +8,13 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-EPOCHS = 10
+EPOCHS = 15
 BATCH_SIZE = 12
+# https://keras.io/optimizers
+OPTIMIZER = Adam(lr=0.001, amsgrad=True)
+# OPTIMIZER = RMSprop()
+# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adagrad(lr=0.05)
 
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
@@ -45,19 +49,19 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 ########################### Auto encoder ############################
 def autoencoder(input_img):
     # output: (224x224)/24.5 input: 224x224
-    x = Conv2D(2048, kernel_size=(3, 3), padding="same", activation="relu")(input_img)
+    x = Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu")(input_img)
     x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)  # 112x112x2048
     # output: 2048x2 input: 56x56x4096
-    x = Conv2D(4096, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = Conv2D(516, kernel_size=(3, 3), activation="relu", padding="same")(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)  # 28x28x4096
     # output: 4096x2 input: 28x28x8192
-    encoded = Conv2D(8192, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    encoded = Conv2D(1024, kernel_size=(3, 3), activation="relu", padding="same")(x)
 
     # output: 4096x2 input: 28x28x8192
-    x = Conv2D(8192, kernel_size=(3, 3), activation="relu", padding="same")(encoded)
+    x = Conv2D(1024, kernel_size=(3, 3), activation="relu", padding="same")(encoded)
     x = UpSampling2D(size=(2, 2))(x)  # 56x56x8192
     # output: 2048x2 input: 56x56x4096
-    x = Conv2D(4096, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = Conv2D(516, kernel_size=(3, 3), activation="relu", padding="same")(x)
     x = UpSampling2D(size=(2, 2))(x)  # 112x112x4096
     # output: 224x224 input: 224x224x1
     decoded = Conv2D(3, kernel_size=(3, 3), padding="same", activation="sigmoid")(x)
@@ -65,25 +69,24 @@ def autoencoder(input_img):
 
 
 ####################################################################
-# (x_train, _), (x_test, _) = mnist.load_data()
-# x_train = x_train.astype("float32") / 255.
-# x_test = x_test.astype("float32") / 255.
-# x_train = np.reshape(x_train, (len(x_train), 28, 28, 1))
-# x_test = np.reshape(x_test, (len(x_test), 28, 28, 1))
-####################################################################
+
+genderType = "female"
+x_train, _, _ = readFile(genderType, "training")
+x_valid, _, _ = readFile(genderType, "validation")
+x_test, _, _ = readFile(genderType, "testing")
 
 genderType = "male"
-genderType = "female"
-x_test, _, _ = readFile(genderType, "testing")
-x_train, _, _ = readFile(genderType, "validation")
+x_train, _, _ = readFile(genderType, "training", x_train)
+x_valid, _, _, = readFile(genderType, "validation", x_valid)
+x_test, _, _ = readFile(genderType, "testing", x_test)
 
 input_img = Input(shape=x_train.shape[1:])
 # input_img = Input(shape=(224, 224, 1))
 
 autoencoder = Model(input_img, autoencoder(input_img))
 print(autoencoder.summary())
-autoencoder.compile(optimizer="adadelta", loss="binary_crossentropy")
-# autoencoder.compile(loss='mean_squared_error', optimizer = RMSprop())
+autoencoder.compile(optimizer=OPTIMIZER, loss="binary_crossentropy")
+# autoencoder.compile(loss="mean_squared_error", optimizer=OPTIMIZER)
 
 autoencoder_train = autoencoder.fit(
     x_train,
@@ -91,12 +94,13 @@ autoencoder_train = autoencoder.fit(
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     shuffle=True,
-    validation_data=(x_test, x_test),
+    validation_data=(x_valid, x_valid),
 )
 
 loss = autoencoder_train.history["loss"]
 val_loss = autoencoder_train.history["val_loss"]
-epochs = range(epochs)
+epochs = range(EPOCHS)
+plt.style.use("ggplot")
 plt.figure()
 plt.plot(epochs, loss, label="Training loss")
 plt.plot(epochs, val_loss, label="Validation loss")
@@ -104,7 +108,7 @@ plt.title("Training and validation loss")
 plt.legend()
 plt.show()
 
-decoded_imgs = autoencoder.predict(x_test)
+decoded_imgs = autoencoder.predict(x_test[10])
 
 n = 10
 plt.figure(figsize=(20, 4))
