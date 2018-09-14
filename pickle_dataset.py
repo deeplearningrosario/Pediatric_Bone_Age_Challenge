@@ -12,13 +12,13 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 500
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
 
 # Usgin for auto-encoder
-GENERATE_IMAGE_FOR_AUTOENCODER = False
+GENERATE_IMAGE_FOR_AUTOENCODER = not False
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
