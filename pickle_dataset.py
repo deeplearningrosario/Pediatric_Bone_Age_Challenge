@@ -237,9 +237,8 @@ def processImage(img_path):
 
     # Resize the images
     img = cv2.resize(img, IMAGE_SIZE)
-    if not GENERATE_IMAGE_FOR_AUTOENCODER:
-        # Return to original colors
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    # Return to original colors
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # Convert the image into an 8 bit array
     return np.asarray(img, dtype=np.float32)
 
