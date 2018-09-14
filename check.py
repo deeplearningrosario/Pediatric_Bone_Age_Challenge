@@ -40,12 +40,11 @@ def generate_graph(x_img, x_gdr, y_age, title):
     input_values = x_img
     try:
         if model.get_layer(name="gdr_input") is not None:
-            print("Model with gender")
             input_values = [x_img, x_gdr]
     except:
         pass
 
-    print("Evaluate model for", title.lower())
+    print("\nEvaluate model for", title.lower())
     score = model.evaluate(input_values, y_age, batch_size=BATCH_SIZE, verbose=1)
     print("loss:", score[0])
     print("MAE:", score[1])
@@ -60,7 +59,7 @@ def generate_graph(x_img, x_gdr, y_age, title):
         for i in range(len(y_new)):
             print("ID:", i, "Original:", y_age[i], "Predict:", y_new[i][0])
 
-    print("\nGenerate graphics...")
+    print("Generate graphics...")
     # summarize history for mean
     _, ax1 = plt.subplots(1, 1, figsize=(24, 24))
     ax1.plot(y_age, y_new, "r.", label="predictions")
@@ -170,6 +169,7 @@ model = model_from_yaml(loaded_model_yaml)
 
 # printing a model summary to check what we constructed
 print(model.summary())
+print("Model for", GENDER_TYPE)
 
 # load weights into new model
 model.load_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
