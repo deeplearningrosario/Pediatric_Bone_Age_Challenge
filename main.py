@@ -23,7 +23,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 60
+EPOCHS = 30
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -147,10 +147,9 @@ x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1256, activation="relu")(x)
 
-x1 = Dropout(0.35)(x)
+x1 = Dropout(0.4)(x)
 x1 = Dense(1256, activation="relu")(x1)
-
-x2 = Dropout(0.35)(x)
+x2 = Dropout(0.4)(x)
 x2 = Dense(1256, activation="relu")(x2)
 x = keras.layers.concatenate([x1, x2])
 
@@ -158,10 +157,8 @@ x = keras.layers.concatenate([x1, x2])
 # activity_regularizer=regularizers.l1(0.01),
 x1 = Dropout(0.35)(x)
 x1 = Dense(240, activation="relu")(x1)
-
 x2 = Dropout(0.35)(x)
 x2 = Dense(240, activation="relu")(x2)
-
 x = keras.layers.concatenate([x1, x2])
 
 # and the final prediction layer as output (should be the main logistic regression layer)
@@ -282,7 +279,7 @@ plt.title("Training Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(["train", "test"], loc="upper right")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
 plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
@@ -291,7 +288,7 @@ plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
 plt.legend(["train", "test"], loc="upper right")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"), bbox_inches="tight")
 plt.close()
 
 # summarize history for loss

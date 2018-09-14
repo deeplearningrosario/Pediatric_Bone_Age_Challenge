@@ -22,6 +22,7 @@ GENERATE_IMAGE_FOR_AUTOENCODER = False
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
+# IMAGE_SIZE = (212, 212)
 IMAGE_SIZE = (224, 224)
 
 # Turn saving renders feature on/off
@@ -236,8 +237,9 @@ def processImage(img_path):
 
     # Resize the images
     img = cv2.resize(img, IMAGE_SIZE)
-    # Return to original colors
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    if not GENERATE_IMAGE_FOR_AUTOENCODER:
+        # Return to original colors
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # Convert the image into an 8 bit array
     return np.asarray(img, dtype=np.float32)
 
