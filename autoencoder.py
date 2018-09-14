@@ -115,7 +115,7 @@ plt.figure()
 for i in range(1, n + 1):
     # display original
     ax = plt.subplot(2, n, i)
-    plt.imshow(x_test)
+    plt.imshow(x_test[i])
     plt.gray()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
