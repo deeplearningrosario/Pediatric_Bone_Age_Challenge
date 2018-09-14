@@ -47,8 +47,8 @@ def generate_graph(x_img, x_gdr, y_age, title):
 
     print("Evaluate model for", title.lower())
     score = model.evaluate(input_values, y_age, batch_size=BATCH_SIZE, verbose=1)
-    print("Test loss:", score[0])
-    print("Test MAE:", score[1])
+    print("loss:", score[0])
+    print("MAE:", score[1])
 
     print("Predicted", title.lower())
 
