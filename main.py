@@ -85,20 +85,20 @@ img_test, gdr_test, age_test = readFile(
 )
 
 
-def randomDataSet(X_img, x_gender, y_age):
-    random_id = np.random.choice(X_img.shape[0], size=X_img.shape[0], replace=False)
-    X_img = X_img[random_id]
-    x_gender = x_gender[random_id]
-    y_age = y_age[random_id]
-    return X_img, x_gender, y_age
+# def randomDataSet(X_img, x_gender, y_age):
+#    random_id = np.random.choice(X_img.shape[0], size=X_img.shape[0], replace=False)
+#    X_img = X_img[random_id]
+#    x_gender = x_gender[random_id]
+#    y_age = y_age[random_id]
+#    return X_img, x_gender, y_age
 
 
-print("Random order of the train dataset...")
-img_train, gdr_train, age_train = randomDataSet(img_train, gdr_train, age_train)
-print("Random order of the valid dataset...")
-img_valid, gdr_valid, age_valid = randomDataSet(img_valid, gdr_valid, age_valid)
-print("Random order of the test dataset...")
-img_test, gdr_test, age_test = randomDataSet(img_test, gdr_test, age_test)
+# print("Random order of the train dataset...")
+# img_train, gdr_train, age_train = randomDataSet(img_train, gdr_train, age_train)
+# print("Random order of the valid dataset...")
+# img_valid, gdr_valid, age_valid = randomDataSet(img_valid, gdr_valid, age_valid)
+# print("Random order of the test dataset...")
+# img_test, gdr_test, age_test = randomDataSet(img_test, gdr_test, age_test)
 
 print("img_train shape:", img_train.shape)
 print("gdr_train shape:", gdr_train.shape)
@@ -241,6 +241,7 @@ history = model.fit(
     [img_train, gdr_train],
     [age_train],
     batch_size=BATCH_SIZE,
+    shuffle=True,
     epochs=EPOCHS,
     verbose=VERBOSE,
     validation_data=([img_valid, gdr_valid], [age_valid]),
