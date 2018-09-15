@@ -12,10 +12,18 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 500
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
+
+# Usgin for auto-encoder
+GENERATE_IMAGE_FOR_AUTOENCODER = not False
+
+# Image resize
+# IMAGE_SIZE = (299, 299)
+# IMAGE_SIZE = (212, 212)
+IMAGE_SIZE = (224, 224)
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -118,8 +126,8 @@ def cutHand(image):
     )
 
     # Trim that object of mask and image
-    mask = image[y: y + h, x: x + w]
-    image_cut = image_copy[y: y + h, x: x + w]
+    mask = image[y : y + h, x : x + w]
+    image_cut = image_copy[y : y + h, x : x + w]
 
     # Apply mask
     image_cut = cv2.bitwise_and(image_cut, image_cut, mask=mask)
@@ -228,10 +236,9 @@ def processImage(img_path):
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, "render", img_file), img)
 
     # Resize the images
-    img = cv2.resize(img, (224, 224))
+    img = cv2.resize(img, IMAGE_SIZE)
     # Return to original colors
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-
     # Convert the image into an 8 bit array
     return np.asarray(img, dtype=np.float32)
 
@@ -267,12 +274,18 @@ def loadDataSet(files=[]):
 def writeFile(gender, dataset, X_train, x_gender, y_age):
     print("Saving", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(os.path.join(__location__, "packaging-dataset", file_name), "w") as f:
+
+    path_to_save = os.path.join(__location__, "packaging-dataset")
+    if GENERATE_IMAGE_FOR_AUTOENCODER:
+        path_to_save = os.path.join(path_to_save, "for_autoencoder")
+
+    with h5py.File(os.path.join(path_to_save, file_name), "w") as f:
         f.create_dataset(
             "img",
             data=X_train,
             dtype=np.float32,
-            compression="gzip", compression_opts=5
+            compression="gzip",
+            compression_opts=5,
         )
         f.create_dataset("age", data=y_age, dtype=np.uint8)
         f.create_dataset("gender", data=x_gender, dtype=np.uint8)
@@ -287,19 +300,30 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
     k = int(len(X_train) / 6)
-    writeFile(
-        genderType, "testing", img[:k, :, :, :], gender[:k], age[:k]
-    )
-    writeFile(
-        genderType,
-        "validation",
-        img[k: 2 * k, :, :, :],
-        gender[k: 2 * k],
-        age[k: 2 * k],
-    )
-    writeFile(
-        genderType, "training", img[2 * k:, :, :, :], gender[2 * k:], age[2 * k:]
-    )
+    if GENERATE_IMAGE_FOR_AUTOENCODER:
+        writeFile(genderType, "testing", img[:k, :, :], gender[:k], age[:k])
+        writeFile(
+            genderType,
+            "validation",
+            img[k : 2 * k, :, :],
+            gender[k : 2 * k],
+            age[k : 2 * k],
+        )
+        writeFile(
+            genderType, "training", img[2 * k :, :, :], gender[2 * k :], age[2 * k :]
+        )
+    else:
+        writeFile(genderType, "testing", img[:k, :, :, :], gender[:k], age[:k])
+        writeFile(
+            genderType,
+            "validation",
+            img[k : 2 * k, :, :, :],
+            gender[k : 2 * k],
+            age[k : 2 * k],
+        )
+        writeFile(
+            genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
+        )
 
 
 # list all the image files and randomly unravel them,
@@ -330,6 +354,10 @@ def getFiles():
 def checkPath():
     if not os.path.exists(os.path.join(__location__, "packaging-dataset")):
         os.makedirs(os.path.join(__location__, "packaging-dataset"))
+    if not os.path.exists(
+        os.path.join(__location__, "packaging-dataset", "for_autoencoder")
+    ):
+        os.makedirs(os.path.join(__location__, "packaging-dataset", "for_autoencoder"))
 
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "mask"]:

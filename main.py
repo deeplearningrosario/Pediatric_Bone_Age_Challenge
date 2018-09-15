@@ -3,7 +3,7 @@
 
 from trainingmonitor import TrainingMonitor
 from keras.applications import InceptionV3, ResNet50, Xception
-from keras.layers import Flatten, Dense, Input, Dropout
+from keras.layers import Flatten, Dense, Input, Dropout, regularizers
 from keras.models import Model
 from keras.utils import plot_model
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
@@ -23,7 +23,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 50
+EPOCHS = 30
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -34,7 +34,7 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 
 # Image processing layer
 CNN = "Xception"
-# CNN = 'IV3'
+# CNN = "IV3"
 # CNN = "RN50"
 
 
@@ -129,6 +129,7 @@ elif CNN == "RN50":
     output_cnn = base_rn50_model(image_input)
 elif CNN == "Xception":
     # Xception layer with pre-trained weights from ImageNet
+    # base_xp_model = Xception(weights=None)
     base_xp_model = Xception(weights="imagenet")
     # Xception output from input layer
     output_cnn = base_xp_model(image_input)
@@ -145,20 +146,23 @@ x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1256, activation="relu")(x)
-x = Dropout(0.35)(x)
-x = Dense(1000, activation="relu")(x)
 
+x1 = Dropout(0.4)(x)
+x1 = Dense(1256, activation="relu")(x1)
+x2 = Dropout(0.4)(x)
+x2 = Dense(1256, activation="relu")(x2)
+x = keras.layers.concatenate([x1, x2])
+
+# kernel_regularizer=regularizers.l2(0.01),
+# activity_regularizer=regularizers.l1(0.01),
 x1 = Dropout(0.35)(x)
 x1 = Dense(240, activation="relu")(x1)
-
 x2 = Dropout(0.35)(x)
 x2 = Dense(240, activation="relu")(x2)
-
 x = keras.layers.concatenate([x1, x2])
-# x = Dropout(0.2)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
-predictions = Dense(1)(x)
+predictions = Dense(1, activation="relu")(x)
 
 # Now that we have created a model structure we can define it
 # this defines the model with two inputs and one output
@@ -268,7 +272,6 @@ print(history.history.keys())
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
-plt.figure(figsize=(24, 24))
 
 plt.plot(history.history["loss"], label="loss")
 plt.plot(history.history["val_loss"], label="val_loss")
@@ -276,7 +279,7 @@ plt.title("Training Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend(["train", "test"], loc="upper right")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
 plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
@@ -285,7 +288,7 @@ plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
 plt.legend(["train", "test"], loc="upper right")
-plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
+plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"), bbox_inches="tight")
 plt.close()
 
 # summarize history for loss
