@@ -57,7 +57,7 @@ class TrainingMonitor(BaseLogger):
             plt.title("Training Loss [Epoch {}]".format(len(self.H["loss"])))
             plt.xlabel("Epoch #")
             plt.ylabel("Loss")
-            plt.legend(loc="upper left")
+            plt.legend(loc="upper right")
             # save the figure
             plt.savefig(os.path.sep.join([self.figPath, "history_loss.png"]))
             plt.close()
@@ -67,7 +67,7 @@ class TrainingMonitor(BaseLogger):
             plt.title("Training Absolute Error [Epoch {}]".format(len(self.H["loss"])))
             plt.xlabel("Epoch #")
             plt.ylabel("Absolute Error")
-            plt.legend(loc="upper left")
+            plt.legend(loc="upper right")
             # save the figure
             plt.savefig(os.path.sep.join([self.figPath, "history_mean.png"]))
             plt.close()

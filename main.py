@@ -150,6 +150,7 @@ x = Dense(1000, activation="relu")(x)
 
 x1 = Dropout(0.35)(x)
 x1 = Dense(240, activation="relu")(x1)
+
 x2 = Dropout(0.35)(x)
 x2 = Dense(240, activation="relu")(x2)
 
@@ -256,7 +257,6 @@ score = model.evaluate(
 
 print("\nTest loss:", score[0])
 print("Test MAE:", score[1])
-# print("Test accuracy:", score[2])
 
 # Save all data in history
 with open(os.path.join(PATH_SAVE_MODEL, "history.pkl"), "wb") as f:
@@ -268,43 +268,25 @@ print(history.history.keys())
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
-plt.figure()
+plt.figure(figsize=(24, 24))
 
 plt.plot(history.history["loss"], label="loss")
 plt.plot(history.history["val_loss"], label="val_loss")
 plt.title("Training Loss")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"))
 plt.close()
-
-# plt.plot(history.history["acc"], label="acc")
-# plt.plot(history.history["val_acc"], label="val_acc")
-# plt.title("Training Accuracy")
-# plt.xlabel("Epoch")
-# plt.ylabel("Accuracy")
-# plt.legend(["train", "test"], loc="upper left")
-# plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_accuracy.png"))
-# plt.close()
 
 plt.plot(history.history["mean_absolute_error"], label="mean")
 plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
 plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_mean.png"))
 plt.close()
-
-# summarize history for accuracy
-# plt.plot(history.history["acc"], label="train_acc")
-# plt.plot(history.history["val_acc"], label="val_acc")
-# plt.title("model accuracy")
-# plt.ylabel("Accuracy")
-# plt.xlabel("Epoch")
-# plt.legend(["train", "test"], loc="upper left")
-# plt.show()
 
 # summarize history for loss
 plt.plot(history.history["loss"], label="train_loss")
@@ -312,7 +294,7 @@ plt.plot(history.history["val_loss"], label="val_loss")
 plt.title("model loss")
 plt.ylabel("Loss")
 plt.xlabel("Epoch")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.show()
 
 # summarize history for mean
@@ -321,7 +303,7 @@ plt.plot(history.history["val_mean_absolute_error"], label="val_mean")
 plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
-plt.legend(["train", "test"], loc="upper left")
+plt.legend(["train", "test"], loc="upper right")
 plt.show()
 
 # Reduce learning rate
@@ -329,5 +311,5 @@ plt.plot(history.history["lr"], label="Reduce learning rate")
 plt.title("Reduce learning rate")
 plt.xlabel("Epoch")
 plt.ylabel("Reduce learning rate")
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 plt.show()
