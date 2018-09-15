@@ -1,4 +1,3 @@
-# TODO, crear las iamagenes apartir del csv y ponerlas en hands
 from multiprocessing import Process
 from utilities import Console, updateProgress, histogramsLevelFix
 import cv2
@@ -108,9 +107,9 @@ def makeHandsHuman():
 
         for x in range(1, num_processes + 1):
             if x < num_processes:
-                lot_img = files[(x - 1) * lot_size : ((x - 1) * lot_size) + lot_size]
+                lot_img = files[(x - 1) * lot_size: ((x - 1) * lot_size) + lot_size]
             else:
-                lot_img = files[(x - 1) * lot_size :]
+                lot_img = files[(x - 1) * lot_size:]
             processes.append(Process(target=mpStart, args=(lot_img, output)))
 
         if len(processes) > 0:
