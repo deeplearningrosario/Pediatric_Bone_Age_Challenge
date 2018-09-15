@@ -11,15 +11,13 @@ import h5py
 import multiprocessing
 import numpy as np
 import os
-import pandas as pd
 import platform
-import sys
 
 # Image resize
-# IMAGE_SIZE = (299, 299)
 # IMAGE_SIZE = (212, 212)
 IMAGE_SIZE = (224, 224)
-IMAGE_SIZE = (500, 500)
+# IMAGE_SIZE = (299, 299)
+# IMAGE_SIZE = (500, 500)
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -54,7 +52,7 @@ def saveDataSet(X_img, y_img):
         f.close()
 
 
-def loadDataSet(path, files=[]):
+def loadDataSet(files=[]):
     total_file = len(files)
 
     # defined path
@@ -111,15 +109,14 @@ def getFiles():
 
 
 def openDataSet():
-    file_path = os.path.join(
-        __location__, "dataset_hands", "histogram-hand-dataset.hdf5"
-    )
+    Console.info("Opening dataset...")
+    file_path = os.path.join(__location__, "dataset", "img-for-autoencoder.hdf5")
     with h5py.File(file_path, "r+") as f:
-        hist = f["hist"][()]
-        valid = f["valid"][()]
+        X_img = f["train"][()]
+        y_img = f["test"][()]
         f.close()
 
-    return hist, valid
+    return X_img, y_img
 
 
 # Usado en caso de usar multiples core
@@ -182,4 +179,4 @@ if __name__ == "__main__":
     saveDataSet(X_img, y_img)
 
     X_img, y_img = openDataSet()
-    Console.log("Dataset", len(X_img[0]), len(y_img))
+    Console.log("Dataset", len(X_img), len(y_img))
