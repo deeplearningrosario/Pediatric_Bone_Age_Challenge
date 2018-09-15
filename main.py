@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # ./main.py --load_weight ./weight_file.h5
 
+from trainingmonitor import TrainingMonitor
 from keras.applications import InceptionV3, ResNet50, Xception
 from keras.layers import Flatten, Dense, Input, Dropout
 from keras.models import Model
@@ -22,7 +23,7 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 100
+EPOCHS = 50
 BATCH_SIZE = 32
 VERBOSE = 1
 # https://keras.io/optimizers
@@ -32,9 +33,9 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 # Image processing layer
-# CNN = 'Xception'
+CNN = "Xception"
 # CNN = 'IV3'
-CNN = "RN50"
+# CNN = "RN50"
 
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
@@ -135,7 +136,7 @@ elif CNN == "Xception":
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
 # Gender dense layer
-gdr_dense = Dense(32, activation="relu")
+gdr_dense = Dense(2, activation="relu")
 # Gender dense output
 output_gdr_dense = gdr_dense(gdr_input)
 
@@ -143,15 +144,19 @@ output_gdr_dense = gdr_dense(gdr_input)
 x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 
 # We stack dense layers and dropout layers to avoid overfitting after that
+x = Dense(1256, activation="relu")(x)
+x = Dropout(0.35)(x)
 x = Dense(1000, activation="relu")(x)
-x = Dropout(0.45)(x)
-x = Dense(1000, activation="relu")(x)
-x = Dropout(0.45)(x)
-x = Dense(240, activation="relu")(x)
-# x = Dropout(0.1)(x)
+
+x1 = Dropout(0.35)(x)
+x1 = Dense(240, activation="relu")(x1)
+x2 = Dropout(0.35)(x)
+x2 = Dense(240, activation="relu")(x2)
+
+x = keras.layers.concatenate([x1, x2])
+# x = Dropout(0.2)(x)
 
 # and the final prediction layer as output (should be the main logistic regression layer)
-# predictions = Dense(1, activation='sigmoid', name='predictions')(x)
 predictions = Dense(1)(x)
 
 # Now that we have created a model structure we can define it
@@ -208,6 +213,25 @@ if not os.path.exists(PATH_SAVE_MODEL):
 
 csv_logger = keras.callbacks.CSVLogger(os.path.join(PATH_SAVE_MODEL, "training.csv"))
 
+# Imagen summary model
+plot_model(
+    model, to_file=os.path.join(PATH_SAVE_MODEL, "summary_model.png"), show_shapes=True
+)
+
+# Save model fit progress
+PATH_TRAING_MONITOR = os.path.join(PATH_SAVE_MODEL, "training_monitor")
+if not os.path.exists(PATH_TRAING_MONITOR):
+    os.makedirs(PATH_TRAING_MONITOR)
+
+callbacks = [
+    TrainingMonitor(PATH_TRAING_MONITOR),
+    # tbCallBack,
+    # checkpoint,
+    reduceLROnPlat,
+    csv_logger,
+]
+
+
 history = model.fit(
     [img_train, gdr_train],
     [age_train],
@@ -215,7 +239,7 @@ history = model.fit(
     epochs=EPOCHS,
     verbose=VERBOSE,
     validation_data=([img_valid, gdr_valid], [age_valid]),
-    callbacks=[tbCallBack, checkpoint, reduceLROnPlat, csv_logger],
+    callbacks=callbacks,
 )
 
 # serialize model to YAML

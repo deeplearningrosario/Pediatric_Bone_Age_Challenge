@@ -17,6 +17,7 @@ The order of execution would be
 * [numpy](http://www.numpy.org/)
 * [matplotlib](http://www.matplotlib.org/)
 * [sklearn](http://scikit-learn.org/stable/)
+* [pydot](https://github.com/erocarrera/pydot)
 
 Install on Linux
 ```bash
