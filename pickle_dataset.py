@@ -268,12 +268,18 @@ def processImage(img):
 def dataAugmentation(img):
     rta = []
     rta.append(img)
+
+    # Rotacion
+    height, width, _ = img.shape
+    angle = np.random.uniform(-30, 30)
+    x = height if height > width else width
+    y = height if height > width else width
+    M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
+    img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
+    rta.append(img)
     # Rotacion
     if np.random.uniform() > 0.5:
-        height, width, _ = img.shape
         angle = np.random.uniform(0, 360)
-        x = height if height > width else width
-        y = height if height > width else width
         M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
         img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
         rta.append(img)

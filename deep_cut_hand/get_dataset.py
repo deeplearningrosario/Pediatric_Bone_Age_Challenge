@@ -86,6 +86,35 @@ def makeSquare(img):
     )
 
 
+def dataAugmentation(img):
+    rta = []
+    rta.append(img)
+
+    # Rotacion
+    height, width, _ = img.shape
+    angle = np.random.uniform(-30, 30)
+    x = height if height > width else width
+    y = height if height > width else width
+    M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
+    img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
+    rta.append(img)
+    # Rotacion
+    if np.random.uniform() > 0.5:
+        angle = np.random.uniform(0, 360)
+        M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
+        img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
+        rta.append(img)
+    # Flip
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, 0))
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, 1))
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, -1))
+    # Traslations
+    return rta
+
+
 def processeImg(img_path):
     img = cv2.imread(img_path)  # Read a image
     img = makeSquare(img)
