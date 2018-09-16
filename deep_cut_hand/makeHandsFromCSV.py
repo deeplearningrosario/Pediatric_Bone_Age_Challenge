@@ -58,7 +58,7 @@ def progressImg(files=[]):
 def getFiles():
     rta = []
     # Read csv
-    df = pd.read_csv(os.path.join(train_dir, "histogram-dataset.csv"))
+    df = pd.read_csv(os.path.join(__location__, "dataset", "histogram-dataset.csv"))
 
     # file names on train_dir
     files = os.listdir(train_dir)
