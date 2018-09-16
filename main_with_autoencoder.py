@@ -42,8 +42,8 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
-# Usar Xception o Encoder
-USING_ENCODER = True
+# Usar Xception o only Encoder
+USING_XCEPTION = True
 
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "autoencoder_regression")
@@ -136,12 +136,13 @@ def regressionModel(inputs):
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
-if not USING_ENCODER:
+output_encoder = encodedModel(image_input)
+output_decoder = decodedModel(output_encoder)
+if not USING_XCEPTION:
     output_img = Xception(weights="imagenet")(image_input)
 else:
-    output_encoder = encodedModel(image_input)
-    output_decoder = decodedModel(output_encoder)
-    output_img = Xception(weights="imagenet")(output_decoder)
+    output_img = Flatten(output_decoder)
+    output_img = Dense(1000, activation="relu")(output_img)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
@@ -153,12 +154,7 @@ predictions = regressionModel(x)
 
 # Now that we have created a model structure we can define it
 # this defines the model with two inputs and one output
-if USING_ENCODER:
-    model = Model(
-        inputs=[image_input, gdr_input], outputs=[predictions, output_decoder]
-    )
-else:
-    model = Model(inputs=[image_input, gdr_input], outputs=[predictions])
+model = Model(inputs=[image_input, gdr_input], outputs=[predictions, output_decoder])
 
 # printing a model summary to check what we constructed
 print(model.summary())
