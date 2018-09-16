@@ -55,6 +55,8 @@ def writeImage(path, image, force=False):
 # Add black padding for make squera img and keeping ration
 def makeSquare(img):
     height, width, _ = img.shape
+    if height == width:
+        return img
     # Create a black image
     top = 0
     bottom = 0
@@ -237,9 +239,7 @@ def getColorsHands(img):
     return (min_color, max_color)
 
 
-def processImage(img_path):
-    # Read a image
-    img = cv2.imread(img_path, 0)
+def processImage(img):
     img = makeSquare(img)
     # Adjust color levels
     min_color, max_color = getColorsHands(img)
@@ -265,6 +265,29 @@ def processImage(img_path):
     return np.asarray(img, dtype=np.float16)
 
 
+def dataAugmentation(img):
+    rta = []
+    rta.append(img)
+    # Rotacion
+    if np.random.uniform() > 0.5:
+        height, width, _ = img.shape
+        angle = np.random.uniform(0, 360)
+        x = height if height > width else width
+        y = height if height > width else width
+        M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
+        img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
+        rta.append(img)
+    # Flip
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, 0))
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, 1))
+    if np.random.uniform() > 0.5:
+        rta.append(cv2.flip(img, -1))
+    # Traslations
+    return rta
+
+
 def loadDataSet(files=[]):
     global img_file
     X_train = []
@@ -282,10 +305,13 @@ def loadDataSet(files=[]):
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
         if os.path.exists(img_path):
-            img = processImage(img_path) / 255.
-            X_train.append(img)
-            x_gender.append(gender)
-            y_age.append(bone_age)
+            # Read a image
+            img = cv2.imread(img_path, 0)
+            for img in dataAugmentation(img):
+                img = processImage(img_path) / 255.
+                X_train.append(img)
+                x_gender.append(gender)
+                y_age.append(bone_age)
 
     updateProgress(1, total_file, total_file, img_file)
 
