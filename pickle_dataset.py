@@ -12,7 +12,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = 500
+CUT_DATASET = -1
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -270,7 +270,7 @@ def dataAugmentation(img):
     rta.append(img)
 
     # Rotacion
-    height, width, _ = img.shape
+    height, width = img.shape
     angle = np.random.uniform(-30, 30)
     x = height if height > width else width
     y = height if height > width else width
