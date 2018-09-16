@@ -240,7 +240,7 @@ def processImage(img_path):
     # Return to original colors
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # Convert the image into an 8 bit array
-    return np.asarray(img, dtype=np.float32)
+    return np.asarray(img, dtype=np.float16)
 
 
 def loadDataSet(files=[]):
@@ -283,7 +283,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
         f.create_dataset(
             "img",
             data=X_train,
-            dtype=np.float32,
+            dtype=np.float16,
             compression="gzip",
             compression_opts=5,
         )
@@ -300,30 +300,17 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
     k = int(len(X_train) / 6)
-    if GENERATE_IMAGE_FOR_AUTOENCODER:
-        writeFile(genderType, "testing", img[:k, :, :], gender[:k], age[:k])
-        writeFile(
-            genderType,
-            "validation",
-            img[k : 2 * k, :, :],
-            gender[k : 2 * k],
-            age[k : 2 * k],
-        )
-        writeFile(
-            genderType, "training", img[2 * k :, :, :], gender[2 * k :], age[2 * k :]
-        )
-    else:
-        writeFile(genderType, "testing", img[:k, :, :, :], gender[:k], age[:k])
-        writeFile(
-            genderType,
-            "validation",
-            img[k : 2 * k, :, :, :],
-            gender[k : 2 * k],
-            age[k : 2 * k],
-        )
-        writeFile(
-            genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
-        )
+    writeFile(genderType, "testing", img[:k, :, :, :], gender[:k], age[:k])
+    writeFile(
+        genderType,
+        "validation",
+        img[k : 2 * k, :, :, :],
+        gender[k : 2 * k],
+        age[k : 2 * k],
+    )
+    writeFile(
+        genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
+    )
 
 
 # list all the image files and randomly unravel them,
