@@ -66,7 +66,7 @@ def saveDataSet(X_img, y_img):
 
 # Add black padding for make squera img and keeping ration
 def makeSquare(img):
-    height, width, _ = img.shape
+    height, width = img.shape
     # Create a black image
     top = 0
     bottom = 0
@@ -86,37 +86,46 @@ def makeSquare(img):
     )
 
 
-def dataAugmentation(img):
-    rta = []
-    rta.append(img)
+# TODO: en caso de usar iamgens con distintas dimecion corregir
+def dataAugmentation(x_img, y_img):
+    x_rta = []
+    y_rta = []
+    x_rta.append(x_img)
+    y_rta.append(y_img)
 
     # Rotacion
-    height, width, _ = img.shape
+    height, width = x_img.shape
     angle = np.random.uniform(-30, 30)
     x = height if height > width else width
     y = height if height > width else width
     M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
-    img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
-    rta.append(img)
+    x_img = cv2.warpAffine(x_img, M, (x, y), flags=cv2.INTER_LINEAR)
+    y_img = cv2.warpAffine(y_img, M, (x, y), flags=cv2.INTER_LINEAR)
+    x_rta.append(x_img)
+    y_rta.append(y_img)
     # Rotacion
     if np.random.uniform() > 0.5:
         angle = np.random.uniform(0, 360)
         M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
-        img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
-        rta.append(img)
+        x_img = cv2.warpAffine(x_img, M, (x, y), flags=cv2.INTER_LINEAR)
+        y_img = cv2.warpAffine(y_img, M, (x, y), flags=cv2.INTER_LINEAR)
+        x_rta.append(x_img)
+        y_rta.append(y_img)
     # Flip
     if np.random.uniform() > 0.5:
-        rta.append(cv2.flip(img, 0))
+        x_rta.append(cv2.flip(x_img, 0))
+        y_rta.append(cv2.flip(y_img, 0))
     if np.random.uniform() > 0.5:
-        rta.append(cv2.flip(img, 1))
+        x_rta.append(cv2.flip(x_img, 1))
+        y_rta.append(cv2.flip(y_img, 1))
     if np.random.uniform() > 0.5:
-        rta.append(cv2.flip(img, -1))
+        x_rta.append(cv2.flip(x_img, -1))
+        y_rta.append(cv2.flip(y_img, -1))
     # Traslations
-    return rta
+    return x_rta, y_rta
 
 
-def processeImg(img_path):
-    img = cv2.imread(img_path)  # Read a image
+def processeImg(img):
     img = makeSquare(img)
     img = cv2.resize(img, IMAGE_SIZE)  # Resize the images
     return img
@@ -140,11 +149,13 @@ def loadDataSet(files=[]):
         updateProgress(progress[0], progress[1], total_file, img_file)
 
         # Get image's path
-        img_path = os.path.join(path_original, img_file)
-        X_img.append(processeImg(img_path))
-
-        img_path = os.path.join(path_hands, img_file)
-        y_img.append(processeImg(img_path))
+        x_path = os.path.join(path_original, img_file)
+        y_path = os.path.join(path_hands, img_file)
+        x_img = cv2.imread(x_path)  # Read a image
+        y_img = cv2.imread(y_path)  # Read a image
+        for x_img, y_img in dataAugmentation(x_img, y_img):
+            X_img.append(processeImg(x_img))
+            y_img.append(processeImg(y_img))
 
     return X_img, y_img
 
