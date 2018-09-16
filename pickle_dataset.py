@@ -314,7 +314,7 @@ def loadDataSet(files=[]):
             # Read a image
             img = cv2.imread(img_path, 0)
             for img in dataAugmentation(img):
-                img = processImage(img_path) / 255.
+                img = processImage(img) / 255.
                 X_train.append(img)
                 x_gender.append(gender)
                 y_age.append(bone_age)
