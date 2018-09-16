@@ -1,9 +1,9 @@
+from utilities import Console
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from keras.models import Model
 import h5py
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -17,33 +17,14 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 
-def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
-    print("Reading", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(
-        os.path.join(__location__, "packaging-dataset", "for_autoencoder", file_name),
-        "r+",
-    ) as f:
-        f_img = f["img"][()]
-        f_gender = f["gender"][()]
-        f_age = f["age"][()]
+def readFile():
+    Console.info("Opening dataset...")
+    file_path = os.path.join(__location__, "dataset", "img-for-autoencoder.hdf5")
+    with h5py.File(file_path, "r+") as f:
+        X_img = f["train"][()]
+        y_img = f["test"][()]
         f.close()
-    if X_img is None:
-        X_img = f_img
-    else:
-        X_img = np.concatenate((X_img, f_img), axis=0)
-
-    if x_gender is None:
-        x_gender = f_gender
-    else:
-        x_gender = np.concatenate((x_gender, f_gender), axis=0)
-
-    if y_age is None:
-        y_age = f_age
-    else:
-        y_age = np.concatenate((y_age, f_age), axis=0)
-
-    return X_img, x_gender, y_age
+    return X_img, y_img
 
 
 ########################### Auto encoder ############################
@@ -69,19 +50,9 @@ def autoencoder(input_img):
 
 
 ####################################################################
+X_img, y_img = readFile()
 
-genderType = "female"
-x_train, _, _ = readFile(genderType, "training")
-x_valid, _, _ = readFile(genderType, "validation")
-x_test, _, _ = readFile(genderType, "testing")
-
-genderType = "male"
-x_train, _, _ = readFile(genderType, "training", x_train)
-x_valid, _, _, = readFile(genderType, "validation", x_valid)
-x_test, _, _ = readFile(genderType, "testing", x_test)
-
-input_img = Input(shape=x_train.shape[1:])
-# input_img = Input(shape=(224, 224, 1))
+input_img = Input(shape=X_img.shape[1:])
 
 autoencoder = Model(input_img, autoencoder(input_img))
 print(autoencoder.summary())
@@ -89,33 +60,33 @@ autoencoder.compile(optimizer=OPTIMIZER, loss="binary_crossentropy")
 # autoencoder.compile(loss="mean_squared_error", optimizer=OPTIMIZER)
 
 autoencoder_train = autoencoder.fit(
-    x_train,
-    x_train,
+    X_img,
+    y_img,
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     shuffle=True,
-    validation_data=(x_valid, x_valid),
+    validation_data=(X_img, y_img),
 )
 
-loss = autoencoder_train.history["loss"]
-val_loss = autoencoder_train.history["val_loss"]
-epochs = range(EPOCHS)
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(epochs, loss, label="Training loss")
-plt.plot(epochs, val_loss, label="Validation loss")
-plt.title("Training and validation loss")
-plt.legend()
-plt.show()
+# loss = autoencoder_train.history["loss"]
+# val_loss = autoencoder_train.history["val_loss"]
+# epochs = range(EPOCHS)
+# plt.style.use("ggplot")
+# plt.figure()
+# plt.plot(epochs, loss, label="Training loss")
+# plt.plot(epochs, val_loss, label="Validation loss")
+# plt.title("Training and validation loss")
+# plt.legend()
+# plt.show()
 
-decoded_imgs = autoencoder.predict(x_test[:12])
+decoded_imgs = autoencoder.predict(y_img[:12])
 
 n = 10
 plt.figure()
 for i in range(1, n + 1):
     # display original
     ax = plt.subplot(2, n, i)
-    plt.imshow(x_test[i])
+    plt.imshow(y_img[i])
     plt.gray()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
