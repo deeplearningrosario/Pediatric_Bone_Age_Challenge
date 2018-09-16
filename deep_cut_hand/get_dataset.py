@@ -34,22 +34,39 @@ MAKE_HANDS_FROM_HUMAN = False
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
-def saveDataSet(X_img, y_img):
-    Console.info("Save dataset")
-    file_path = os.path.join(__location__, "dataset", "img-for-autoencoder.hdf5")
-    with h5py.File(file_path, "w") as f:
+# Write hdf5 file
+def writeFile(dataset, X_img, y_img):
+    Console.log("Saving", dataset, "data...")
+    file_name = "img-for-autoencoder-" + dataset + ".hdf5"
+    path_to_save = os.path.join(__location__, "dataset", file_name)
+
+    with h5py.File(os.path.join(path_to_save), "w") as f:
         f.create_dataset(
-            "train",
-            dtype=np.float32,
+            "x_img",
+            data=X_img,
+            dtype=np.float16,
             compression="gzip",
             compression_opts=5,
-            data=X_img,
         )
-        f.create_dataset(
-            "test", dtype=np.float32, compression="gzip", compression_opts=5, data=y_img
-        )
-        f.flush()
+        f.create_dataset("y_img", data=y_img, dtype=np.uint8)
         f.close()
+
+
+def saveDataSet(X_img, y_img):
+    Console.info("Save dataset")
+    X_img = np.asarray(X_img, dtype=np.float16)
+    y_img = np.asarray(y_img, dtype=np.float16)
+    # Split images dataset
+    k = int(len(X_img) / 6)
+    writeFile("testing", X_img[:k, :, :, :], y_img[:k, :, :, :])
+    writeFile("validation", X_img[k : 2 * k, :, :, :], y_img[k : 2 * k, :, :, :])
+    writeFile("training", X_img[2 * k :, :, :, :], y_img[2 * k :, :, :, :])
+
+
+def processeImg(img_path):
+    img = cv2.imread(img_path)  # Read a image
+    img = cv2.resize(img, IMAGE_SIZE)  # Resize the images
+    return img
 
 
 def loadDataSet(files=[]):
@@ -71,14 +88,10 @@ def loadDataSet(files=[]):
 
         # Get image's path
         img_path = os.path.join(path_original, img_file)
-        img = cv2.imread(img_path)  # Read a image
-        img = cv2.resize(img, IMAGE_SIZE)  # Resize the images
-        X_img.append(img)
+        X_img.append(processeImg(img_path))
 
         img_path = os.path.join(path_hands, img_file)
-        img = cv2.imread(img_path)  # Read a image
-        img = cv2.resize(img, IMAGE_SIZE)  # Resize the images
-        y_img.append(img)
+        y_img.append(processeImg(img_path))
 
     return X_img, y_img
 
@@ -108,12 +121,13 @@ def getFiles():
     return rta
 
 
-def openDataSet():
+def openDataSet(dataset):
     Console.info("Opening dataset...")
-    file_path = os.path.join(__location__, "dataset", "img-for-autoencoder.hdf5")
-    with h5py.File(file_path, "r+") as f:
-        X_img = f["train"][()]
-        y_img = f["test"][()]
+    file_name = "img-for-autoencoder-" + dataset + ".hdf5"
+    path_to_save = os.path.join(__location__, "dataset", file_name)
+    with h5py.File(path_to_save, "r+") as f:
+        X_img = f["x_img"][()]
+        y_img = f["y_img"][()]
         f.close()
 
     return X_img, y_img
@@ -178,5 +192,5 @@ if __name__ == "__main__":
     X_img, y_img = progressFiles(files)
     saveDataSet(X_img, y_img)
 
-    X_img, y_img = openDataSet()
+    X_img, y_img = openDataSet("training")
     Console.log("Dataset", len(X_img), len(y_img))

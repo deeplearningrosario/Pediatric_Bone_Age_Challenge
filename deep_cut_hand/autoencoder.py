@@ -1,3 +1,4 @@
+from get_dataset import openDataSet
 from utilities import Console
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
@@ -15,17 +16,6 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
-
-
-def readFile():
-    Console.info("Opening dataset...")
-    file_path = os.path.join(__location__, "dataset", "img-for-autoencoder.hdf5")
-    with h5py.File(file_path, "r+") as f:
-        X_img = f["train"][()]
-        y_img = f["test"][()]
-        f.close()
-    return X_img, y_img
-
 
 ########################### Auto encoder ############################
 def autoencoder(input_img):
@@ -50,43 +40,45 @@ def autoencoder(input_img):
 
 
 ####################################################################
-X_img, y_img = readFile()
+X_train, y_train = openDataSet("testing")
+X_valid, y_valid = openDataSet("validation")
+X_test, y_test = openDataSet("training")
 
-input_img = Input(shape=X_img.shape[1:])
+input_img = Input(shape=X_train.shape[1:])
 
 autoencoder = Model(input_img, autoencoder(input_img))
 print(autoencoder.summary())
 autoencoder.compile(optimizer=OPTIMIZER, loss="binary_crossentropy")
-# autoencoder.compile(loss="mean_squared_error", optimizer=OPTIMIZER)
+# autoencoder.compile(optimizer=OPTIMIZER,loss="mean_squared_error")
 
 autoencoder_train = autoencoder.fit(
-    X_img,
-    y_img,
+    X_train,
+    y_train,
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     shuffle=True,
-    validation_data=(X_img, y_img),
+    validation_data=(X_valid, y_valid),
 )
 
-# loss = autoencoder_train.history["loss"]
-# val_loss = autoencoder_train.history["val_loss"]
-# epochs = range(EPOCHS)
-# plt.style.use("ggplot")
-# plt.figure()
-# plt.plot(epochs, loss, label="Training loss")
-# plt.plot(epochs, val_loss, label="Validation loss")
-# plt.title("Training and validation loss")
-# plt.legend()
-# plt.show()
+loss = autoencoder_train.history["loss"]
+val_loss = autoencoder_train.history["val_loss"]
+epochs = range(EPOCHS)
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(epochs, loss, label="Training loss")
+plt.plot(epochs, val_loss, label="Validation loss")
+plt.title("Training and validation loss")
+plt.legend()
+plt.showow(bbox_inches="tight")
 
-decoded_imgs = autoencoder.predict(y_img[:12])
+decoded_imgs = autoencoder.predict(X_test[:12])
 
 n = 10
 plt.figure()
 for i in range(1, n + 1):
     # display original
     ax = plt.subplot(2, n, i)
-    plt.imshow(y_img[i])
+    plt.imshow(X_test[i])
     plt.gray()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
@@ -97,4 +89,11 @@ for i in range(1, n + 1):
     plt.gray()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
-plt.show()
+
+    # display real output image
+    ax = plt.subplot(2, n, i + n)
+    plt.imshow(y_test[i])
+    plt.gray()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+plt.show(bbox_inches="tight")

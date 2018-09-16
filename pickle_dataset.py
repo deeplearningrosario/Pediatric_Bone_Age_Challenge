@@ -295,7 +295,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
-    img = np.asarray(X_train)
+    img = np.asarray(X_train, dtype=np.float16)
     gender = np.asarray(x_gender, dtype=np.uint8)
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
