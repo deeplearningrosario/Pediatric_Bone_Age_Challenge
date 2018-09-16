@@ -40,9 +40,9 @@ def autoencoder(input_img):
 
 
 ####################################################################
-X_train, y_train = openDataSet("testing")
+X_train, y_train = openDataSet("training")
 X_valid, y_valid = openDataSet("validation")
-X_test, y_test = openDataSet("training")
+X_test, y_test = openDataSet("testing")
 
 input_img = Input(shape=X_train.shape[1:])
 
