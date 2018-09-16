@@ -52,6 +52,28 @@ def writeImage(path, image, force=False):
         cv2.imwrite(os.path.join(__location__, TRAIN_DIR, path, img_file), image)
 
 
+# Add black padding for make squera img and keeping ration
+def makeSquare(img):
+    height, width, _ = img.shape
+    # Create a black image
+    top = 0
+    bottom = 0
+    left = 0
+    right = 0
+    if height > width:
+        x = math.floor((height - width) / 2)
+        left = x
+        right = x
+    else:
+        x = math.floor((width - height) / 2)
+        top = x
+        bottom = x
+
+    return cv2.copyMakeBorder(
+        img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0]
+    )
+
+
 # Auto adjust levels colors
 # We order the colors of the image with their frequency and
 # obtain the accumulated one, then we obtain the colors that
@@ -218,7 +240,7 @@ def getColorsHands(img):
 def processImage(img_path):
     # Read a image
     img = cv2.imread(img_path, 0)
-
+    img = makeSquare(img)
     # Adjust color levels
     min_color, max_color = getColorsHands(img)
     img = histogramsLevelFix(img, min_color, max_color)

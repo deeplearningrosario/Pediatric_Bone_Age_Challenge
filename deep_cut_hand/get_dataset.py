@@ -8,6 +8,7 @@ from utilities import Console, updateProgress, getHistogram
 import cv2
 import fnmatch
 import h5py
+import math
 import multiprocessing
 import numpy as np
 import os
@@ -63,8 +64,31 @@ def saveDataSet(X_img, y_img):
     writeFile("training", X_img[2 * k :, :, :, :], y_img[2 * k :, :, :, :])
 
 
+# Add black padding for make squera img and keeping ration
+def makeSquare(img):
+    height, width, _ = img.shape
+    # Create a black image
+    top = 0
+    bottom = 0
+    left = 0
+    right = 0
+    if height > width:
+        x = math.floor((height - width) / 2)
+        left = x
+        right = x
+    else:
+        x = math.floor((width - height) / 2)
+        top = x
+        bottom = x
+
+    return cv2.copyMakeBorder(
+        img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[0, 0, 0]
+    )
+
+
 def processeImg(img_path):
     img = cv2.imread(img_path)  # Read a image
+    img = makeSquare(img)
     img = cv2.resize(img, IMAGE_SIZE)  # Resize the images
     return img
 
