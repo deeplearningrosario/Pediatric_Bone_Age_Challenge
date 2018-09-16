@@ -54,7 +54,7 @@ def writeImage(path, image, force=False):
 
 # Add black padding for make squera img and keeping ration
 def makeSquare(img):
-    height, width, _ = img.shape
+    height, width = img.shape
     if height == width:
         return img
     # Create a black image
