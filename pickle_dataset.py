@@ -12,7 +12,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = 50
+CUT_DATASET = -1
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23

@@ -41,8 +41,9 @@ if __name__ == "__main__":
     num_processes = multiprocessing.cpu_count()
     if platform.system() == "Linux" and num_processes > 1:
         processes = []
-        lot_size = int(len(female) / num_processes)
         num_processes = int(num_processes / 2)
+
+        lot_size = int(len(female) / num_processes)
         for x in range(1, num_processes + 1):
             if x < num_processes:
                 lot_img = female[(x - 1) * lot_size : ((x - 1) * lot_size) + lot_size]
@@ -59,17 +60,19 @@ if __name__ == "__main__":
             processes.append(Process(target=mpStart, args=("male", lot_img, output)))
 
         if len(processes) > 0:
-            print("Processing images...")
             for p in processes:
                 p.start()
+
             result_female = []
             result_male = []
+            print("Processing images...")
             for x in range(num_processes * 2):
                 gender, data = output.get(True)
                 if gender == "male":
                     result_male.append(data)
                 if gender == "female":
                     result_female.append(data)
+
             for p in processes:
                 p.join()
 
