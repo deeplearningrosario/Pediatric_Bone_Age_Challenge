@@ -40,7 +40,7 @@ CNN = "Xception"
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    file_name = gender + "-" + dataset + ".hdf5"
     with h5py.File(
         os.path.join(__location__, "packaging-dataset", file_name), "r+"
     ) as f:

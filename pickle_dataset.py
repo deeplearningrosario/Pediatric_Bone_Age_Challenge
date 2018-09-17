@@ -334,7 +334,7 @@ def loadDataSet(files=[]):
 # Write hdf5 file
 def writeFile(gender, dataset, X_train, x_gender, y_age):
     print("Saving", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    file_name = gender + "-" + dataset + ".hdf5"
 
     path_to_save = os.path.join(__location__, "packaging-dataset")
     if GENERATE_IMAGE_FOR_AUTOENCODER:
