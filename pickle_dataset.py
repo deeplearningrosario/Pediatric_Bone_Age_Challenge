@@ -12,7 +12,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = 100
+CUT_DATASET = -1
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -328,7 +328,7 @@ def loadDataSet(files=[]):
                 x_gender.append(gender)
                 y_age.append(bone_age)
 
-    updateProgress(1, total_file, total_file, img_file)
+    updateProgress(1, total_file, total_file, img_file, gender)
 
     return X_train, x_gender, y_age
 
