@@ -20,6 +20,9 @@ REMOVE_AGE = 23
 # Usgin for auto-encoder
 GENERATE_IMAGE_FOR_AUTOENCODER = False
 
+# Data augmentation
+DATA_AUGMENTATION = True
+
 # Image resize
 # IMAGE_SIZE = (299, 299)
 # IMAGE_SIZE = (212, 212)
@@ -314,15 +317,21 @@ def loadDataSet(files=[]):
         if os.path.exists(img_path):
             # Read a image
             img = cv2.imread(img_path, 0)
-            data_aug = dataAugmentation(img)
-            for img in data_aug:
-                updateProgress(
-                    progress[0],
-                    progress[1],
-                    total_file,
-                    img_file + " x" + str(len(data_aug)),
-                    gender,
-                )
+            if DATA_AUGMENTATION:
+                data_aug = dataAugmentation(img)
+                for img in data_aug:
+                    updateProgress(
+                        progress[0],
+                        progress[1],
+                        total_file,
+                        img_file + " x" + str(len(data_aug)),
+                        gender,
+                    )
+                    img = processImage(img) / 255.
+                    X_train.append(img)
+                    x_gender.append(gender)
+                    y_age.append(bone_age)
+            else:
                 img = processImage(img) / 255.
                 X_train.append(img)
                 x_gender.append(gender)
