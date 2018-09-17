@@ -60,12 +60,13 @@ if __name__ == "__main__":
             processes.append(Process(target=mpStart, args=("male", lot_img, output)))
 
         if len(processes) > 0:
+            print("Processing images...")
             for p in processes:
                 p.start()
 
             result_female = []
             result_male = []
-            print("Processing images...")
+            print("Joining result...")
             for x in range(num_processes * 2):
                 gender, data = output.get(True)
                 if gender == "male":
@@ -76,7 +77,7 @@ if __name__ == "__main__":
             for p in processes:
                 p.join()
 
-            ###################################
+            print("Start saving process...")
             processes = []
             processes.append(
                 Process(target=mpSaveFiles, args=("female", result_female))
