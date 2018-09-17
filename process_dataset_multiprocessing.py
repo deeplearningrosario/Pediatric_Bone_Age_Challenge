@@ -16,7 +16,6 @@ output = multiprocessing.Queue()
 
 
 def mpSaveFiles(gender, result):
-    print("Join the results of the processes...")
     X_train = []
     x_gender = []
     y_age = []
@@ -24,6 +23,7 @@ def mpSaveFiles(gender, result):
         X_train = X_train + X_train_mp
         x_gender = x_gender + x_gender_mp
         y_age = y_age + y_age_mp
+    print("Image for", gender, len(X_train))
     saveDataSet(gender, X_train, x_gender, y_age)
 
 
@@ -66,7 +66,6 @@ if __name__ == "__main__":
 
             result_female = []
             result_male = []
-            print("Joining result...")
             for x in range(num_processes * 2):
                 gender, data = output.get(True)
                 if gender == "male":

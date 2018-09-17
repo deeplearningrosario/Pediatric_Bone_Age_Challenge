@@ -12,13 +12,13 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 100
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
 
 # Usgin for auto-encoder
-GENERATE_IMAGE_FOR_AUTOENCODER = not False
+GENERATE_IMAGE_FOR_AUTOENCODER = False
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
@@ -203,7 +203,7 @@ def rotateImage(imageToRotate):
 
 
 # Show a progress bar
-def updateProgress(progress, tick="", total="", status="Loading..."):
+def updateProgress(progress, tick="", total="", status="Loading...", gender=None):
     lineLength = 80
     barLength = 23
     if isinstance(progress, int):
@@ -215,12 +215,13 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
         progress = 1
         status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
-    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+    line = str("\rImage{5}: {0}/{1} [{2}] {3}% {4}").format(
         tick,
         total,
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1),
         status,
+        " F" if gender == 0 else " M" if gender != None else "",
     )
     emptyBlock = lineLength - len(line)
     emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
@@ -306,7 +307,7 @@ def loadDataSet(files=[]):
         img_file = str(img_file) + ".png"
         # Update the progress bar
         progress = float(i / total_file), (i + 1)
-        updateProgress(progress[0], progress[1], total_file, img_file)
+        updateProgress(progress[0], progress[1], total_file, img_file, gender)
 
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
@@ -320,6 +321,7 @@ def loadDataSet(files=[]):
                     progress[1],
                     total_file,
                     img_file + " x" + str(len(data_aug)),
+                    gender,
                 )
                 img = processImage(img) / 255.
                 X_train.append(img)
