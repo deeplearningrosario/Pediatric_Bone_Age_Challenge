@@ -142,7 +142,7 @@ if not USING_XCEPTION:
     output_img = Xception(weights="imagenet")(image_input)
 else:
     output_img = Flatten(output_decoder)
-    output_img = Dense(1000, activation="relu")(output_img)
+    output_img = Dense(img_train.shape[1:] * 2, activation="relu")(output_img)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
