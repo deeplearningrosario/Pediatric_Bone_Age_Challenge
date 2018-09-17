@@ -12,7 +12,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 50
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -278,17 +278,17 @@ def dataAugmentation(img):
     img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
     rta.append(img)
     # Rotacion
-    if np.random.uniform() > 0.5:
+    if np.random.uniform() > 0.6:
         angle = np.random.uniform(0, 360)
         M = cv2.getRotationMatrix2D((height / 2, width / 2), angle, 1)
         img = cv2.warpAffine(img, M, (x, y), flags=cv2.INTER_LINEAR)
         rta.append(img)
     # Flip
-    if np.random.uniform() > 0.5:
+    if np.random.uniform() > 0.7:
         rta.append(cv2.flip(img, 0))
-    if np.random.uniform() > 0.5:
+    if np.random.uniform() > 0.7:
         rta.append(cv2.flip(img, 1))
-    if np.random.uniform() > 0.5:
+    if np.random.uniform() > 0.7:
         rta.append(cv2.flip(img, -1))
     # Traslations
     return rta
@@ -313,7 +313,14 @@ def loadDataSet(files=[]):
         if os.path.exists(img_path):
             # Read a image
             img = cv2.imread(img_path, 0)
-            for img in dataAugmentation(img):
+            data_aug = dataAugmentation(img)
+            for img in data_aug:
+                updateProgress(
+                    progress[0],
+                    progress[1],
+                    total_file,
+                    img_file + " x" + str(len(data_aug)),
+                )
                 img = processImage(img) / 255.
                 X_train.append(img)
                 x_gender.append(gender)

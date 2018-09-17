@@ -15,8 +15,20 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 output = multiprocessing.Queue()
 
 
+def mpSaveFiles(gender, result):
+    print("Join the results of the processes...")
+    X_train = []
+    x_gender = []
+    y_age = []
+    for X_train_mp, x_gender_mp, y_age_mp in result:
+        X_train = X_train + X_train_mp
+        x_gender = x_gender + x_gender_mp
+        y_age = y_age + y_age_mp
+    saveDataSet(gender, X_train, x_gender, y_age)
+
+
 def mpStart(gender, arg, output):
-    output.put(gender, loadDataSet(arg))
+    output.put((gender, loadDataSet(arg)))
 
 
 if __name__ == "__main__":
@@ -50,37 +62,27 @@ if __name__ == "__main__":
             print("Processing images...")
             for p in processes:
                 p.start()
-
             result_female = []
             result_male = []
-            for x in range(num_processes):
+            for x in range(num_processes * 2):
                 gender, data = output.get(True)
                 if gender == "male":
                     result_male.append(data)
                 if gender == "female":
                     result_female.append(data)
-
             for p in processes:
                 p.join()
 
-            ### TODO: v2 otra vez multi process
-            X_train = []
-            x_gender = []
-            y_age = []
-            for X_train_mp, x_gender_mp, y_age_mp in result_female:
-                X_train = X_train + X_train_mp
-                x_gender = x_gender + x_gender_mp
-                y_age = y_age + y_age_mp
-            saveDataSet("female", X_train, x_gender, y_age)
-            ####
-            X_train = []
-            x_gender = []
-            y_age = []
-            for X_train_mp, x_gender_mp, y_age_mp in result_male:
-                X_train = X_train + X_train_mp
-                x_gender = x_gender + x_gender_mp
-                y_age = y_age + y_age_mp
-            saveDataSet("male", X_train, x_gender, y_age)
+            ###################################
+            processes = []
+            processes.append(
+                Process(target=mpSaveFiles, args=("female", result_female))
+            )
+            processes.append(Process(target=mpSaveFiles, args=("male", result_male)))
+            for p in processes:
+                p.start()
+            for p in processes:
+                p.join()
 
     else:
         print("No podemos dividir la cargan en distintos procesadores")
