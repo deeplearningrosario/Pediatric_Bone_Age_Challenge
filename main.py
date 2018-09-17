@@ -114,25 +114,15 @@ print("age_test shape:", age_test.shape)
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
+# CNN layer with pre-trained weights from ImageNet
 if CNN == "IV3":
-    # Inception V3 layer with pre-trained weights from ImageNet
-    # base_iv3_model = InceptionV3(include_top=False, weights="imagenet")
-    base_iv3_model = InceptionV3(weights="imagenet")
-    # Inception V3 output from input layer
-    output_cnn = base_iv3_model(image_input)
-    # flattening it #why?
-    # flat_iv3 = Flatten()(output_vgg16)
+    # cnn_layer = InceptionV3(include_top=False, weights="imagenet")
+    cnn_layer = InceptionV3(weights="imagenet")
 elif CNN == "RN50":
-    # ResNet50 layer with pre-trained weights from ImageNet
-    base_rn50_model = ResNet50(weights="imagenet")
-    # ResNet50 output from input layer
-    output_cnn = base_rn50_model(image_input)
+    cnn_layer = ResNet50(weights="imagenet")
 elif CNN == "Xception":
-    # Xception layer with pre-trained weights from ImageNet
-    # base_xp_model = Xception(weights=None)
-    base_xp_model = Xception(weights="imagenet")
-    # Xception output from input layer
-    output_cnn = base_xp_model(image_input)
+    cnn_layer = Xception(weights="imagenet")
+output_cnn = cnn_layer(image_input)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
