@@ -50,23 +50,19 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 def encodedModel(inputs):
     # output: (224x224)/24.5 input: 224x224
     x = Conv2D(
-        32, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
+        512, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
     )(inputs)
     # outpu: 112x112x2048
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_2")(x)
     # output: 2048x2 input: 56x56x4096
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
+        128, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
     )(x)
     # output: 28x28x4096
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_4")(x)
     # output: 4096x2 input: 28x28x8192
     encoded = Conv2D(
-        128,
-        kernel_size=(3, 3),
-        activation="relu",
-        padding="same",
-        name="encoded_output",
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
     )(x)
     return encoded
 
@@ -74,13 +70,13 @@ def encodedModel(inputs):
 def decodedModel(inputs):
     # output: 4096x2 input: 28x28x8192
     x = Conv2D(
-        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
     # output: 56x56x8192
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
     # output: 2048x2 input: 56x56x4096
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
+        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
     )(x)
     # output: 112x112x4096
     x = UpSampling2D(size=(2, 2), name="decoder_4")(x)

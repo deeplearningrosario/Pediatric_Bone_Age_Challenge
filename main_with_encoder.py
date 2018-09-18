@@ -148,7 +148,7 @@ if not USING_OUTPUT_DENCODER:
 else:
     output_img = Flatten()(output_encoder)
     output_img = Dense(img_train.shape[1] * 2, activation="relu")(output_img)
-    output_img = Dense(2048, activation="relu")(output_img)
+    # output_img = Dense(2048, activation="relu")(output_img)
     output_img = Dense(1024, activation="relu")(output_img)
 
 # Gender input layer
@@ -161,7 +161,7 @@ predictions = regressionModel(x)
 
 # Now that we have created a model structure we can define it
 # this defines the model with two inputs and one output
-model = Model(inputs=[image_input, gdr_input], outputs=[predictions, output_decoder])
+model = Model(inputs=[image_input, gdr_input], outputs=[predictions])
 
 # printing a model summary to check what we constructed
 print(model.summary())
@@ -175,11 +175,7 @@ if args["load_weights"] != None:
     print("Loading weights from", args["load_weights"])
     model.load_weights(args["load_weights"])
 
-model.compile(
-    optimizer=OPTIMIZER,
-    loss="mean_squared_error",
-    metrics=["MAE", "binary_crossentropy"],
-)
+model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
 
 ################################### CallBacks ######################################
 # Reduce learning rate
@@ -195,13 +191,7 @@ if not os.path.exists(PATH_TRAING_MONITOR):
     os.makedirs(PATH_TRAING_MONITOR)
 
 callbacks = [
-    TrainingMonitor(
-        PATH_TRAING_MONITOR,
-        metrics=[
-            "prediction_mean_absolute_error",
-            "decoder_output_binary_crossentropy",
-        ],
-    ),
+    TrainingMonitor(PATH_TRAING_MONITOR, metrics=["prediction_mean_absolute_error"]),
     reduceLROnPlat,
     csv_logger,
 ]
@@ -209,12 +199,12 @@ callbacks = [
 
 history = model.fit(
     [img_train, gdr_train],
-    [age_train, img_train],
+    [age_train],
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
     shuffle=True,
     verbose=VERBOSE,
-    validation_data=([img_valid, gdr_valid], [age_valid, img_valid]),
+    validation_data=([img_valid, gdr_valid], [age_valid]),
     callbacks=callbacks,
 )
 
@@ -227,7 +217,7 @@ model.save_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
 print("Saved model to disk")
 
 score = model.evaluate(
-    [img_test, gdr_test], age_test, batch_size=BATCH_SIZE, verbose=VERBOSE
+    [img_test, gdr_test], [age_test], batch_size=BATCH_SIZE, verbose=VERBOSE
 )
 
 print("\nTest loss:", score[0])
