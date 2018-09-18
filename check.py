@@ -120,7 +120,7 @@ def readFile(
     dataset_dir="packaging-dataset",
 ):
     print("Reading", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    file_name = gender + "-" + dataset + ".hdf5"
     with h5py.File(os.path.join(__location__, dataset_dir, file_name), "r+") as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
