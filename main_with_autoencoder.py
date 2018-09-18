@@ -36,8 +36,8 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 30
-BATCH_SIZE = 32
+EPOCHS = 40
+BATCH_SIZE = 12
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001, amsgrad=True)
@@ -45,11 +45,15 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
-# Usar Xception o only Encoder
-USING_XCEPTION = True
+# Usar Xception after deconcoder output or only Encoder output
+USING_OUTPUT_DENCODER = True
 
 # Path to save model
 PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "autoencoder_regression")
+
+# Save weights after every epoch
+if not os.path.exists(PATH_SAVE_MODEL):
+    os.makedirs(PATH_SAVE_MODEL)
 
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
@@ -127,7 +131,7 @@ def regressionModel(inputs):
     x = keras.layers.concatenate([x1, x2])
 
     # and the final prediction layer as output (should be the main logistic regression layer)
-    model = Dense(1, activation="relu")(x)
+    model = Dense(1, activation="relu", name="prediction")(x)
     return model
 
 
@@ -139,11 +143,13 @@ image_input = Input(shape=img_train.shape[1:], name="image_input")
 
 output_encoder = encodedModel(image_input)
 output_decoder = decodedModel(output_encoder)
-if not USING_XCEPTION:
-    output_img = Xception(weights="imagenet")(image_input)
+if not USING_OUTPUT_DENCODER:
+    output_img = Xception(weights="imagenet")(output_decoder)
 else:
-    output_img = Flatten()(output_decoder)
+    output_img = Flatten()(output_encoder)
     output_img = Dense(img_train.shape[1] * 2, activation="relu")(output_img)
+    output_img = Dense(2048, activation="relu")(output_img)
+    output_img = Dense(1024, activation="relu")(output_img)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
@@ -169,17 +175,17 @@ if args["load_weights"] != None:
     print("Loading weights from", args["load_weights"])
     model.load_weights(args["load_weights"])
 
-model.compile(optimizer=OPTIMIZER, loss="mean_squared_error", metrics=["MAE"])
+model.compile(
+    optimizer=OPTIMIZER,
+    loss="mean_squared_error",
+    metrics=["MAE", "binary_crossentropy"],
+)
 
 ################################### CallBacks ######################################
 # Reduce learning rate
 reduceLROnPlat = keras.callbacks.ReduceLROnPlateau(
     monitor="val_loss", factor=0.8, patience=3, verbose=1, min_lr=0.0001
 )
-
-# Save weights after every epoch
-if not os.path.exists(PATH_SAVE_MODEL):
-    os.makedirs(PATH_SAVE_MODEL)
 
 csv_logger = keras.callbacks.CSVLogger(os.path.join(PATH_SAVE_MODEL, "training.csv"))
 
@@ -188,7 +194,17 @@ PATH_TRAING_MONITOR = os.path.join(PATH_SAVE_MODEL, "training_monitor")
 if not os.path.exists(PATH_TRAING_MONITOR):
     os.makedirs(PATH_TRAING_MONITOR)
 
-callbacks = [TrainingMonitor(PATH_TRAING_MONITOR), reduceLROnPlat, csv_logger]
+callbacks = [
+    TrainingMonitor(
+        PATH_TRAING_MONITOR,
+        metrics=[
+            "prediction_mean_absolute_error",
+            "decoder_output_binary_crossentropy",
+        ],
+    ),
+    reduceLROnPlat,
+    csv_logger,
+]
 ####################################################################################
 
 history = model.fit(

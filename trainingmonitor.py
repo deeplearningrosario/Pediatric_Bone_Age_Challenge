@@ -7,13 +7,14 @@ import os
 
 
 class TrainingMonitor(BaseLogger):
-    def __init__(self, figPath, startAt=0):
+    def __init__(self, figPath, startAt=0, metrics=["mean_absolute_error"]):
         # store the output path for the figure, the path to the JSON
         # serialized file, and the starting epoch
         super(TrainingMonitor, self).__init__()
         self.figPath = figPath
-        self.jsonPath = os.path.sep.join([figPath, "female_and_male.json"])
+        self.jsonPath = os.path.sep.join([figPath, "metrics.json"])
         self.startAt = startAt
+        self.metrics = metrics
 
     def on_train_begin(self, logs={}):
         # initialize the history dictionary
@@ -64,22 +65,24 @@ class TrainingMonitor(BaseLogger):
             )
             plt.close()
 
-            plt.figure(figsize=(10, 10))
-            plt.plot(N, self.H["mean_absolute_error"], label="train_mean")
-            plt.plot(N, self.H["val_mean_absolute_error"], label="val_mean")
-            plt.title(
-                "Training Absolute Error [Epoch {}]\n Train: {} - Val: {}".format(
-                    len(self.H["loss"]),
-                    np.min(self.H["mean_absolute_error"]),
-                    np.min(self.H["val_mean_absolute_error"]),
+            for metric in self.metrics:
+                plt.figure(figsize=(10, 10))
+                plt.plot(N, self.H[metric], label="training")
+                plt.plot(N, self.H["val_" + metric], label="validation")
+                plt.title(
+                    "{} [Epoch {}]\n Train: {} - Val: {}".format(
+                        metric,
+                        len(self.H["loss"]),
+                        np.min(self.H[metric]),
+                        np.min(self.H["val_" + metric]),
+                    )
                 )
-            )
-            plt.xlabel("Epoch #")
-            plt.ylabel("Absolute Error")
-            plt.legend(loc="upper right")
-            # save the figure
-            plt.savefig(
-                os.path.sep.join([self.figPath, "history_mean.png"]),
-                bbox_inches="tight",
-            )
-            plt.close()
+                plt.xlabel("Epoch #")
+                plt.ylabel(metric)
+                plt.legend(loc="upper right")
+                # save the figure
+                plt.savefig(
+                    os.path.sep.join([self.figPath, metric + ".png"]),
+                    bbox_inches="tight",
+                )
+                plt.close()
