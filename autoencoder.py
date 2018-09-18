@@ -1,6 +1,7 @@
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from keras.models import Model
+import argparse
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,14 +17,18 @@ OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+ap.add_argument(
+    "-d", "--dataset", default="packaging-dataset", help="path to input dataset"
+)
+args = vars(ap.parse_args())
+
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(
-        os.path.join(__location__, "packaging-dataset", "for_autoencoder", file_name),
-        "r+",
-    ) as f:
+    file_name = gender + "-" + dataset + ".hdf5"
+    with h5py.File(os.path.join(__location__, args["dataset"], file_name), "r+") as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
         f_age = f["age"][()]
@@ -48,19 +53,18 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 ########################### Auto encoder ############################
 def encodedModel(inputs):
-    # output: (224x224)/24.5 input: 224x224
     x = Conv2D(
         512, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
     )(inputs)
-    # outpu: 112x112x2048
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_2")(x)
-    # output: 2048x2 input: 56x56x4096
     x = Conv2D(
         128, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
     )(x)
-    # output: 28x28x4096
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_4")(x)
-    # output: 4096x2 input: 28x28x8192
+    x = Conv2D(
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_5"
+    )(x)
+    x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
     encoded = Conv2D(
         64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
     )(x)
@@ -68,19 +72,18 @@ def encodedModel(inputs):
 
 
 def decodedModel(inputs):
-    # output: 4096x2 input: 28x28x8192
     x = Conv2D(
         64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
-    # output: 56x56x8192
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
-    # output: 2048x2 input: 56x56x4096
     x = Conv2D(
-        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
-    )(x)
-    # output: 112x112x4096
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
+    )(inputs)
     x = UpSampling2D(size=(2, 2), name="decoder_4")(x)
-    # output: 224x224 input: 224x224x1
+    x = Conv2D(
+        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
+    )(x)
+    x = UpSampling2D(size=(2, 2), name="decoder_6")(x)
     decoded = Conv2D(
         3,
         kernel_size=(3, 3),

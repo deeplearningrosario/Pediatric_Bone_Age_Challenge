@@ -191,7 +191,7 @@ if not os.path.exists(PATH_TRAING_MONITOR):
     os.makedirs(PATH_TRAING_MONITOR)
 
 callbacks = [
-    TrainingMonitor(PATH_TRAING_MONITOR, metrics=["prediction_mean_absolute_error"]),
+    TrainingMonitor(PATH_TRAING_MONITOR, metrics=["mean_absolute_error"]),
     reduceLROnPlat,
     csv_logger,
 ]
