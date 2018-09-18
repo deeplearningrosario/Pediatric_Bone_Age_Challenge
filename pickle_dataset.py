@@ -18,11 +18,14 @@ CUT_DATASET = -1
 REMOVE_AGE = 23
 
 # Usgin for auto-encoder
-GENERATE_IMAGE_FOR_AUTOENCODER = not False
+GENERATE_IMAGE_FOR_AUTOENCODER = False
+
+# Data augmentation
+DATA_AUGMENTATION = not True
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
-# IMAGE_SIZE = (212, 212)
+# IMAGE_SIZE = (500, 500)
 IMAGE_SIZE = (224, 224)
 
 # Turn saving renders feature on/off
@@ -203,7 +206,7 @@ def rotateImage(imageToRotate):
 
 
 # Show a progress bar
-def updateProgress(progress, tick="", total="", status="Loading..."):
+def updateProgress(progress, tick="", total="", status="Loading...", gender=None):
     lineLength = 80
     barLength = 23
     if isinstance(progress, int):
@@ -215,12 +218,13 @@ def updateProgress(progress, tick="", total="", status="Loading..."):
         progress = 1
         status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
-    line = str("\rImage: {0}/{1} [{2}] {3}% {4}").format(
+    line = str("\rImage{5}: {0}/{1} [{2}] {3}% {4}").format(
         tick,
         total,
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1),
         status,
+        " F" if gender == 0 else " M" if gender != None else "",
     )
     emptyBlock = lineLength - len(line)
     emptyBlock = " " * emptyBlock if emptyBlock > 0 else ""
@@ -306,27 +310,34 @@ def loadDataSet(files=[]):
         img_file = str(img_file) + ".png"
         # Update the progress bar
         progress = float(i / total_file), (i + 1)
-        updateProgress(progress[0], progress[1], total_file, img_file)
+        updateProgress(progress[0], progress[1], total_file, img_file, gender)
 
         # Get image's path
         img_path = os.path.join(train_dir, img_file)
         if os.path.exists(img_path):
             # Read a image
             img = cv2.imread(img_path, 0)
-            data_aug = dataAugmentation(img)
-            for img in data_aug:
-                updateProgress(
-                    progress[0],
-                    progress[1],
-                    total_file,
-                    img_file + " x" + str(len(data_aug)),
-                )
+            if DATA_AUGMENTATION:
+                data_aug = dataAugmentation(img)
+                for img in data_aug:
+                    updateProgress(
+                        progress[0],
+                        progress[1],
+                        total_file,
+                        img_file + " x" + str(len(data_aug)),
+                        gender,
+                    )
+                    img = processImage(img) / 255.
+                    X_train.append(img)
+                    x_gender.append(gender)
+                    y_age.append(bone_age)
+            else:
                 img = processImage(img) / 255.
                 X_train.append(img)
                 x_gender.append(gender)
                 y_age.append(bone_age)
 
-    updateProgress(1, total_file, total_file, img_file)
+    updateProgress(1, total_file, total_file, img_file, gender)
 
     return X_train, x_gender, y_age
 
@@ -334,7 +345,7 @@ def loadDataSet(files=[]):
 # Write hdf5 file
 def writeFile(gender, dataset, X_train, x_gender, y_age):
     print("Saving", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
+    file_name = gender + "-" + dataset + ".hdf5"
 
     path_to_save = os.path.join(__location__, "packaging-dataset")
     if GENERATE_IMAGE_FOR_AUTOENCODER:

@@ -28,6 +28,9 @@ import os
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
+ap.add_argument(
+    "-d", "--dataset", default="packaging-dataset", help="path to input dataset"
+)
 args = vars(ap.parse_args())
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -51,10 +54,8 @@ PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "autoencoder_regres
 
 def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
     print("Reading", gender, dataset, "data...")
-    file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(
-        os.path.join(__location__, "packaging-dataset", file_name), "r+"
-    ) as f:
+    file_name = gender + "-" + dataset + ".hdf5"
+    with h5py.File(os.path.join(__location__, args["dataset"], file_name), "r+") as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
         f_age = f["age"][()]
