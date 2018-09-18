@@ -9,8 +9,8 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-EPOCHS = 15
-BATCH_SIZE = 12
+EPOCHS = 30
+BATCH_SIZE = 6
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
@@ -54,34 +54,34 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 ########################### Auto encoder ############################
 def encodedModel(inputs):
     x = Conv2D(
-        512, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
+        1024, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
     )(inputs)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_2")(x)
     x = Conv2D(
-        128, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
+        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_4")(x)
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_5"
+        128, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_5"
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
     encoded = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
+        32, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
+        32, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
-    )(inputs)
+        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
+    )(x)
     x = UpSampling2D(size=(2, 2), name="decoder_4")(x)
     x = Conv2D(
-        128, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
+        256, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
     )(x)
     x = UpSampling2D(size=(2, 2), name="decoder_6")(x)
     decoded = Conv2D(
@@ -117,7 +117,6 @@ if __name__ == "__main__":
     print(autoencoder.summary())
 
     autoencoder.compile(optimizer=OPTIMIZER, loss="binary_crossentropy")
-    # autoencoder.compile(loss="mean_squared_error", optimizer=OPTIMIZER)
 
     autoencoder_train = autoencoder.fit(
         x_train,
