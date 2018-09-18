@@ -3,6 +3,7 @@
 # Check metrics using trained weight files
 from keras.models import model_from_yaml
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+import argparse
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,12 +111,17 @@ def generate_graph(x_img, x_gdr, y_age, title):
     plt.close()
 
 
-def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
+def readFile(
+    gender,
+    dataset,
+    X_img=None,
+    x_gender=None,
+    y_age=None,
+    dataset_dir="packaging-dataset",
+):
     print("Reading", gender, dataset, "data...")
     file_name = gender + "-" + dataset + "-" + ".hdf5"
-    with h5py.File(
-        os.path.join(__location__, "packaging-dataset", file_name), "r+"
-    ) as f:
+    with h5py.File(os.path.join(__location__, dataset_dir, file_name), "r+") as f:
         f_img = f["img"][()]
         f_gender = f["gender"][()]
         f_age = f["age"][()]
@@ -139,23 +145,45 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 
 # Load data
+ap = argparse.ArgumentParser()
+ap.add_argument(
+    "-d", "--dataset", default="packaging-dataset", help="path to input dataset"
+)
+args = vars(ap.parse_args())
+
 print("...loading training data")
 if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "female":
     genderType = "female"
-    img_train, gdr_train, age_train = readFile(genderType, "training")
-    img_valid, gdr_valid, age_valid = readFile(genderType, "validation")
-    img_test, gdr_test, age_test = readFile(genderType, "testing")
+    img_train, gdr_train, age_train = readFile(
+        genderType, "training", dataset_dir=args["dataset"]
+    )
+    img_valid, gdr_valid, age_valid = readFile(
+        genderType, "validation", dataset_dir=args["dataset"]
+    )
+    img_test, gdr_test, age_test = readFile(
+        genderType, "testing", dataset_dir=args["dataset"]
+    )
 
 if GENDER_TYPE == "female_and_male" or GENDER_TYPE == "male":
     genderType = "male"
     img_train, gdr_train, age_train = readFile(
-        genderType, "training", img_train, gdr_train, age_train
+        genderType,
+        "training",
+        img_train,
+        gdr_train,
+        age_train,
+        dataset_dir=args["dataset"],
     )
     img_valid, gdr_valid, age_valid = readFile(
-        genderType, "validation", img_valid, gdr_valid, age_valid
+        genderType,
+        "validation",
+        img_valid,
+        gdr_valid,
+        age_valid,
+        dataset_dir=args["dataset"],
     )
     img_test, gdr_test, age_test = readFile(
-        genderType, "testing", img_test, gdr_test, age_test
+        genderType, "testing", img_test, gdr_test, age_test, dataset_dir=args["dataset"]
     )
 
 print("Joining train, valid and test dataset.")
