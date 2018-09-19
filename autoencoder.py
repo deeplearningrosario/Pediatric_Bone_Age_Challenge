@@ -166,4 +166,4 @@ if __name__ == "__main__":
         plt.gray()
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-    plt.show()
+    plt.show(bbox_inches="tight")
