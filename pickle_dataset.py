@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import cv2
 import math
 import numpy as np
@@ -24,9 +23,9 @@ GENERATE_IMAGE_FOR_AUTOENCODER = False
 DATA_AUGMENTATION = not True
 
 # Image resize
-IMAGE_SIZE = (299, 299)
+# IMAGE_SIZE = (299, 299)
 # IMAGE_SIZE = (500, 500)
-# IMAGE_SIZE = (224, 224)
+IMAGE_SIZE = (224, 224)
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -414,9 +413,11 @@ def checkPath():
     if not os.path.exists(os.path.join(__location__, "packaging-dataset")):
         os.makedirs(os.path.join(__location__, "packaging-dataset"))
     if not os.path.exists(
-        os.path.join(__location__, "packaging-dataset", "for_autoencoder")
+        os.path.join(__location__, "packaging-dataset", "hands_for_autoencoder")
     ):
-        os.makedirs(os.path.join(__location__, "packaging-dataset", "for_autoencoder"))
+        os.makedirs(
+            os.path.join(__location__, "packaging-dataset", "hands_for_autoencoder")
+        )
 
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "mask"]:

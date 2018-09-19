@@ -89,4 +89,11 @@ if __name__ == "__main__":
 
     else:
         print("No podemos dividir la cargan en distintos procesadores")
-        exit(0)
+
+        print("Processing female images...")
+        (X_train, x_gender, y_age) = loadDataSet(female)
+        saveDataSet("female", X_train, x_gender, y_age)
+
+        print("Processing male images...")
+        (X_train, x_gender, y_age) = loadDataSet(male)
+        saveDataSet("male", X_train, x_gender, y_age)
