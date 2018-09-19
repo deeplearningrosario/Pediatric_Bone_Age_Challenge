@@ -29,6 +29,9 @@ import os
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")
 ap.add_argument(
+    "-ew", "--encoded_weights", default=None, help="Path to the file encoder weights"
+)
+ap.add_argument(
     "-d", "--dataset", default="packaging-dataset", help="path to input dataset"
 )
 args = vars(ap.parse_args())
@@ -141,14 +144,13 @@ def regressionModel(inputs):
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
-output_encoder = encodedModel(image_input)
-output_decoder = decodedModel(output_encoder)
+output_encoder = encodedModel(image_input, weights=args["encoded_weights"])
 if not USING_OUTPUT_DENCODER:
+    output_decoder = decodedModel(output_encoder)
     output_img = Xception(weights="imagenet")(output_decoder)
 else:
     output_img = Flatten()(output_encoder)
     output_img = Dense(img_train.shape[1] * 2, activation="relu")(output_img)
-    # output_img = Dense(2048, activation="relu")(output_img)
     output_img = Dense(1024, activation="relu")(output_img)
 
 # Gender input layer
