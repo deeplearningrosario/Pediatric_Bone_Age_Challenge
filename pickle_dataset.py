@@ -27,6 +27,9 @@ DATA_AUGMENTATION = not True
 # IMAGE_SIZE = (500, 500)
 IMAGE_SIZE = (224, 224)
 
+# Using unsigned int, 0 to 255
+UINT8_FOR_IMAGES = True
+
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
@@ -316,22 +319,17 @@ def loadDataSet(files=[]):
         if os.path.exists(img_path):
             # Read a image
             img = cv2.imread(img_path, 0)
-            if DATA_AUGMENTATION:
-                data_aug = dataAugmentation(img)
-                for img in data_aug:
-                    updateProgress(
-                        progress[0],
-                        progress[1],
-                        total_file,
-                        img_file + " x" + str(len(data_aug)),
-                        gender,
-                    )
-                    img = processImage(img) / 255.
-                    X_train.append(img)
-                    x_gender.append(gender)
-                    y_age.append(bone_age)
-            else:
-                img = processImage(img) / 255.
+            data_aug = dataAugmentation(img) if DATA_AUGMENTATION else [img]
+            for img in data_aug:
+                updateProgress(
+                    progress[0],
+                    progress[1],
+                    total_file,
+                    img_file + " x" + str(len(data_aug)),
+                    gender,
+                )
+                if not UINT8_FOR_IMAGES:
+                    img = img / 255.
                 X_train.append(img)
                 x_gender.append(gender)
                 y_age.append(bone_age)
@@ -354,7 +352,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
         f.create_dataset(
             "img",
             data=X_train,
-            dtype=np.float16,
+            dtype=np.unit8 if UINT8_FOR_IMAGES else np.float16,
             compression="gzip",
             compression_opts=5,
         )
@@ -366,7 +364,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
-    img = np.asarray(X_train, dtype=np.float16)
+    img = np.asarray(X_train, dtype=np.unit8 if UINT8_FOR_IMAGES else np.float16)
     gender = np.asarray(x_gender, dtype=np.uint8)
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
