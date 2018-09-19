@@ -12,7 +12,7 @@ import os
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 EPOCHS = 30
-BATCH_SIZE = 10
+BATCH_SIZE = 12
 # https://keras.io/optimizers
 # OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
@@ -80,12 +80,10 @@ def encodedModel(inputs, weights=None):
         padding="same",
         name="encoded_output",
     )(x)
-    if weights is not None:
-        encoded.load_weights(weights)
     return encoded
 
 
-def decodedModel(inputs, weights=None):
+def decodedModel(inputs):
     x = Conv2D(
         2048, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
@@ -107,8 +105,6 @@ def decodedModel(inputs, weights=None):
         activation="sigmoid",
         name="decoder_output",
     )(x)
-    if weights is not None:
-        decoded.load_weights(weights)
     return decoded
 
 
@@ -136,10 +132,10 @@ if __name__ == "__main__":
 
     input_img = Input(shape=x_train.shape[1:])
 
-    output_encoder = encodedModel(input_img)
-    output_decoder = decodedModel(output_encoder)
+    encoder = encodedModel(input_img)
+    decoder = decodedModel(encoder)
 
-    autoencoder = Model(inputs=[input_img], outputs=[output_decoder])
+    autoencoder = Model(inputs=[input_img], outputs=[decoder])
     print(autoencoder.summary())
     # Imagen summary model
     plot_model(
@@ -165,20 +161,25 @@ if __name__ == "__main__":
         callbacks=[TrainingMonitor(PATH_TRAING_MONITOR, metrics=[])],
     )
 
-    loss = autoencoder_train.history["loss"]
-    val_loss = autoencoder_train.history["val_loss"]
-    epochs = range(EPOCHS)
+    # serialize model to YAML
+    model_yaml = autoencoder.to_yaml()
+    with open(os.path.join(PATH_SAVE_MODEL, "model.yaml"), "w") as yaml_file:
+        yaml_file.write(model_yaml)
+    # serialize weights to HDF5
+    autoencoder.save_weights(os.path.join(PATH_SAVE_MODEL, "model.h5"))
+    print("Saved model to disk")
+
     plt.style.use("ggplot")
     plt.figure()
 
-    plt.legend(["train", "test"], loc="upper right")
-    plt.plot(epochs, loss, label="Training loss")
-    plt.plot(epochs, val_loss, label="Validation loss")
-    plt.show()
+    plt.plot(autoencoder_train.history["loss"], label="Training")
+    plt.plot(autoencoder_train.history["val_loss"], label="Validation")
     plt.title("Training and validation loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
+    plt.legend(loc="upper right")
     plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
+    plt.show()
     plt.close()
 
     decoded_imgs = autoencoder.predict(x_test[:12])
@@ -188,15 +189,13 @@ if __name__ == "__main__":
     for i in range(1, n + 1):
         # display original
         ax = plt.subplot(2, n, i)
-        plt.imshow(x_test[i])
-        plt.gray()
+        plt.imshow(x_test[i].astype(np.float32))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         # display reconstruction
         ax = plt.subplot(2, n, i + n)
-        plt.imshow(decoded_imgs[i])
-        plt.gray()
+        plt.imshow(decoded_imgs[i].astype(np.float32))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-    plt.show(bbox_inches="tight")
+    plt.show()
