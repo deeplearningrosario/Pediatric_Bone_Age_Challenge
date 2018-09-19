@@ -57,7 +57,7 @@ def encodedModel(inputs):
     x = Conv2D(
         1024, kernel_size=(3, 3), padding="same", activation="relu", name="encoder_1"
     )(inputs)
-    x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_2")(x)
+    x = MaxPooling2D(pool_size=(4, 4), padding="same", name="encoder_2")(x)
     x = Conv2D(
         256, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
     )(x)
@@ -67,14 +67,14 @@ def encodedModel(inputs):
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
     encoded = Conv2D(
-        32, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
     x = Conv2D(
-        32, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
     x = Conv2D(
@@ -84,7 +84,7 @@ def decodedModel(inputs):
     x = Conv2D(
         256, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
     )(x)
-    x = UpSampling2D(size=(2, 2), name="decoder_6")(x)
+    x = UpSampling2D(size=(4, 4), name="decoder_6")(x)
     decoded = Conv2D(
         3,
         kernel_size=(3, 3),
