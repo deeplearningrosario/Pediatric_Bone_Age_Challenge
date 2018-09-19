@@ -26,8 +26,8 @@ args = vars(ap.parse_args())
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 # network and training
-EPOCHS = 30
-BATCH_SIZE = 32
+EPOCHS = 90
+BATCH_SIZE = 34
 VERBOSE = 1
 # https://keras.io/optimizers
 OPTIMIZER = Adam(lr=0.001, amsgrad=True)
@@ -112,25 +112,21 @@ print("gdr_test shape:", gdr_test.shape)
 print("age_test shape:", age_test.shape)
 
 # First we need to create a model structure
-# input layer
+# Image input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
 
 # CNN layer with pre-trained weights from ImageNet
 if CNN == "IV3":
-    # cnn_layer = InceptionV3(include_top=False, weights="imagenet")
-    cnn_layer = InceptionV3(weights="imagenet")
+    output_cnn = InceptionV3(weights="imagenet")(image_input)
 elif CNN == "RN50":
-    cnn_layer = ResNet50(weights="imagenet")
+    output_cnn = ResNet50(weights="imagenet")(image_input)
 elif CNN == "Xception":
-    cnn_layer = Xception(weights="imagenet")
-output_cnn = cnn_layer(image_input)
+    output_cnn = Xception(weights="imagenet")(image_input)
 
 # Gender input layer
 gdr_input = Input(shape=(1,), name="gdr_input")
 # Gender dense layer
-gdr_dense = Dense(2, activation="relu")
-# Gender dense output
-output_gdr_dense = gdr_dense(gdr_input)
+output_gdr_dense = Dense(2, activation="relu")(gdr_input)
 
 # Concatenating CNN output with sex_dense output after going through shared layer
 x = keras.layers.concatenate([output_cnn, output_gdr_dense])
@@ -138,9 +134,9 @@ x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1256, activation="relu")(x)
 
-x1 = Dropout(0.4)(x)
+x1 = Dropout(0.45)(x)
 x1 = Dense(1256, activation="relu")(x1)
-x2 = Dropout(0.4)(x)
+x2 = Dropout(0.45)(x)
 x2 = Dense(1256, activation="relu")(x2)
 x = keras.layers.concatenate([x1, x2])
 
