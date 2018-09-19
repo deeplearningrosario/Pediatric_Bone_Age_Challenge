@@ -54,7 +54,7 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 
 ########################### Auto encoder ############################
-def encodedModel(inputs):
+def encodedModel(inputs, weights=None):
     x = Conv2D(
         1024,
         kernel_size=(3, 3),
@@ -66,7 +66,7 @@ def encodedModel(inputs):
     )(inputs)
     x = MaxPooling2D(pool_size=(4, 4), padding="same", name="encoder_2")(x)
     x = Conv2D(
-        512, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
+        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_4")(x)
     x = Conv2D(
@@ -80,10 +80,12 @@ def encodedModel(inputs):
         padding="same",
         name="encoded_output",
     )(x)
+    if weights is not None:
+        encoded.load_weights(weights)
     return encoded
 
 
-def decodedModel(inputs):
+def decodedModel(inputs, weights=None):
     x = Conv2D(
         2048, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
@@ -93,7 +95,7 @@ def decodedModel(inputs):
     )(x)
     x = UpSampling2D(size=(2, 2), name="decoder_4")(x)
     x = Conv2D(
-        512, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
+        256, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
     )(x)
     x = UpSampling2D(size=(4, 4), name="decoder_6")(x)
     decoded = Conv2D(
@@ -105,6 +107,8 @@ def decodedModel(inputs):
         activation="sigmoid",
         name="decoder_output",
     )(x)
+    if weights is not None:
+        decoded.load_weights(weights)
     return decoded
 
 
