@@ -11,21 +11,19 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = -1
+CUT_DATASET = 200
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
-
-# Usgin for auto-encoder
-GENERATE_IMAGE_FOR_AUTOENCODER = False
 
 # Data augmentation
 DATA_AUGMENTATION = not True
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
-# IMAGE_SIZE = (500, 500)
-IMAGE_SIZE = (224, 224)
+# IMAGE_SIZE = (224, 224)
+# IMAGE_SIZE = (448, 448)
+IMAGE_SIZE = (304, 304)
 
 # Using unsigned int, 0 to 255
 UINT8_FOR_IMAGES = True
@@ -318,16 +316,23 @@ def loadDataSet(files=[]):
         img_path = os.path.join(train_dir, img_file)
         if os.path.exists(img_path):
             # Read a image
-            img = cv2.imread(img_path, 0)
-            data_aug = dataAugmentation(img) if DATA_AUGMENTATION else [img]
+            img_original = cv2.imread(img_path, 0)
+            data_aug = (
+                dataAugmentation(img_original) if DATA_AUGMENTATION else [img_original]
+            )
+            del img_original
             for img in data_aug:
                 updateProgress(
                     progress[0],
                     progress[1],
                     total_file,
-                    img_file + " x" + str(len(data_aug)),
+                    img_file + " x" + str(len(data_aug))
+                    if len(data_aug) > 1
+                    else img_file,
                     gender,
                 )
+
+                img = processImage(img)
                 if not UINT8_FOR_IMAGES:
                     img = img / 255.
                 X_train.append(img)
@@ -345,14 +350,12 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
     file_name = gender + "-" + dataset + ".hdf5"
 
     path_to_save = os.path.join(__location__, "packaging-dataset")
-    if GENERATE_IMAGE_FOR_AUTOENCODER:
-        path_to_save = os.path.join(path_to_save, "for_autoencoder")
 
     with h5py.File(os.path.join(path_to_save, file_name), "w") as f:
         f.create_dataset(
             "img",
             data=X_train,
-            dtype=np.unit8 if UINT8_FOR_IMAGES else np.float16,
+            # dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16
             compression="gzip",
             compression_opts=5,
         )
@@ -364,7 +367,10 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
-    img = np.asarray(X_train, dtype=np.unit8 if UINT8_FOR_IMAGES else np.float16)
+    if UINT8_FOR_IMAGES:
+        img = np.asarray(X_train)
+    else:
+        img = np.asarray(X_train, dtype=np.float16)
     gender = np.asarray(x_gender, dtype=np.uint8)
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
@@ -410,13 +416,6 @@ def getFiles():
 def checkPath():
     if not os.path.exists(os.path.join(__location__, "packaging-dataset")):
         os.makedirs(os.path.join(__location__, "packaging-dataset"))
-    if not os.path.exists(
-        os.path.join(__location__, "packaging-dataset", "hands_for_autoencoder")
-    ):
-        os.makedirs(
-            os.path.join(__location__, "packaging-dataset", "hands_for_autoencoder")
-        )
-
     if SAVE_IMAGE_FOR_DEBUGGER:
         for folder in ["histograms_level_fix", "cut_hand", "mask"]:
             if not os.path.exists(os.path.join(__location__, TRAIN_DIR, folder)):
