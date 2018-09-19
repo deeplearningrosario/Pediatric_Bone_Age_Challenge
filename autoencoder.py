@@ -1,6 +1,7 @@
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from keras.models import Model
+from trainingmonitor import TrainingMonitor
 import argparse
 import h5py
 import matplotlib.pyplot as plt
@@ -10,11 +11,11 @@ import os
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 EPOCHS = 30
-BATCH_SIZE = 6
+BATCH_SIZE = 10
 # https://keras.io/optimizers
-OPTIMIZER = Adam(lr=0.001, amsgrad=True)
+# OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
-# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 ap = argparse.ArgumentParser()
@@ -96,8 +97,16 @@ def decodedModel(inputs):
 
 ####################################################################
 
+
 # Run presses if this file is main
 if __name__ == "__main__":
+    # Path to save model
+    PATH_SAVE_MODEL = os.path.join(__location__, "model_backup", "autoencoder")
+    # Save model fit progress
+    PATH_TRAING_MONITOR = os.path.join(PATH_SAVE_MODEL, "training_monitor")
+    if not os.path.exists(PATH_TRAING_MONITOR):
+        os.makedirs(PATH_TRAING_MONITOR)
+
     genderType = "female"
     x_train, _, _ = readFile(genderType, "training")
     x_valid, _, _ = readFile(genderType, "validation")
@@ -125,6 +134,7 @@ if __name__ == "__main__":
         batch_size=BATCH_SIZE,
         shuffle=True,
         validation_data=(x_valid, x_valid),
+        callbacks=[TrainingMonitor(PATH_TRAING_MONITOR, metrics=[])],
     )
 
     loss = autoencoder_train.history["loss"]
