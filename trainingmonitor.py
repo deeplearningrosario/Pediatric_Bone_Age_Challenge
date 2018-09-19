@@ -47,13 +47,13 @@ class TrainingMonitor(BaseLogger):
         # ensure at least two epochs have passed before plotting
         # (epoch starts at zero)
         if len(self.H["loss"]) > 1:
-            N = np.arange(0, len(self.H["loss"]))
+            N = range(len(self.H["loss"]))
             # plot the training loss
             plt.style.use("ggplot")
 
             plt.figure(figsize=(10, 10))
-            plt.plot(N, self.H["loss"], label="train_loss")
-            plt.plot(N, self.H["val_loss"], label="val_loss")
+            plt.plot(N, self.H["loss"], label="training")
+            plt.plot(N, self.H["val_loss"], label="validatin")
             plt.title("Training Loss [Epoch {}]".format(len(self.H["loss"])))
             plt.xlabel("Epoch #")
             plt.ylabel("Loss")

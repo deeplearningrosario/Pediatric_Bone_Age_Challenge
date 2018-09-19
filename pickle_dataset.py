@@ -24,9 +24,9 @@ GENERATE_IMAGE_FOR_AUTOENCODER = False
 DATA_AUGMENTATION = not True
 
 # Image resize
-# IMAGE_SIZE = (299, 299)
+IMAGE_SIZE = (299, 299)
 # IMAGE_SIZE = (500, 500)
-IMAGE_SIZE = (224, 224)
+# IMAGE_SIZE = (224, 224)
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False

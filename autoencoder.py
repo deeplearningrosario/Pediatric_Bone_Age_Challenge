@@ -1,5 +1,6 @@
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
+from keras.utils import plot_model
 from keras.models import Model
 from trainingmonitor import TrainingMonitor
 import argparse
@@ -67,14 +68,18 @@ def encodedModel(inputs):
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
     encoded = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded_output"
+        2048,
+        kernel_size=(3, 3),
+        activation="relu",
+        padding="same",
+        name="encoded_output",
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
     x = Conv2D(
-        64, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
+        2048, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
     x = Conv2D(
@@ -124,6 +129,17 @@ if __name__ == "__main__":
 
     autoencoder = Model(inputs=[input_img], outputs=[output_decoder])
     print(autoencoder.summary())
+    # Imagen summary model
+    plot_model(
+        autoencoder,
+        to_file=os.path.join(PATH_SAVE_MODEL, "summary_model.png"),
+        show_shapes=True,
+    )
+
+    # Load weight
+    if args["load_weights"] != None:
+        print("Loading weights from", args["load_weights"])
+        autoencoder.load_weights(args["load_weights"])
 
     autoencoder.compile(optimizer=OPTIMIZER, loss="binary_crossentropy")
 
@@ -142,11 +158,16 @@ if __name__ == "__main__":
     epochs = range(EPOCHS)
     plt.style.use("ggplot")
     plt.figure()
+
+    plt.legend(["train", "test"], loc="upper right")
     plt.plot(epochs, loss, label="Training loss")
     plt.plot(epochs, val_loss, label="Validation loss")
-    plt.title("Training and validation loss")
-    plt.legend()
     plt.show()
+    plt.title("Training and validation loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
+    plt.close()
 
     decoded_imgs = autoencoder.predict(x_test[:12])
 
