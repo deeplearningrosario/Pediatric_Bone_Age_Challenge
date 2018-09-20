@@ -15,6 +15,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-lw", "--load_weights", help="Path to the file weights")

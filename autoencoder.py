@@ -1,4 +1,11 @@
-from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
+from keras.layers import (
+    Input,
+    Dense,
+    Conv2D,
+    MaxPooling2D,
+    UpSampling2D,
+    BatchNormalization,
+)
 from keras.optimizers import Adam, RMSprop, Adadelta, Adagrad
 from keras.utils import plot_model
 from keras.models import Model
@@ -9,10 +16,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-EPOCHS = 2
-BATCH_SIZE = 3
+EPOCHS = 5  # max 5 or 10
+BATCH_SIZE = 2
 # https://keras.io/optimizers
 # OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
@@ -54,56 +63,28 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 
 
 ########################### Auto encoder ############################
-def encodedModel(inputs, weights=None):
-    x = Conv2D(
-        1024,
-        kernel_size=(3, 3),
-        # strides=(2, 2),
-        use_bias=False,
-        padding="same",
-        activation="relu",
-        name="encoder_1",
-    )(inputs)
-    x = MaxPooling2D(pool_size=(4, 4), padding="same", name="encoder_2")(x)
-    x = Conv2D(
-        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_3"
-    )(x)
-    x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_4")(x)
-    x = Conv2D(
-        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoder_5"
-    )(x)
-    x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
+def encodedModel(inputs):
+    x = Conv2D(1024, kernel_size=(3, 3), padding="same", activation="relu")(inputs)
+    x = MaxPooling2D(pool_size=(4, 4), padding="same")(x)
+    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
+    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
     encoded = Conv2D(
-        1024,
-        kernel_size=(3, 3),
-        activation="relu",
-        padding="same",
-        name="encoded_output",
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded"
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
-    x = Conv2D(
-        1024, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
-    )(inputs)
-    x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
-    x = Conv2D(
-        256, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_3"
-    )(x)
-    x = UpSampling2D(size=(2, 2), name="decoder_4")(x)
-    x = Conv2D(
-        256, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_5"
-    )(x)
-    x = UpSampling2D(size=(4, 4), name="decoder_6")(x)
+    x = Conv2D(64, kernel_size=(3, 3), activation="relu", padding="same")(inputs)
+    x = UpSampling2D(size=(2, 2))(x)
+    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = UpSampling2D(size=(2, 2))(x)
+    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = UpSampling2D(size=(4, 4))(x)
     decoded = Conv2D(
-        3,
-        kernel_size=(3, 3),
-        # strides=(2, 2),
-        use_bias=False,
-        padding="same",
-        activation="sigmoid",
-        name="decoder_output",
+        3, kernel_size=(3, 3), padding="same", activation="sigmoid", name="decoder"
     )(x)
     return decoded
 
@@ -170,34 +151,32 @@ if __name__ == "__main__":
     print("Saved model to disk")
 
     plt.style.use("ggplot")
-    plt.figure()
 
-    plt.plot(autoencoder_train.history["loss"], label="Training")
-    plt.plot(autoencoder_train.history["val_loss"], label="Validation")
-    plt.title("Training and validation loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend(loc="upper right")
-    plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
-    plt.show()
-    plt.close()
+    # plt.figure()
+    # plt.plot(autoencoder_train.history["loss"], label="Training")
+    # plt.plot(autoencoder_train.history["val_loss"], label="Validation")
+    # plt.title("Training and validation loss")
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Loss")
+    # plt.legend(loc="upper right")
+    # plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
+    # plt.show()
+    # plt.close()
 
-    decoded_imgs = autoencoder.predict(x_test[:3])
+    decoded_imgs = autoencoder.predict(x_test[:4], batch_size=BATCH_SIZE)
 
-    n = 2
+    n = 4
     plt.figure()
     for i in range(1, n + 1):
         # display original
         ax = plt.subplot(2, n, i)
-        # plt.imshow(x_test[i - 1].astype(np.float32))
-        plt.imshow(x_test[i - 1].astype(np.int))
+        plt.imshow(x_test[i - 1])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         # display reconstruction
         ax = plt.subplot(2, n, i + n)
-        # plt.imshow(decoded_imgs[i - 1].astype(np.float32))
-        plt.imshow(decoded_imgs[i - 1].astype(np.int))
+        plt.imshow(decoded_imgs[i - 1])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     plt.show()

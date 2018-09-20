@@ -3,7 +3,7 @@
 
 from autoencoder import encodedModel, decodedModel
 from trainingmonitor import TrainingMonitor
-from keras.applications import InceptionV3, ResNet50, Xception
+from keras.applications import Xception
 from keras.layers import (
     Conv2D,
     Dense,
@@ -24,6 +24,8 @@ import keras
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -143,8 +145,12 @@ def regressionModel(inputs):
 
 # input layer
 image_input = Input(shape=img_train.shape[1:], name="image_input")
+if args["encoded_weights"]:
+    image_input = Input(
+        shape=img_train.shape[1:], name="image_input", weights=args["encoded_weights"]
+    )
 
-output_encoder = encodedModel(image_input, weights=args["encoded_weights"])
+output_encoder = encodedModel(image_input)
 if not USING_OUTPUT_DENCODER:
     output_decoder = decodedModel(output_encoder)
     output_img = Xception(weights="imagenet")(output_decoder)
