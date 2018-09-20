@@ -11,7 +11,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = 200
+CUT_DATASET = 1000
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -21,12 +21,12 @@ DATA_AUGMENTATION = not True
 
 # Image resize
 # IMAGE_SIZE = (299, 299)
-# IMAGE_SIZE = (224, 224)
+IMAGE_SIZE = (224, 224)
 # IMAGE_SIZE = (448, 448)
-IMAGE_SIZE = (304, 304)
+# IMAGE_SIZE = (304, 304)
 
 # Using unsigned int, 0 to 255
-UINT8_FOR_IMAGES = True
+UINT8_FOR_IMAGES = False
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -385,6 +385,11 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     )
     writeFile(
         genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
+    )
+    print(
+        "Saved {0} image, shape: {1}, dataType: {2}".format(
+            len(X_train), X_train[0].shape, "uint8" if UINT8_FOR_IMAGES else "float16"
+        )
     )
 
 

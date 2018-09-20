@@ -11,8 +11,8 @@ import os
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-EPOCHS = 30
-BATCH_SIZE = 12
+EPOCHS = 2
+BATCH_SIZE = 3
 # https://keras.io/optimizers
 # OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
@@ -74,7 +74,7 @@ def encodedModel(inputs, weights=None):
     )(x)
     x = MaxPooling2D(pool_size=(2, 2), padding="same", name="encoder_6")(x)
     encoded = Conv2D(
-        2048,
+        1024,
         kernel_size=(3, 3),
         activation="relu",
         padding="same",
@@ -85,7 +85,7 @@ def encodedModel(inputs, weights=None):
 
 def decodedModel(inputs):
     x = Conv2D(
-        2048, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
+        1024, kernel_size=(3, 3), activation="relu", padding="same", name="decoder_1"
     )(inputs)
     x = UpSampling2D(size=(2, 2), name="decoder_2")(x)
     x = Conv2D(
@@ -182,20 +182,22 @@ if __name__ == "__main__":
     plt.show()
     plt.close()
 
-    decoded_imgs = autoencoder.predict(x_test[:12])
+    decoded_imgs = autoencoder.predict(x_test[:3])
 
-    n = 10
+    n = 2
     plt.figure()
     for i in range(1, n + 1):
         # display original
         ax = plt.subplot(2, n, i)
-        plt.imshow(x_test[i].astype(np.float32))
+        # plt.imshow(x_test[i - 1].astype(np.float32))
+        plt.imshow(x_test[i - 1].astype(np.int))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         # display reconstruction
         ax = plt.subplot(2, n, i + n)
-        plt.imshow(decoded_imgs[i].astype(np.float32))
+        # plt.imshow(decoded_imgs[i - 1].astype(np.float32))
+        plt.imshow(decoded_imgs[i - 1].astype(np.int))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     plt.show()
