@@ -26,7 +26,7 @@ IMAGE_SIZE = (224, 224)
 # IMAGE_SIZE = (304, 304)
 
 # Using unsigned int, 0 to 255
-UINT8_FOR_IMAGES = True
+UINT8_FOR_IMAGES = not True
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -383,7 +383,14 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     writeFile(
         genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
     )
-    print("Saved {0} image, shape: {1}".format(len(X_train), X_train[0].shape))
+    print(
+        "Saved {0} image with shape {1}\n\tData type: {2}\n\tData augmentation: {3}".format(
+            len(X_train),
+            X_train[0].shape,
+            "unit8" if UINT8_FOR_IMAGES else "float16",
+            DATA_AUGMENTATION,
+        )
+    )
 
 
 # list all the image files and randomly unravel them,
