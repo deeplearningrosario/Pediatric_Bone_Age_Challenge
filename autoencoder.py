@@ -68,22 +68,21 @@ def encodedModel(inputs):
     x = MaxPooling2D(pool_size=(4, 4), padding="same")(x)
     # x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
     # x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
-    # x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    # x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
+    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
     encoded = Conv2D(
-        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoded"
+        64, kernel_size=(3, 3), activation="relu", padding="same", name="encoded"
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
-    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(inputs)
+    x = Conv2D(64, kernel_size=(1, 1), activation="relu", padding="same")(inputs)
     x = UpSampling2D(size=(2, 2))(x)
-    # x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    # x = UpSampling2D(size=(2, 2))(x)
-    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = UpSampling2D(size=(2, 2))(x)  # -
-    # x = UpSampling2D(size=(4, 4))(x)
+    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = UpSampling2D(size=(2, 2))(x)
+    x = Conv2D(512, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    x = UpSampling2D(size=(2, 2))(x)
     decoded = Conv2D(
         3, kernel_size=(3, 3), padding="same", activation="sigmoid", name="decoder"
     )(x)
@@ -153,20 +152,23 @@ if __name__ == "__main__":
 
     plt.style.use("ggplot")
 
-    # plt.figure()
-    # plt.plot(autoencoder_train.history["loss"], label="Training")
-    # plt.plot(autoencoder_train.history["val_loss"], label="Validation")
-    # plt.title("Training and validation loss")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.legend(loc="upper right")
-    # plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
+    plt.figure()
+    plt.plot(autoencoder_train.history["loss"], label="Training")
+    plt.plot(autoencoder_train.history["val_loss"], label="Validation")
+    plt.title("Training and validation loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend(loc="upper right")
+    plt.savefig(os.path.join(PATH_SAVE_MODEL, "history_loss.png"), bbox_inches="tight")
     # plt.show()
-    # plt.close()
+    plt.close()
+
+    score = autoencoder.evaluate([x_test], [x_test], batch_size=BATCH_SIZE)
+    print("\nTest loss:", score[0], "\nTest MAE:", score[1])
 
     decoded_imgs = autoencoder.predict(x_test[:4], batch_size=BATCH_SIZE)
 
-    n = 4
+    n = 2
     plt.figure()
     for i in range(1, n + 1):
         # display original
