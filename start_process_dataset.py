@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from pickle_dataset import loadDataSet, saveDataSet, getFiles, checkPath
+from process_dataset import loadDataSet, saveDataSet, getFiles, checkPath
 from multiprocessing import Process
 import multiprocessing
 import os
