@@ -23,9 +23,9 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 EPOCHS = 5  # max 5 or 10
 BATCH_SIZE = 2
 # https://keras.io/optimizers
-# OPTIMIZER = Adam(lr=0.001, amsgrad=True)
+OPTIMIZER = Adam(lr=0.001, amsgrad=True)
 # OPTIMIZER = RMSprop()
-OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
+# OPTIMIZER = Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=0.0)
 # OPTIMIZER = Adagrad(lr=0.05)
 
 ap = argparse.ArgumentParser()
@@ -66,23 +66,24 @@ def readFile(gender, dataset, X_img=None, x_gender=None, y_age=None):
 def encodedModel(inputs):
     x = Conv2D(1024, kernel_size=(3, 3), padding="same", activation="relu")(inputs)
     x = MaxPooling2D(pool_size=(4, 4), padding="same")(x)
-    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
+    # x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
     # x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
     # x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
+    # x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
     encoded = Conv2D(
-        128, kernel_size=(3, 3), activation="relu", padding="same", name="encoded"
+        256, kernel_size=(3, 3), activation="relu", padding="same", name="encoded"
     )(x)
     return encoded
 
 
 def decodedModel(inputs):
-    x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(inputs)
+    x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(inputs)
     x = UpSampling2D(size=(2, 2))(x)
     # x = Conv2D(128, kernel_size=(3, 3), activation="relu", padding="same")(x)
     # x = UpSampling2D(size=(2, 2))(x)
     x = Conv2D(256, kernel_size=(3, 3), activation="relu", padding="same")(x)
-    x = UpSampling2D(size=(4, 4))(x)
+    x = UpSampling2D(size=(2, 2))(x)  # -
+    # x = UpSampling2D(size=(4, 4))(x)
     decoded = Conv2D(
         3, kernel_size=(3, 3), padding="same", activation="sigmoid", name="decoder"
     )(x)

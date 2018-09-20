@@ -217,7 +217,7 @@ def updateProgress(progress, tick="", total="", status="", gender=None):
             status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
     line = str("\rImage{5}: {0}/{1} [{2}] {3}% {4}").format(
-        tick,
+        str(" " * (len(str(total)) - str(len(tick)))) + str(tick),
         total,
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1),
