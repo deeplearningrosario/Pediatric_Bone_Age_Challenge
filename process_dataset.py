@@ -369,8 +369,8 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print(
-        "Divide the data set...\nSaved {0} image with shape {1}\n\tData augmentation: {2}".format(
-            len(X_train), X_train[0].shape, DATA_AUGMENTATION
+        "Divide the data set...\n{0} {1} image with shape {2}, data augmentation: {3}".format(
+            genderType, len(X_train), X_train[0].shape, DATA_AUGMENTATION
         )
     )
     img = np.asarray(X_train, dtype=np.float32)

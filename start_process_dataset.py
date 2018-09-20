@@ -23,7 +23,6 @@ def mpSaveFiles(gender, result):
         X_train = X_train + X_train_mp
         x_gender = x_gender + x_gender_mp
         y_age = y_age + y_age_mp
-    print("Image for", gender, len(X_train))
     saveDataSet(gender, X_train, x_gender, y_age)
 
 
