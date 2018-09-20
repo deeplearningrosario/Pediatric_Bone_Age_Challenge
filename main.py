@@ -102,14 +102,14 @@ img_test, gdr_test, age_test = readFile(
 # img_test, gdr_test, age_test = randomDataSet(img_test, gdr_test, age_test)
 
 print("img_train shape:", img_train.shape)
-print("gdr_train shape:", gdr_train.shape)
-print("age_train shape:", age_train.shape)
+print("gdr_train shape:", gdr_train.shape[0])
+print("age_train shape:", age_train.shape[0])
 print("img_valid shape:", img_valid.shape)
-print("gdr_valid shape:", gdr_valid.shape)
-print("age_valid shape:", age_valid.shape)
+print("gdr_valid shape:", gdr_valid.shape[0])
+print("age_valid shape:", age_valid.shape[0])
 print("img_test shape:", img_test.shape)
-print("gdr_test shape:", gdr_test.shape)
-print("age_test shape:", age_test.shape)
+print("gdr_test shape:", gdr_test.shape[0])
+print("age_test shape:", age_test.shape[0])
 
 # First we need to create a model structure
 # Image input layer
@@ -134,9 +134,9 @@ x = keras.layers.concatenate([output_cnn, output_gdr_dense])
 # We stack dense layers and dropout layers to avoid overfitting after that
 x = Dense(1256, activation="relu")(x)
 
-x1 = Dropout(0.45)(x)
+x1 = Dropout(0.3)(x)
 x1 = Dense(1256, activation="relu")(x1)
-x2 = Dropout(0.45)(x)
+x2 = Dropout(0.3)(x)
 x2 = Dense(1256, activation="relu")(x2)
 x = keras.layers.concatenate([x1, x2])
 
@@ -295,12 +295,4 @@ plt.title("Training Absolute Error")
 plt.xlabel("Epoch")
 plt.ylabel("Absolute Error")
 plt.legend(["train", "test"], loc="upper right")
-plt.show()
-
-# Reduce learning rate
-plt.plot(history.history["lr"], label="Reduce learning rate")
-plt.title("Reduce learning rate")
-plt.xlabel("Epoch")
-plt.ylabel("Reduce learning rate")
-plt.legend(loc="upper right")
 plt.show()

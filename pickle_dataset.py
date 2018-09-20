@@ -11,7 +11,7 @@ import sys
 TRAIN_DIR = "boneage-training-dataset"
 
 # Use N images of dataset, If it is -1 using all dataset
-CUT_DATASET = 1000
+CUT_DATASET = -1
 
 # Remove images that are less than or equal to 23 months of age
 REMOVE_AGE = 23
@@ -26,7 +26,7 @@ IMAGE_SIZE = (224, 224)
 # IMAGE_SIZE = (304, 304)
 
 # Using unsigned int, 0 to 255
-UINT8_FOR_IMAGES = False
+UINT8_FOR_IMAGES = True
 
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
@@ -355,7 +355,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
         f.create_dataset(
             "img",
             data=X_train,
-            # dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16
+            dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16,
             compression="gzip",
             compression_opts=5,
         )
@@ -367,10 +367,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print("Divide the data set...")
-    if UINT8_FOR_IMAGES:
-        img = np.asarray(X_train)
-    else:
-        img = np.asarray(X_train, dtype=np.float16)
+    img = np.asarray(X_train, dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16)
     gender = np.asarray(x_gender, dtype=np.uint8)
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
@@ -386,11 +383,7 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     writeFile(
         genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
     )
-    print(
-        "Saved {0} image, shape: {1}, dataType: {2}".format(
-            len(X_train), X_train[0].shape, "uint8" if UINT8_FOR_IMAGES else "float16"
-        )
-    )
+    print("Saved {0} image, shape: {1}".format(len(X_train), X_train[0].shape))
 
 
 # list all the image files and randomly unravel them,
