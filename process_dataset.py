@@ -203,7 +203,7 @@ def rotateImage(imageToRotate):
 
 
 # Show a progress bar
-def updateProgress(progress, tick="", total="", status="Loading...", gender=None):
+def updateProgress(progress, tick="", total="", status="", gender=None):
     lineLength = 80
     barLength = 23
     if isinstance(progress, int):
@@ -213,7 +213,8 @@ def updateProgress(progress, tick="", total="", status="Loading...", gender=None
         status = "Waiting...\r"
     if progress >= 1:
         progress = 1
-        status = "Completed loading data\r\n"
+        if status != "":
+            status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
     line = str("\rImage{5}: {0}/{1} [{2}] {3}% {4}").format(
         tick,
@@ -334,7 +335,13 @@ def loadDataSet(files=[]):
                 x_gender.append(gender)
                 y_age.append(bone_age)
 
-    updateProgress(1, total_file, total_file, img_file, gender)
+    updateProgress(
+        1,
+        total_file,
+        total_file,
+        str(len(X_train)) + "image" if DATA_AUGMENTATION else "Completed",
+        gender,
+    )
 
     return X_train, x_gender, y_age
 
