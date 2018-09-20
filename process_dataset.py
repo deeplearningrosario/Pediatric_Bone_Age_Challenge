@@ -217,7 +217,7 @@ def updateProgress(progress, tick="", total="", status="", gender=None):
             status = "Completed loading data\r\n"
     block = int(round(barLength * progress))
     line = str("\rImage{5}: {0}/{1} [{2}] {3}% {4}").format(
-        str(" " * (len(str(total)) - str(len(tick)))) + str(tick),
+        str(" " * (len(str(total)) - len(str(tick)))) + str(tick),
         total,
         str(("#" * block)) + str("." * (barLength - block)),
         round(progress * 100, 1),
@@ -369,7 +369,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
     print(
-        "Divide the data set...\nSaved {0} image with shape {1}\n\tData augmentation: {3}".format(
+        "Divide the data set...\nSaved {0} image with shape {1}\n\tData augmentation: {2}".format(
             len(X_train), X_train[0].shape, DATA_AUGMENTATION
         )
     )
