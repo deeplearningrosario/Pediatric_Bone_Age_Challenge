@@ -25,9 +25,6 @@ IMAGE_SIZE = (224, 224)
 # IMAGE_SIZE = (448, 448)
 # IMAGE_SIZE = (304, 304)
 
-# Using unsigned int, 0 to 255
-UINT8_FOR_IMAGES = not True
-
 # Turn saving renders feature on/off
 SAVE_RENDERS = False
 
@@ -266,7 +263,7 @@ def processImage(img):
     # Return to original colors
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     # Convert the image into an 8 bit array
-    return np.asarray(img, dtype=np.float16)
+    return np.asarray(img, dtype=np.float32)
 
 
 def dataAugmentation(img):
@@ -332,9 +329,7 @@ def loadDataSet(files=[]):
                     gender,
                 )
 
-                img = processImage(img)
-                if not UINT8_FOR_IMAGES:
-                    img = img / 255.
+                img = processImage(img) / 255.
                 X_train.append(img)
                 x_gender.append(gender)
                 y_age.append(bone_age)
@@ -355,7 +350,7 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
         f.create_dataset(
             "img",
             data=X_train,
-            dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16,
+            dtype=np.float32,
             compression="gzip",
             compression_opts=5,
         )
@@ -366,8 +361,12 @@ def writeFile(gender, dataset, X_train, x_gender, y_age):
 
 # Save dataset
 def saveDataSet(genderType, X_train, x_gender, y_age):
-    print("Divide the data set...")
-    img = np.asarray(X_train, dtype=np.uint8 if UINT8_FOR_IMAGES else np.float16)
+    print(
+        "Divide the data set...\nSaved {0} image with shape {1}\n\tData augmentation: {3}".format(
+            len(X_train), X_train[0].shape, DATA_AUGMENTATION
+        )
+    )
+    img = np.asarray(X_train, dtype=np.float32)
     gender = np.asarray(x_gender, dtype=np.uint8)
     age = np.asarray(y_age, dtype=np.uint8)
     # Split images dataset
@@ -382,14 +381,6 @@ def saveDataSet(genderType, X_train, x_gender, y_age):
     )
     writeFile(
         genderType, "training", img[2 * k :, :, :, :], gender[2 * k :], age[2 * k :]
-    )
-    print(
-        "Saved {0} image with shape {1}\n\tData type: {2}\n\tData augmentation: {3}".format(
-            len(X_train),
-            X_train[0].shape,
-            "unit8" if UINT8_FOR_IMAGES else "float16",
-            DATA_AUGMENTATION,
-        )
     )
 
 
